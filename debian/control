@@ -1,0 +1,24 @@
+Source: junemule
+Section: net
+Priority: extra
+Maintainer: Mickael Royer <mickael.royer@enac.fr>
+Build-Depends: debhelper (>= 7.0.50~), python (>= 2.6.6-3)
+Build-Depends-Indep: python-support (>= 0.5.3)
+Standards-Version: 3.9.2.0
+X-Python-Version: >= 2.6
+Homepage: http://mroy31.dyndns.org/repository/junemule
+Vcs-Hg: http://mroy31.dyndns.org/repository/junemule
+Vcs-Browser: http://mroy31.dyndns.org/repository/junemule
+
+Package: junemule
+Architecture: all
+Depends: ${misc:Depends}, ${python:Depends},
+         lsb-base (>= 3.0-6),
+         qemu-system,
+         qemu-utils,
+         uml-utilities,
+         vde2,
+         python-configobj
+Description: Junemule is network emulator working with qemu/vde
+ junemule is a network emulator based on JUNOS OS emulated with qemu and
+ connected to each other thanks to vde

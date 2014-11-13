@@ -1,0 +1,12 @@
+syntax: glob
+*.net
+conf/*
+*.orig
+*.rej
+.DS_Store
+*~
+*.pyc
+build*
+
+syntax: regexp
+.*\#.*\#$

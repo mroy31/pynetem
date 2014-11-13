@@ -1,0 +1,13 @@
+# Defaults for junemule initscript
+# sourced by /etc/init.d/junemule
+# installed at /etc/default/junemule by the maintainer scripts
+
+#
+# This is a POSIX shell fragment
+#
+
+# set to true to start junemule-daemon
+RUN="false"
+
+# Additional options that are passed to the Daemon.
+DAEMON_OPTS=""

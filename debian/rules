@@ -1,0 +1,17 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+
+%:
+	dh $@ --with python2
+
+override_dh_install:
+	# Fixing example conffile location as dh_install cannot rename
+	mkdir -p $(CURDIR)/debian/junemule/etc
+	cp -a $(CURDIR)/junemule/ui/defaults.conf\
+		$(CURDIR)/debian/junemule/etc/junemule.conf
+
+	dh_install
