@@ -2,4 +2,4 @@ include MANIFEST.in
 include MANIFEST
 include COPYING
 include junemule/ui/defaults.conf
-recursive-include .idea *
+include doc/*
