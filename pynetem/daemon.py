@@ -1,5 +1,5 @@
-# junemule, a network emulator
-# Copyright (C) 2012-2013 Mickael Royer <mickael.royer@gmail.com>
+# pynetem: network emulator
+# Copyright (C) 2015-2017 Mickael Royer <mickael.royer@recherche.enac.fr>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,40 +15,44 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import SocketServer, subprocess
-import logging, shlex
+import os
+import threading
+from socketserver import UnixStreamServer, BaseRequestHandler
+import subprocess
+import logging
+import shlex
+from pynetem import NetemError
+from pynetem.ui.config import NetemConfig
 
-from junemule import JunemuleError
-from junemule.ui.config import JunemuleConfig
 
-class JunemuleDaemonHandler(SocketServer.BaseRequestHandler):
+class NetemDaemonHandler(BaseRequestHandler):
 
     def setup(self):
-        SocketServer.BaseRequestHandler.setup(self)
-
-        self.config = JunemuleConfig()
+        BaseRequestHandler.setup(self)
+        self.config = NetemConfig()
 
     def handle(self):
-        cmd = self.request.recv(1024).strip()
+        cmd = self.request.recv(1024).decode("utf-8").strip()
         logging.debug("Receive data: %s" % cmd)
 
         try:
             if cmd.startswith("tap_create"):
                 cmd_split = cmd.split()
                 if len(cmd_split) != 3:
-                    raise JunemuleError("Wrong tap_create invocation")
+                    raise NetemError("Wrong tap_create invocation")
                 self.create_tap(cmd_split[1], cmd_split[2])
             elif cmd.startswith("tap_delete"):
                 cmd_split = cmd.split()
                 if len(cmd_split) != 2:
-                    raise JunemuleError("Wrong tap_create invocation")
+                    raise NetemError("Wrong tap_create invocation")
                 self.delete_tap(cmd_split[1])
             else:
-                raise JunemuleError("Unknown command %s" % cmd)
-        except JunemuleError, err:
-            self.request.sendall("%s" % err)
+                raise NetemError("Unknown command %s" % cmd)
+        except NetemError as err:
+            msg = "ERROR: %s" % err
+            self.request.sendall(msg.encode("utf-8"))
         else:
-            self.request.sendall("OK")
+            self.request.sendall("OK".encode("utf-8"))
 
     def create_tap(self, name, user):
         logging.debug("Create tap %s" % name)
@@ -65,6 +69,29 @@ class JunemuleDaemonHandler(SocketServer.BaseRequestHandler):
         if ret != 0:
             msg = "Unable to excecute command %s" % (cmd_line,)
             logging.error(msg)
-            raise JunemuleError(msg)
+            raise NetemError(msg)
 
-# vim: ts=4 sw=4 expandtab
+
+class NetemDaemonThread(threading.Thread):
+
+    def __init__(self, socket):
+        super(NetemDaemonThread, self).__init__()
+
+        self.__server = None
+        self.__socket = socket
+        self.running = False
+
+    def run(self):
+        self.running = True
+        self.__server = UnixStreamServer(self.__socket, NetemDaemonHandler)
+        os.chmod(self.__socket, 0o666)
+
+        logging.info("Start pynetem daemon")
+        self.__server.serve_forever()
+
+    def stop(self):
+        if self.__server is not None:
+            logging.info("Stop pynetem daemon")
+            self.__server.shutdown()
+            self.__server = None
+        self.running = False

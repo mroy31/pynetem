@@ -1,5 +1,5 @@
-# Deejayd, a media player daemon
-# Copyright (C) 2012-2013 Mickael Royer <mickael.royer@gmail.com>
+# pynetem: network emulator
+# Copyright (C) 2015-2017 Mickael Royer <mickael.royer@recherche.enac.fr>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +15,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from junemule import JunemuleError
 
-class JunemuleConsole(object):
+class NetemConsole(object):
 
     def __init__(self, config, manager):
         self.config = config
@@ -25,18 +24,18 @@ class JunemuleConsole(object):
 
     def start(self):
         while True:
-            command = raw_input("[junemule] --> ").strip()
+            command = input("[netem] --> ").strip()
             if command == "help":
-                print """
+                print("""
 available commands:
     help: return this help
     status: print router and host state
     stopall: stop all router and host instance
     startall: start all router and host instance
     quit: stop all machines and quit
-"""
+""")
             elif command == "status":
-                print self.manager.status()
+                print(self.manager.status())
             elif command == "stopall":
                 self.manager.stopall()
             elif command == "startall":
@@ -45,7 +44,4 @@ available commands:
                 self.manager.close()
                 break
             else:
-                print "Unknown command, enter help for more details"
-
-
-# vim: ts=4 sw=4 expandtab
+                print("Unknown command, enter help for more details")

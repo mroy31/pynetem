@@ -1,5 +1,5 @@
 include MANIFEST.in
 include MANIFEST
 include COPYING
-include junemule/ui/defaults.conf
+include pynetem/ui/defaults.conf
 include doc/*

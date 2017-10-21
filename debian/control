@@ -1,23 +1,22 @@
-Source: junemule
+Source: pynetem
 Section: net
 Priority: extra
-Maintainer: Mickael Royer <mickael.royer@enac.fr>
-Build-Depends: debhelper (>= 9.0.0), python (>= 2.7.0)
+Maintainer: Mickael Royer <mickael.royer@recherche.enac.fr>
+Build-Depends: debhelper (>= 9.0.0), python3 (>= 3.4.0)
 Standards-Version: 3.9.2.0
-X-Python-Version: >= 2.7
-Homepage: http://mroy31.dyndns.org/repository/junemule
-Vcs-Hg: http://mroy31.dyndns.org/repository/junemule
-Vcs-Browser: http://mroy31.dyndns.org/repository/junemule
+X-Python3-Version: >= 3.4
+Homepage: http://mroy31.dyndns.org/~roy/repository/pynetem
+Vcs-Git: http://mroy31.dyndns.org/~roy/repository/pynetem
+Vcs-Browser: http://mroy31.dyndns.org/~roy/repository/pynetem
 
-Package: junemule
+Package: pynetem
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends},
+Depends: ${misc:Depends}, ${python3:Depends},
          lsb-base (>= 3.0-6),
          qemu-system,
          qemu-utils,
          uml-utilities,
          vde2,
-         python-configobj
-Description: Junemule is network emulator working with qemu/vde
- junemule is a network emulator based on JUNOS OS emulated with qemu and
- connected to each other thanks to vde
+         python3-configobj
+Description: PyNetem is network emulator working with qemu/vde
+ PyNetem is a network emulator based on qemu and vde

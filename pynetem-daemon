@@ -1,6 +1,7 @@
-#!/usr/bin/python
-# junemule, a network emulator
-# Copyright (C) 2012-2013 Mickael Royer <mickael.royer@gmail.com>
+#!/usr/bin/python3
+
+# pynetem: network emulator
+# Copyright (C) 2015-2017 Mickael Royer <mickael.royer@recherche.enac.fr>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,25 +17,27 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import os, sys, signal, errno
-import logging, threading, time
+import os
+import sys
+import signal
+import errno
+import logging
+import time
 from optparse import OptionParser
-from SocketServer import UnixStreamServer
+from pynetem.ui.config import NetemConfig
+from pynetem.daemon import NetemDaemonThread
 
-from junemule.ui.config import JunemuleConfig
-from junemule.daemon import JunemuleDaemonHandler
 
 usage = "usage: %prog [options]"
 parser = OptionParser(usage=usage)
-parser.set_defaults(pidfile="junemule.pid", daemon = True,\
-        logfile="junemule.log")
-parser.add_option("-n","--nodaemon",action="store_false",dest="daemon",\
-                  help="No daemonize junemule daemon")
-parser.add_option("-l","--log-file",type="string",dest="logfile",\
+parser.set_defaults(pidfile="pynetem.pid", daemon=True, logfile="pynetem.log")
+parser.add_option("-n", "--nodaemon", action="store_false", dest="daemon",
+                  help="No daemonize pynetem daemon")
+parser.add_option("-l", "--log-file", type="string", dest="logfile",
                   metavar="FILE", help="Specify the log file")
-parser.add_option("-c","--conf-file",type="string",dest="conffile",\
+parser.add_option("-c", "--conf-file", type="string", dest="conffile",
                   metavar="FILE", help="Specify a custom conf file")
-parser.add_option("-p","--pid-file",type="string",dest="pidfile",\
+parser.add_option("-p", "--pid-file", type="string", dest="pidfile",
                   metavar="FILE", help="Specify the pid file")
 parser.add_option("-d", "--debug",
                   action="store_true", dest="debug",
@@ -44,44 +47,47 @@ parser.add_option("-d", "--debug",
 # add custom config parms
 if options.conffile:
     if os.path.isfile(options.conffile):
-        JunemuleConfig.custom_conf = options.conffile
+        NetemConfig.custom_conf = options.conffile
     else:
         sys.exit("The config file does not exist.")
 
+
 def daemonize():
-    # See http://www.erlenstar.demon.co.uk/unix/faq_toc.html#TOC16
-    if os.fork():   # launch child and...
-        os._exit(0) # kill off parent
+    if os.fork():    # launch child and...
+        os._exit(0)  # kill off parent
     os.setsid()
-    if os.fork():   # launch child and...
-        os._exit(0) # kill off parent again.
-    os.umask(077)
-    null=os.open('/dev/null', os.O_RDWR)
+    if os.fork():    # launch child and...
+        os._exit(0)  # kill off parent again.
+    os.umask(0o77)
+    null = os.open('/dev/null', os.O_RDWR)
     for i in range(3):
         try:
             os.dup2(null, i)
-        except OSError, e:
+        except OSError as e:
             if e.errno != errno.EBADF:
                 raise
     os.close(null)
 
-def removePID(pidfile):
-    try: os.unlink(pidfile)
-    except OSError, e:
+
+def remove_pid(pidfile):
+    try:
+        os.unlink(pidfile)
+    except OSError as e:
         if e.errno == errno.EACCES or e.errno == errno.EPERM:
             sys.exit("Unable to remove pid file : %s" % (e,))
 
+
 if __name__ == "__main__":
-    config = JunemuleConfig()
+    config = NetemConfig()
     log_format = '%(asctime)s - %(levelname)s: %(message)s'
     log_level = options.debug and logging.DEBUG or logging.INFO
     if options.daemon:
-        logging.basicConfig(format=log_format, level=log_level,\
-                filename=options.logfile)
+        logging.basicConfig(format=log_format, level=log_level,
+                            filename=options.logfile)
         daemonize()
         # Store the pid
-        removePID(options.pidfile)
-        open(options.pidfile,'wb').write(str(os.getpid()))
+        remove_pid(options.pidfile)
+        open(options.pidfile, 'wb').write(str(os.getpid()))
     else:
         logging.basicConfig(format=log_format, level=log_level)
 
@@ -94,32 +100,8 @@ if __name__ == "__main__":
             sys.exit("The socket %s already exists" % socket)
 
     # start the server in a separate thread and install handler for SIGTERM
-    class ServerThread(threading.Thread):
+    server_thread = NetemDaemonThread(socket)
 
-        def __init__(self, socket):
-            super(ServerThread, self).__init__()
-
-            self.__server = None
-            self.__socket = socket
-            self.running = False
-
-        def run(self):
-            self.running = True
-            self.__server = UnixStreamServer(self.__socket,\
-                    JunemuleDaemonHandler)
-            os.chmod(socket, 0666)
-
-            logging.info("Start junemule daemon")
-            self.__server.serve_forever()
-
-        def stop(self):
-            if self.__server is not None:
-                logging.info("Stop junemule daemon")
-                self.__server.shutdown()
-                self.__server = None
-            self.running = False
-
-    server_thread = ServerThread(socket)
     def shutdown(s, f):
         server_thread.stop()
     for sig in (signal.SIGTERM, signal.SIGINT):
@@ -138,5 +120,3 @@ if __name__ == "__main__":
         os.unlink(socket)
     except OSError:
         logging.error("Unable to remove socket %s" % socket)
-
-# vim: ts=4 sw=4 expandtab

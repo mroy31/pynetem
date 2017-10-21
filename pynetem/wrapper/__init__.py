@@ -1,5 +1,5 @@
-# Junemule, a network emulator
-# Copyright (C) 2012-2013 Mickael Royer <mickael.royer@gmail.com>
+# pynetem: network emulator
+# Copyright (C) 2015-2017 Mickael Royer <mickael.royer@recherche.enac.fr>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +15,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import os, subprocess, shlex, socket
+import subprocess
+import shlex
+import socket
 import logging
-from junemule import JunemuleError
+from pynetem import NetemError
+
 
 class _BaseInstance(object):
 
@@ -31,14 +34,11 @@ class _BaseInstance(object):
 
     def stop(self):
         if self.process is not None:
-            import signal
             try:
-                logging.debug("Killing pid %d" % self.process.pid)
-                #os.kill(self.process.pid, signal.SIGTERM)
                 self.process.terminate()
                 self.process.wait()
-            except OSError, e:
-                raise JunemuleError("Unable to stop %s" % self.name)
+            except OSError as e:
+                raise NetemError("Unable to stop %s -> %s" % (self.name, e))
             finally:
                 self.process = None
 
@@ -54,20 +54,17 @@ class _BaseInstance(object):
         if ret != 0:
             msg = "Unable to excecute command %s" % (cmd_line,)
             logging.error(msg)
-            raise JunemuleError(msg)
+            raise NetemError(msg)
 
     def _daemon_command(self, cmd):
         s_name = self.config.get("general", "daemon_socket")
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        try: sock.connect(s_name)
-        except socket.error, err:
-            raise JunemuleError("Unable to connect to daemon: %s" % err)
+        try:
+            sock.connect(s_name)
+        except socket.error as err:
+            raise NetemError("Unable to connect to daemon: %s" % err)
 
-        sock.sendall(cmd)
-        ans = sock.recv(1024).strip()
+        sock.sendall(cmd.encode("utf-8"))
+        ans = sock.recv(1024).decode("utf-8").strip()
         if ans != "OK":
-            raise JunemuleError("Daemon returns an error: %s" % ans)
-
-
-
-# vim: ts=4 sw=4 expandtab
+            raise NetemError("Daemon returns an error: %s" % ans)

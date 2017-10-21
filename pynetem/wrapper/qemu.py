@@ -1,5 +1,5 @@
-# Deejayd, a media player daemon
-# Copyright (C) 2012-2013 Mickael Royer <mickael.royer@gmail.com>
+# pynetem: network emulator
+# Copyright (C) 2015-2017 Mickael Royer <mickael.royer@recherche.enac.fr>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,11 +15,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import subprocess, os
-import logging, shlex
+import subprocess
+import os
+import logging
+import shlex
+from pynetem.wrapper import _BaseInstance
 
-from junemule.wrapper import _BaseInstance
-from junemule import JunemuleError
 
 class DynamicParmAttribution(object):
     base_mac = "00:aa:00:60:00:%02X"
@@ -33,10 +34,13 @@ class DynamicParmAttribution(object):
         else:
             self.last_given_mac += 1
         return self.base_mac % self.last_given_mac
+
+
 parm_attribution = DynamicParmAttribution()
 
+
 class QEMUInstance(_BaseInstance):
-    mem = 128
+    instance_type = ""
     qemu_bin = "qemu-system-i386"
     qemu_img_bin = "qemu-img"
 
@@ -46,16 +50,20 @@ class QEMUInstance(_BaseInstance):
         self.interfaces = []
 
         self.img = img
-        if not os.path.isfile(self.img): # create it
+        if not os.path.isfile(self.img):
             base_img_dir = config.get("general", "image_dir")
             base_img = os.path.join(base_img_dir, "%s.img" % base_img)
 
             command = "%s create -f qcow2 -b %s %s" \
-                    % (self.qemu_img_bin, base_img, img)
+                      % (self.qemu_img_bin, base_img, img)
             self._command(command)
 
+    def get_memory(self):
+        return self.config.get(self.instance_type, "memory")
+
     def add_if(self, switch_name):
-        if switch_name == "__null__": switch_name = None
+        if switch_name == "__null__":
+            switch_name = None
         self.interfaces.append(
             {
                 "mac": parm_attribution.get_mac_address(),
@@ -67,11 +75,11 @@ class QEMUInstance(_BaseInstance):
     def get_interface_cmdline(self):
         result = []
         for i in self.interfaces:
-            result.append("-net nic,macaddr=%s,model=e1000,vlan=%d"\
-                    % (i['mac'], i['vlan_id']))
+            result.append("-net nic,macaddr=%s,model=e1000,vlan=%d"
+                          % (i['mac'], i['vlan_id']))
             if i['name'] is not None:
-                result.append("-net vde,sock=%s,vlan=%d" \
-                        % ("/tmp/%s.ctl" % i['name'], i['vlan_id']))
+                result.append("-net vde,sock=%s,vlan=%d"
+                              % ("/tmp/%s.ctl" % i['name'], i['vlan_id']))
         return " ".join(result)
 
     def cmd_line(self):
@@ -83,32 +91,35 @@ class QEMUInstance(_BaseInstance):
 
         logging.debug(self.cmd_line())
         args = shlex.split(self.cmd_line())
-        self.process = subprocess.Popen(args ,
-                stdin = subprocess.PIPE,
-                stdout = subprocess.PIPE,
-                stderr = subprocess.PIPE,
-                shell=False)
+        self.process = subprocess.Popen(args, stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        shell=False)
 
 
 class RouterInstance(QEMUInstance):
-    mem = 192
+    instance_type = "router"
 
     def cmd_line(self):
-        return "qemu-system-i386 -enable-kvm -hda %(img)s -m %(mem)s -nographic -serial telnet::%(telnet_port)d,server,nowait %(interfaces)s" % {
+        return "qemu-system-i386 -enable-kvm -hda %(img)s -m %(mem)s "\
+               "-nographic -serial telnet::%(telnet_port)d,server,nowait "\
+               "%(interfaces)s" % {
                     "img": self.img,
-                    "mem": self.mem,
+                    "mem": self.get_memory(),
                     "telnet_port": self.telnet_port,
                     "interfaces": self.get_interface_cmdline()
                 }
+
 
 class HostInstance(QEMUInstance):
+    instance_type = "host"
 
     def cmd_line(self):
-        return "qemu-system-i386 -no-acpi -enable-kvm -hda %(img)s -m %(mem)s -nographic -serial telnet::%(telnet_port)d,server,nowait %(interfaces)s" % {
+        return "qemu-system-i386 -no-acpi -enable-kvm -hda %(img)s "\
+               "-m %(mem)s -nographic -serial "\
+               "telnet::%(telnet_port)d,server,nowait %(interfaces)s" % {
                     "img": self.img,
-                    "mem": self.mem,
+                    "mem": self.get_memory(),
                     "telnet_port": self.telnet_port,
                     "interfaces": self.get_interface_cmdline()
                 }
-
-# vim: ts=4 sw=4 expandtab

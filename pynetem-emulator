@@ -1,6 +1,6 @@
-#!/usr/bin/python
-# junos-emulator, a network emulator
-# Copyright (C) 2012-2013 Mickael Royer <mickael.royer@gmail.com>
+#!/usr/bin/python3
+# pynetem: network emulator
+# Copyright (C) 2015-2017 Mickael Royer <mickael.royer@recherche.enac.fr>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,27 +16,27 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import sys, os
+import sys
+import os
 import logging
 from optparse import OptionParser
-from junemule.ui.config import JunemuleConfig
-from junemule.topology import JTopologieManager
-from junemule.console import JunemuleConsole
-from junemule import JunemuleError
+from pynetem.ui.config import NetemConfig
+from pynetem.topology import TopologieManager
+from pynetem.console import NetemConsole
+from pynetem import NetemError
+
 
 usage = "usage: %prog [options] <network file>"
 parser = OptionParser(usage=usage)
-parser.add_option("-c","--conf-file",type="string",dest="conffile",\
+parser.add_option("-c", "--conf-file", type="string", dest="conffile",
                   metavar="FILE", help="Specify a custom conf file")
-parser.add_option("-d", "--debug",
-                  action="store_true", dest="debug",
+parser.add_option("-d", "--debug", action="store_true", dest="debug",
                   help="Log more debug informations")
-
 (options, args) = parser.parse_args()
 # add custom config parms
 if options.conffile:
     if os.path.isfile(options.conffile):
-        JunemuleConfig.custom_conf = options.conffile
+        NetemConfig.custom_conf = options.conffile
     else:
         sys.exit("The config file does not exist.")
 
@@ -47,19 +47,17 @@ if not os.path.isfile(netfile):
     sys.exit("The network file does not exist.")
 
 if __name__ == "__main__":
-    config = JunemuleConfig()
+    config = NetemConfig()
     log_format = '%(asctime)s - %(levelname)s: %(message)s'
     log_level = options.debug and logging.DEBUG or logging.INFO
     logging.basicConfig(format=log_format, level=log_level)
 
     # load toppologie
     try:
-        manager = JTopologieManager(config, netfile)
-    except JunemuleError, e:
+        manager = TopologieManager(config, netfile)
+    except NetemError as e:
         sys.exit("unable to load network file: %s" % e)
 
     # start console
-    console = JunemuleConsole(config, manager)
+    console = NetemConsole(config, manager)
     console.start()
-
-# vim: ts=4 sw=4 expandtab

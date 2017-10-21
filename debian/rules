@@ -6,12 +6,11 @@
 
 
 %:
-	dh $@ --with python2
+	dh $@ --with python3
 
 override_dh_install:
 	# Fixing example conffile location as dh_install cannot rename
-	mkdir -p $(CURDIR)/debian/junemule/etc
-	cp -a $(CURDIR)/junemule/ui/defaults.conf\
-		$(CURDIR)/debian/junemule/etc/junemule.conf
-
+	mkdir -p $(CURDIR)/debian/pynetem/etc
+	cp -a $(CURDIR)/pynetem/ui/defaults.conf\
+		$(CURDIR)/debian/pynetem/etc/pynetem.conf
 	dh_install

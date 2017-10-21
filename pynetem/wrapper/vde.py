@@ -1,5 +1,5 @@
-# Junemule, a network emulator
-# Copyright (C) 2012-2013 Mickael Royer <mickael.royer@gmail.com>
+# pynetem: network emulator
+# Copyright (C) 2015-2017 Mickael Royer <mickael.royer@recherche.enac.fr>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,10 +15,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import os, subprocess, shlex, socket
+import os
+import subprocess
+import shlex
 import logging
-from junemule import JunemuleError
-from junemule.wrapper import _BaseInstance
+from pynetem.wrapper import _BaseInstance
+
 
 class SwitchInstance(_BaseInstance):
 
@@ -32,27 +34,25 @@ class SwitchInstance(_BaseInstance):
         if self.is_started():
             return
 
-        cmd_line = "vde_switch -M /tmp/%s.mgnt -x -s /tmp/%s.ctl"\
-                % (self.name, self.name)
+        cmd_line = "vde_switch -M /tmp/%s.mgnt -x "\
+                   "-s /tmp/%s.ctl" % (self.name, self.name)
         if self.tap_name is not None:
             logging.debug("Create tap interface %s" % self.tap_name)
-            self._daemon_command("tap_create %s %s" % (self.tap_name,\
-                    os.environ["LOGNAME"]))
+            self._daemon_command("tap_create "
+                                 "%s %s" % (self.tap_name,
+                                            os.environ["LOGNAME"]))
             cmd_line += " -t %s" % self.tap_name
 
         args = shlex.split(cmd_line)
-        self.process = subprocess.Popen(args ,
-                stdin = subprocess.PIPE,
-                stdout = subprocess.PIPE,
-                stderr = subprocess.PIPE,
-                shell=False)
-        logging.debug("Subprocess call with cmd line '%s' and pid '%d' "\
-                % (cmd_line, self.process.pid))
+        self.process = subprocess.Popen(args, stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        shell=False)
+        logging.debug("Subprocess call with cmd line '%s' and "
+                      "pid '%d' " % (cmd_line, self.process.pid))
 
     def stop(self):
         super(SwitchInstance, self).stop()
         if self.tap_name is not None:
             logging.debug("Delete tap interface %s" % self.tap_name)
-            self._daemon_command("tap_delete %s" % (self.tap_name,))
-
-# vim: ts=4 sw=4 expandtab
+            self._daemon_command("tap_delete %s" % self.tap_name)

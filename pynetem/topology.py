@@ -1,5 +1,5 @@
-# Deejayd, a media player daemon
-# Copyright (C) 2012-2013 Mickael Royer <mickael.royer@gmail.com>
+# pynetem: network emulator
+# Copyright (C) 2015-2017 Mickael Royer <mickael.royer@recherche.enac.fr>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,21 +15,24 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import os, logging
+import os
+import logging
 from configobj import ConfigObj
-from junemule import JunemuleError
-from junemule.wrapper.qemu import RouterInstance, HostInstance
-from junemule.wrapper.vde import SwitchInstance
+from pynetem import NetemError
+from pynetem.wrapper.qemu import RouterInstance, HostInstance
+from pynetem.wrapper.vde import SwitchInstance
 
-class JTopologieManager(object):
+
+class TopologieManager(object):
 
     def __init__(self, config, netfile):
         self.config = config
         self.netfile = netfile
 
         self.routers, self.hosts, self.switches = [], [], []
-        try: self.__load()
-        except JunemuleError, err:
+        try:
+            self.__load()
+        except NetemError as err:
             self.close()
             logging.error("Unable to load net file %s: %s" % (netfile, err))
 
@@ -41,7 +44,7 @@ class JTopologieManager(object):
 
         # load switches
         switches_section = network["switches"]
-        for s_name in switches_section.keys():
+        for s_name in switches_section:
             logging.debug("Create switch instance %s" % s_name)
             need_tap = switches_section[s_name].as_bool("tap")
             s_inst = SwitchInstance(self.config, s_name, need_tap)
@@ -50,11 +53,11 @@ class JTopologieManager(object):
                 s_inst.start()
             self.switches.append(s_inst)
 
-        image_dir =  os.path.join(os.path.dirname(self.netfile),
-                network["config"]["image_dir"])
+        image_dir = os.path.join(os.path.dirname(self.netfile),
+                                 network["config"]["image_dir"])
         # load routers
         routers_section = network["routers"]
-        for r_name in routers_section.keys():
+        for r_name in routers_section:
             logging.debug("Create router instance %s" % r_name)
             b_img = routers_section[r_name]["type"]
             img = os.path.join(image_dir, "%s.img" % r_name)
@@ -72,13 +75,13 @@ class JTopologieManager(object):
             if autostart:
                 logging.debug("Start router instance %s" % r_name)
                 r_inst.start()
-                logging.info("Router %s is available on telnet port %d" \
-                        % (r_name, console))
+                logging.info("Router %s is available on telnet port %d"
+                             % (r_name, console))
             self.routers.append(r_inst)
 
         # load hosts
         hosts_section = network["hosts"]
-        for h_name in hosts_section.keys():
+        for h_name in hosts_section:
             logging.debug("Create hosts instance %s" % h_name)
             b_img = hosts_section[h_name]["type"]
             img = os.path.join(image_dir, "%s.img" % h_name)
@@ -96,20 +99,21 @@ class JTopologieManager(object):
             if autostart:
                 logging.debug("Start host instance %s" % h_name)
                 h_inst.start()
-                logging.info("Host %s is available on telnet port %d" \
-                        % (h_name, console))
+                logging.info("Host %s is available on telnet port %d"
+                             % (h_name, console))
             self.hosts.append(h_inst)
-
 
     def stop(self, instance_name):
         for instance in self.routers + self.hosts + self.switches:
             if instance.get_name() == instance_name:
-                if instance.is_started(): instance.stop()
+                if instance.is_started():
+                    instance.stop()
 
     def start(self, instance_name):
         for instance in self.routers + self.hosts + self.switches:
             if instance.get_name() == instance_name:
-                if not instance.is_started(): instance.start()
+                if not instance.is_started():
+                    instance.start()
 
     def stopall(self):
         for instance in self.routers + self.hosts + self.switches:
@@ -129,14 +133,14 @@ Routers:
 
 Hosts:
 \t%s
-""" % ("\n\t".join(["Switch %s is %s" % (s.get_name(), s.get_status()) \
-                                         for s in self.switches]),
-       "\n\t".join(["Router %s is %s" % (r.get_name(), r.get_status()) \
-                                         for r in self.routers]),
-       "\n\t".join(["Host %s is %s" % (h.get_name(), h.get_status()) \
-                                        for h in self.hosts]),)
+""" % (
+        "\n\t".join(["Switch %s is %s" % (s.get_name(), s.get_status())
+                    for s in self.switches]),
+        "\n\t".join(["Router %s is %s" % (r.get_name(), r.get_status())
+                    for r in self.routers]),
+        "\n\t".join(["Host %s is %s" % (h.get_name(), h.get_status())
+                    for h in self.hosts])
+    )
 
     def close(self):
         self.stopall()
-
-# vim: ts=4 sw=4 expandtab

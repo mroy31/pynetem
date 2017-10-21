@@ -1,0 +1,11 @@
+[Unit]
+Description=PyNetem daemon
+After=network.target
+
+[Service]
+ExecStartPre=/bin/touch /var/log/pynetem.log 
+ExecStartPre=/bin/chown root:adm /var/log/pynetem.log
+ExecStart=/usr/bin/pynetem-daemon -n -l /var/log/pynetem.log -c /etc/pynetem.conf
+
+[Install]
+WantedBy=multi-user.target
