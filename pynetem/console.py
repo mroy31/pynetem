@@ -15,33 +15,31 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import cmd
 
-class NetemConsole(object):
+
+class NetemConsole(cmd.Cmd):
+    intro = 'Welcome to network emulator. Type help or ? to list commands.\n'
+    prompt = '[net-emulator] '
 
     def __init__(self, config, manager):
+        super(NetemConsole, self).__init__()
         self.config = config
         self.manager = manager
 
-    def start(self):
-        while True:
-            command = input("[netem] --> ").strip()
-            if command == "help":
-                print("""
-available commands:
-    help: return this help
-    status: print router and host state
-    stopall: stop all router and host instance
-    startall: start all router and host instance
-    quit: stop all machines and quit
-""")
-            elif command == "status":
-                print(self.manager.status())
-            elif command == "stopall":
-                self.manager.stopall()
-            elif command == "startall":
-                self.manager.startall()
-            elif command == "quit":
-                self.manager.close()
-                break
-            else:
-                print("Unknown command, enter help for more details")
+    def do_quit(self, arg):
+        "Quit the network emulator"
+        self.manager.close()
+        return True
+
+    def do_start(self, arg):
+        "Start the nodes and switches"
+        self.manager.startall()
+
+    def do_stop(self, arg):
+        "Stop the nodes and switches"
+        self.manager.stopall()
+
+    def do_status(self, arg):
+        "Display routeur/host status"
+        print(self.manager.status())

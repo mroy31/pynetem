@@ -60,4 +60,4 @@ if __name__ == "__main__":
 
     # start console
     console = NetemConsole(config, manager)
-    console.start()
+    console.cmdloop()
