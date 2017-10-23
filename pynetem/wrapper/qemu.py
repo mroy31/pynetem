@@ -19,6 +19,7 @@ import subprocess
 import os
 import logging
 import shlex
+from pynetem import NetemError
 from pynetem.wrapper import _BaseInstance
 
 
@@ -46,6 +47,7 @@ class QEMUInstance(_BaseInstance):
 
     def __init__(self, config, name, img, base_img, telnet_port):
         super(QEMUInstance, self).__init__(config, name)
+        self.shell_process = None
         self.telnet_port = telnet_port
         self.interfaces = []
 
@@ -88,13 +90,24 @@ class QEMUInstance(_BaseInstance):
     def start(self):
         if self.is_started():
             return
-
         logging.debug(self.cmd_line())
         args = shlex.split(self.cmd_line())
         self.process = subprocess.Popen(args, stdin=subprocess.PIPE,
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE,
                                         shell=False)
+        
+
+    def open_shell(self):
+        if self.shell_process is not None and self.shell_process.poll() is None:
+            raise NetemError("The console is already opened")
+        term_cmd = self.config.get("general", "terminal")
+        cmd_line = "%s telnet localhost %d" % (term_cmd, self.telnet_port)
+        args = shlex.split(cmd_line)
+        self.shell_process = subprocess.Popen(args, stdin=subprocess.PIPE,
+                                              stdout=subprocess.PIPE,
+                                              stderr=subprocess.PIPE,
+                                              shell=False)
 
 
 class RouterInstance(QEMUInstance):

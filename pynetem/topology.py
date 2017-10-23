@@ -103,6 +103,12 @@ class TopologieManager(object):
                              % (h_name, console))
             self.hosts.append(h_inst)
 
+    def get_node(self, instance_name):
+        for instance in self.routers + self.hosts:
+            if instance.get_name() == instance_name:
+                return instance
+        return None
+
     def stop(self, instance_name):
         for instance in self.routers + self.hosts + self.switches:
             if instance.get_name() == instance_name:

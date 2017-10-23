@@ -43,3 +43,11 @@ class NetemConsole(cmd.Cmd):
     def do_status(self, arg):
         "Display routeur/host status"
         print(self.manager.status())
+
+    def do_console(self, arg):
+        "open a console for the given router/host"
+        node = self.manager.get_node(arg)
+        if node is None:
+            print("Error: node %s not found in the network" % arg)
+            return
+        node.open_shell()
