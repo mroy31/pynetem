@@ -84,20 +84,6 @@ class QEMUInstance(_BaseInstance):
                               % ("/tmp/%s.ctl" % i['name'], i['vlan_id']))
         return " ".join(result)
 
-    def cmd_line(self):
-        raise NotImplementedError
-
-    def start(self):
-        if self.is_started():
-            return
-        logging.debug(self.cmd_line())
-        args = shlex.split(self.cmd_line())
-        self.process = subprocess.Popen(args, stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        shell=False)
-        
-
     def open_shell(self):
         if self.shell_process is not None and self.shell_process.poll() is None:
             raise NetemError("The console is already opened")
@@ -113,7 +99,7 @@ class QEMUInstance(_BaseInstance):
 class RouterInstance(QEMUInstance):
     instance_type = "router"
 
-    def cmd_line(self):
+    def build_cmd_line(self):
         return "qemu-system-i386 -enable-kvm -hda %(img)s -m %(mem)s "\
                "-nographic -serial telnet::%(telnet_port)d,server,nowait "\
                "%(interfaces)s" % {
@@ -127,7 +113,7 @@ class RouterInstance(QEMUInstance):
 class HostInstance(QEMUInstance):
     instance_type = "host"
 
-    def cmd_line(self):
+    def build_cmd_line(self):
         return "qemu-system-i386 -no-acpi -enable-kvm -hda %(img)s "\
                "-m %(mem)s -nographic -serial "\
                "telnet::%(telnet_port)d,server,nowait %(interfaces)s" % {

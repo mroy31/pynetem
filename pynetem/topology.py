@@ -75,8 +75,8 @@ class TopologieManager(object):
             if autostart:
                 logging.debug("Start router instance %s" % r_name)
                 r_inst.start()
-                logging.info("Router %s is available on telnet port %d"
-                             % (r_name, console))
+                logging.debug("Router %s is available on telnet port %d"
+                              % (r_name, console))
             self.routers.append(r_inst)
 
         # load hosts
@@ -99,8 +99,8 @@ class TopologieManager(object):
             if autostart:
                 logging.debug("Start host instance %s" % h_name)
                 h_inst.start()
-                logging.info("Host %s is available on telnet port %d"
-                             % (h_name, console))
+                logging.debug("Host %s is available on telnet port %d"
+                              % (h_name, console))
             self.hosts.append(h_inst)
 
     def get_node(self, instance_name):

@@ -15,6 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import threading
 import subprocess
 import shlex
 import socket
@@ -29,11 +30,47 @@ class _BaseInstance(object):
         self.config = config
         self.process = None
 
+        self.is_started = False
+        self.watch_thread = None
+
     def get_name(self):
         return self.name
 
+    def watch_process(self):
+        logging.debug("Start watching process for %s" % self.name)
+        while self.is_started:
+            r_code = self.process.poll()
+            if r_code is not None:
+                out, err = self.process.communicate()
+                logging.error("ERROR: process %s dies "
+                              "unexpectedly" % self.name)
+                logging.error(err.decode("utf-8"))
+                self.is_started = False
+        logging.debug("Stop watching process for %s" % self.name)
+
+    def build_cmd_line(self):
+        raise NotImplementedError
+
+    def start(self):
+        if self.is_started:
+            return
+
+        cmd_line = self.build_cmd_line()
+        logging.debug(cmd_line)
+        args = shlex.split(cmd_line)
+        self.process = subprocess.Popen(args, stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        shell=False)
+        self.is_started = True
+        # start thread to monitor process
+        self.watch_thread = threading.Thread(target=self.watch_process)
+        self.watch_thread.start()
+
     def stop(self):
-        if self.process is not None:
+        if self.is_started:
+            self.is_started = False
+            self.watch_thread.join()
             try:
                 self.process.terminate()
                 self.process.wait()
@@ -41,18 +78,16 @@ class _BaseInstance(object):
                 raise NetemError("Unable to stop %s -> %s" % (self.name, e))
             finally:
                 self.process = None
-
-    def is_started(self):
-        return self.process is not None
+                self.watch_thread = None
 
     def get_status(self):
-        return self.process is not None and "Started" or "Stopped"
+        return self.is_started is not None and "Started" or "Stopped"
 
     def _command(self, cmd_line):
         args = shlex.split(cmd_line)
         ret = subprocess.call(args)
         if ret != 0:
-            msg = "Unable to excecute command %s" % (cmd_line,)
+            msg = "Unable to execute command %s" % (cmd_line,)
             logging.error(msg)
             raise NetemError(msg)
 

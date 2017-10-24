@@ -30,10 +30,7 @@ class SwitchInstance(_BaseInstance):
         if need_tap:
             self.tap_name = "VDE%s" % name
 
-    def start(self):
-        if self.is_started():
-            return
-
+    def build_cmd_line(self):
         cmd_line = "vde_switch -M /tmp/%s.mgnt -x "\
                    "-s /tmp/%s.ctl" % (self.name, self.name)
         if self.tap_name is not None:
@@ -42,14 +39,7 @@ class SwitchInstance(_BaseInstance):
                                  "%s %s" % (self.tap_name,
                                             os.environ["LOGNAME"]))
             cmd_line += " -t %s" % self.tap_name
-
-        args = shlex.split(cmd_line)
-        self.process = subprocess.Popen(args, stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        shell=False)
-        logging.debug("Subprocess call with cmd line '%s' and "
-                      "pid '%d' " % (cmd_line, self.process.pid))
+        return cmd_line
 
     def stop(self):
         super(SwitchInstance, self).stop()

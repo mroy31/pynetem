@@ -4,15 +4,15 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
-DynamicParmAttribution	../pynetem/wrapper/qemu.py	/^class DynamicParmAttribution(object):$/;"	kind:class	line:26
-HostInstance	../pynetem/wrapper/qemu.py	/^class HostInstance(QEMUInstance):$/;"	kind:class	line:126
+DynamicParmAttribution	../pynetem/wrapper/qemu.py	/^class DynamicParmAttribution(object):$/;"	kind:class	line:27
+HostInstance	../pynetem/wrapper/qemu.py	/^class HostInstance(QEMUInstance):$/;"	kind:class	line:127
 NetemConfig	../pynetem/ui/config.py	/^class NetemConfig(object):$/;"	kind:class	line:22
 NetemConsole	../pynetem/console.py	/^class NetemConsole(cmd.Cmd):$/;"	kind:class	line:21
 NetemDaemonHandler	../pynetem/daemon.py	/^class NetemDaemonHandler(BaseRequestHandler):$/;"	kind:class	line:28
 NetemDaemonThread	../pynetem/daemon.py	/^class NetemDaemonThread(threading.Thread):$/;"	kind:class	line:75
 NetemError	../pynetem/__init__.py	/^class NetemError(Exception):$/;"	kind:class	line:21
-QEMUInstance	../pynetem/wrapper/qemu.py	/^class QEMUInstance(_BaseInstance):$/;"	kind:class	line:43
-RouterInstance	../pynetem/wrapper/qemu.py	/^class RouterInstance(QEMUInstance):$/;"	kind:class	line:112
+QEMUInstance	../pynetem/wrapper/qemu.py	/^class QEMUInstance(_BaseInstance):$/;"	kind:class	line:44
+RouterInstance	../pynetem/wrapper/qemu.py	/^class RouterInstance(QEMUInstance):$/;"	kind:class	line:113
 SwitchInstance	../pynetem/wrapper/vde.py	/^class SwitchInstance(_BaseInstance):$/;"	kind:class	line:25
 TopologieManager	../pynetem/topology.py	/^class TopologieManager(object):$/;"	kind:class	line:26
 _BaseInstance	../pynetem/wrapper/__init__.py	/^class _BaseInstance(object):$/;"	kind:class	line:25
@@ -25,24 +25,25 @@ __init__	../pynetem/daemon.py	/^    def __init__(self, socket):$/;"	kind:member	
 __init__	../pynetem/topology.py	/^    def __init__(self, config, netfile):$/;"	kind:member	line:28
 __init__	../pynetem/ui/config.py	/^    def __init__(self):$/;"	kind:member	line:27
 __init__	../pynetem/wrapper/__init__.py	/^    def __init__(self, config, name):$/;"	kind:member	line:27
-__init__	../pynetem/wrapper/qemu.py	/^    def __init__(self):$/;"	kind:member	line:29
-__init__	../pynetem/wrapper/qemu.py	/^    def __init__(self, config, name, img, base_img, telnet_port):$/;"	kind:member	line:48
+__init__	../pynetem/wrapper/qemu.py	/^    def __init__(self):$/;"	kind:member	line:30
+__init__	../pynetem/wrapper/qemu.py	/^    def __init__(self, config, name, img, base_img, telnet_port):$/;"	kind:member	line:49
 __init__	../pynetem/wrapper/vde.py	/^    def __init__(self, config, name, need_tap):$/;"	kind:member	line:27
 __init__.py	../pynetem/__init__.py	1;"	kind:file	line:1
 __init__.py	../pynetem/ui/__init__.py	1;"	kind:file	line:1
 __init__.py	../pynetem/wrapper/__init__.py	1;"	kind:file	line:1
 __load	../pynetem/topology.py	/^    def __load(self):$/;"	kind:member	line:39
 __version__	../pynetem/__init__.py	/^__version__ = "0.2.0"$/;"	kind:variable	line:18
-_command	../pynetem/wrapper/__init__.py	/^    def _command(self, cmd_line):$/;"	kind:member	line:51
-_daemon_command	../pynetem/wrapper/__init__.py	/^    def _daemon_command(self, cmd):$/;"	kind:member	line:59
-add_if	../pynetem/wrapper/qemu.py	/^    def add_if(self, switch_name):$/;"	kind:member	line:66
+_command	../pynetem/wrapper/__init__.py	/^    def _command(self, cmd_line):$/;"	kind:member	line:78
+_daemon_command	../pynetem/wrapper/__init__.py	/^    def _daemon_command(self, cmd):$/;"	kind:member	line:86
+add_if	../pynetem/wrapper/qemu.py	/^    def add_if(self, switch_name):$/;"	kind:member	line:67
 author	../setup.py	/^        author="Mikael Royer",$/;"	kind:variable	line:27
 author_email	../setup.py	/^        author_email="mickael.royer@recherche.enac.fr",$/;"	kind:variable	line:28
-base_mac	../pynetem/wrapper/qemu.py	/^    base_mac = "00:aa:00:60:00:%02X"$/;"	kind:variable	line:27
-close	../pynetem/topology.py	/^    def close(self):$/;"	kind:function	line:145
-cmd_line	../pynetem/wrapper/qemu.py	/^    def cmd_line(self):$/;"	kind:member	line:115
-cmd_line	../pynetem/wrapper/qemu.py	/^    def cmd_line(self):$/;"	kind:member	line:129
-cmd_line	../pynetem/wrapper/qemu.py	/^    def cmd_line(self):$/;"	kind:member	line:87
+base_mac	../pynetem/wrapper/qemu.py	/^    base_mac = "00:aa:00:60:00:%02X"$/;"	kind:variable	line:28
+build_cmd_line	../pynetem/wrapper/__init__.py	/^    def build_cmd_line(self):$/;"	kind:member	line:48
+close	../pynetem/topology.py	/^    def close(self):$/;"	kind:function	line:151
+cmd_line	../pynetem/wrapper/qemu.py	/^    def cmd_line(self):$/;"	kind:member	line:116
+cmd_line	../pynetem/wrapper/qemu.py	/^    def cmd_line(self):$/;"	kind:member	line:130
+cmd_line	../pynetem/wrapper/qemu.py	/^    def cmd_line(self):$/;"	kind:member	line:88
 config.py	../pynetem/ui/config.py	1;"	kind:file	line:1
 console.py	../pynetem/console.py	1;"	kind:file	line:1
 create_tap	../pynetem/daemon.py	/^    def create_tap(self, name, user):$/;"	kind:member	line:57
@@ -56,42 +57,44 @@ do_start	../pynetem/console.py	/^    def do_start(self, arg):$/;"	kind:member	li
 do_status	../pynetem/console.py	/^    def do_status(self, arg):$/;"	kind:member	line:43
 do_stop	../pynetem/console.py	/^    def do_stop(self, arg):$/;"	kind:member	line:39
 get_bind_addresses	../pynetem/ui/config.py	/^    def get_bind_addresses(self, service='net'):$/;"	kind:member	line:50
-get_interface_cmdline	../pynetem/wrapper/qemu.py	/^    def get_interface_cmdline(self):$/;"	kind:member	line:77
-get_mac_address	../pynetem/wrapper/qemu.py	/^    def get_mac_address(self):$/;"	kind:member	line:32
-get_memory	../pynetem/wrapper/qemu.py	/^    def get_memory(self):$/;"	kind:member	line:63
-get_name	../pynetem/wrapper/__init__.py	/^    def get_name(self):$/;"	kind:member	line:32
-get_status	../pynetem/wrapper/__init__.py	/^    def get_status(self):$/;"	kind:member	line:48
+get_interface_cmdline	../pynetem/wrapper/qemu.py	/^    def get_interface_cmdline(self):$/;"	kind:member	line:78
+get_mac_address	../pynetem/wrapper/qemu.py	/^    def get_mac_address(self):$/;"	kind:member	line:33
+get_memory	../pynetem/wrapper/qemu.py	/^    def get_memory(self):$/;"	kind:member	line:64
+get_name	../pynetem/wrapper/__init__.py	/^    def get_name(self):$/;"	kind:member	line:35
+get_node	../pynetem/topology.py	/^    def get_node(self, instance_name):$/;"	kind:member	line:106
+get_status	../pynetem/wrapper/__init__.py	/^    def get_status(self):$/;"	kind:member	line:75
 getlist	../pynetem/ui/config.py	/^    def getlist(self, section, variable):$/;"	kind:member	line:46
 handle	../pynetem/daemon.py	/^    def handle(self):$/;"	kind:member	line:34
-instance_type	../pynetem/wrapper/qemu.py	/^    instance_type = ""$/;"	kind:variable	line:44
-instance_type	../pynetem/wrapper/qemu.py	/^    instance_type = "host"$/;"	kind:variable	line:127
-instance_type	../pynetem/wrapper/qemu.py	/^    instance_type = "router"$/;"	kind:variable	line:113
+instance_type	../pynetem/wrapper/qemu.py	/^    instance_type = ""$/;"	kind:variable	line:45
+instance_type	../pynetem/wrapper/qemu.py	/^    instance_type = "host"$/;"	kind:variable	line:128
+instance_type	../pynetem/wrapper/qemu.py	/^    instance_type = "router"$/;"	kind:variable	line:114
 intro	../pynetem/console.py	/^    intro = 'Welcome to network emulator. Type help or ? to list commands.\\n'$/;"	kind:variable	line:22
-is_started	../pynetem/wrapper/__init__.py	/^    def is_started(self):$/;"	kind:member	line:45
 license	../setup.py	/^        license="GNU GPL v2",$/;"	kind:variable	line:29
-open_shell	../pynetem/wrapper/qemu.py	/^    def open_shell(self):$/;"	kind:member	line:100
+open_shell	../pynetem/wrapper/qemu.py	/^    def open_shell(self):$/;"	kind:member	line:101
 package_data	../setup.py	/^        package_data={'pynetem.ui': ['defaults.conf']},$/;"	kind:variable	line:32
 packages	../setup.py	/^        packages=["pynetem", "pynetem.wrapper", "pynetem.ui"],$/;"	kind:variable	line:31
-parm_attribution	../pynetem/wrapper/qemu.py	/^parm_attribution = DynamicParmAttribution()$/;"	kind:variable	line:40
+parm_attribution	../pynetem/wrapper/qemu.py	/^parm_attribution = DynamicParmAttribution()$/;"	kind:variable	line:41
 prompt	../pynetem/console.py	/^    prompt = '[net-emulator] '$/;"	kind:variable	line:23
 qemu.py	../pynetem/wrapper/qemu.py	1;"	kind:file	line:1
-qemu_bin	../pynetem/wrapper/qemu.py	/^    qemu_bin = "qemu-system-i386"$/;"	kind:variable	line:45
-qemu_img_bin	../pynetem/wrapper/qemu.py	/^    qemu_img_bin = "qemu-img"$/;"	kind:variable	line:46
+qemu_bin	../pynetem/wrapper/qemu.py	/^    qemu_bin = "qemu-system-i386"$/;"	kind:variable	line:46
+qemu_img_bin	../pynetem/wrapper/qemu.py	/^    qemu_img_bin = "qemu-img"$/;"	kind:variable	line:47
 run	../pynetem/daemon.py	/^    def run(self):$/;"	kind:member	line:84
 scripts	../setup.py	/^        scripts=["pynetem-emulator", "pynetem-daemon"],$/;"	kind:variable	line:30
 set	../pynetem/ui/config.py	/^    def set(self, section, variable, value):$/;"	kind:member	line:43
 setup	../pynetem/daemon.py	/^    def setup(self):$/;"	kind:member	line:30
 setup.py	../setup.py	1;"	kind:file	line:1
-start	../pynetem/topology.py	/^    def start(self, instance_name):$/;"	kind:member	line:112
-start	../pynetem/wrapper/qemu.py	/^    def start(self):$/;"	kind:member	line:90
+start	../pynetem/topology.py	/^    def start(self, instance_name):$/;"	kind:member	line:118
+start	../pynetem/wrapper/__init__.py	/^    def start(self):$/;"	kind:member	line:51
+start	../pynetem/wrapper/qemu.py	/^    def start(self):$/;"	kind:member	line:91
 start	../pynetem/wrapper/vde.py	/^    def start(self):$/;"	kind:member	line:33
-startall	../pynetem/topology.py	/^    def startall(self):$/;"	kind:member	line:122
-status	../pynetem/topology.py	/^    def status(self):$/;"	kind:member	line:126
+startall	../pynetem/topology.py	/^    def startall(self):$/;"	kind:member	line:128
+status	../pynetem/topology.py	/^    def status(self):$/;"	kind:member	line:132
 stop	../pynetem/daemon.py	/^    def stop(self):$/;"	kind:member	line:92
-stop	../pynetem/topology.py	/^    def stop(self, instance_name):$/;"	kind:member	line:106
-stop	../pynetem/wrapper/__init__.py	/^    def stop(self):$/;"	kind:member	line:35
+stop	../pynetem/topology.py	/^    def stop(self, instance_name):$/;"	kind:member	line:112
+stop	../pynetem/wrapper/__init__.py	/^    def stop(self):$/;"	kind:member	line:62
 stop	../pynetem/wrapper/vde.py	/^    def stop(self):$/;"	kind:member	line:54
-stopall	../pynetem/topology.py	/^    def stopall(self):$/;"	kind:member	line:118
+stopall	../pynetem/topology.py	/^    def stopall(self):$/;"	kind:member	line:124
 topology.py	../pynetem/topology.py	1;"	kind:file	line:1
 url	../setup.py	/^        url="http:\/\/mroy31.dyndns.org\/~roy\/repositories.git\/pynetem",$/;"	kind:variable	line:25
 vde.py	../pynetem/wrapper/vde.py	1;"	kind:file	line:1
+watch_process	../pynetem/wrapper/__init__.py	/^    def watch_process(self):$/;"	kind:member	line:38

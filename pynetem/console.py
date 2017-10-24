@@ -16,6 +16,19 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import cmd
+from pynetem import NetemError
+
+
+def command(func):
+
+    def cmd_func(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except NetemError as err:
+            print("ERROR: %s" % err)
+    cmd_func.__name__ = func.__name__
+
+    return cmd_func
 
 
 class NetemConsole(cmd.Cmd):
@@ -44,6 +57,7 @@ class NetemConsole(cmd.Cmd):
         "Display routeur/host status"
         print(self.manager.status())
 
+    @command
     def do_console(self, arg):
         "open a console for the given router/host"
         node = self.manager.get_node(arg)
