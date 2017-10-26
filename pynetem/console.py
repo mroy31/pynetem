@@ -17,13 +17,17 @@
 
 import cmd
 from pynetem import NetemError
+from pynetem.project import NetemProject
 
 
-def command(func):
+def require_project(func):
 
-    def cmd_func(*args, **kwargs):
+    def cmd_func(self, *args, **kwargs):
+        if self.current_project is None:
+            print("ERROR: no project has been loaded")
+            return
         try:
-            return func(*args, **kwargs)
+            return func(self, *args, **kwargs)
         except NetemError as err:
             print("ERROR: %s" % err)
     cmd_func.__name__ = func.__name__
@@ -35,32 +39,69 @@ class NetemConsole(cmd.Cmd):
     intro = 'Welcome to network emulator. Type help or ? to list commands.\n'
     prompt = '[net-emulator] '
 
-    def __init__(self, config, manager):
+    def __init__(self, config, project=None):
         super(NetemConsole, self).__init__()
         self.config = config
-        self.manager = manager
+        self.current_project = project
 
     def do_quit(self, arg):
         "Quit the network emulator"
-        self.manager.close()
+        if self.current_project is not None:
+            self.current_project.close()
         return True
 
+    def do_load(self, prj_path):
+        """Load a qnet project"""
+        if self.current_project is not None:
+            self.current_project.close()
+        try:
+            self.current_project = NetemProject.load(self.config, prj_path)
+        except NetemError as err:
+            print("ERROR: %s" % err)
+
+    def do_create(self, prj_path):
+        """Create a qnet project"""
+        if self.current_project is not None:
+            self.current_project.close()
+        try:
+            self.current_project = NetemProject.create(self.config, prj_path)
+        except NetemError as err:
+            print("ERROR: %s" % err)
+
+    @require_project
+    def do_save(self, arg):
+        """Save the project"""
+        self.current_project.save()
+
+    @require_project
+    def do_reload(self, arg):
+        """Reload the project"""
+        self.current_project.topology.reload()
+
+    @require_project
+    def do_edit(self, arg):
+        "Edit the topology"""
+        self.current_project.edit_topology()
+
+    @require_project
     def do_start(self, arg):
         "Start the nodes and switches"
-        self.manager.startall()
+        self.current_project.topology.startall()
 
+    @require_project
     def do_stop(self, arg):
         "Stop the nodes and switches"
-        self.manager.stopall()
+        self.current_project.topology.stopall()
 
+    @require_project
     def do_status(self, arg):
         "Display routeur/host status"
-        print(self.manager.status())
+        print(self.current_project.topology.status())
 
-    @command
+    @require_project
     def do_console(self, arg):
         "open a console for the given router/host"
-        node = self.manager.get_node(arg)
+        node = self.current_project.topology.get_node(arg)
         if node is None:
             print("Error: node %s not found in the network" % arg)
             return

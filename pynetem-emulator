@@ -21,7 +21,7 @@ import os
 import logging
 from optparse import OptionParser
 from pynetem.ui.config import NetemConfig
-from pynetem.topology import TopologieManager
+from pynetem.project import NetemProject
 from pynetem.console import NetemConsole
 from pynetem import NetemError
 
@@ -40,11 +40,8 @@ if options.conffile:
     else:
         sys.exit("The config file does not exist.")
 
-if len(args) != 1:
-    sys.exit("You have to choose an network file, %s" % usage)
-netfile = args[0]
-if not os.path.isfile(netfile):
-    sys.exit("The network file does not exist.")
+if len(args) > 1:
+    sys.exit("Too many arguments -> %s" % usage)
 
 if __name__ == "__main__":
     config = NetemConfig()
@@ -52,12 +49,17 @@ if __name__ == "__main__":
     log_level = options.debug and logging.DEBUG or logging.INFO
     logging.basicConfig(format=log_format, level=log_level)
 
-    # load toppologie
-    try:
-        manager = TopologieManager(config, netfile)
-    except NetemError as e:
-        sys.exit("unable to load network file: %s" % e)
+    project = None
+    if len(args) == 1:
+        prj_path = args[0]
+        try:
+            if os.path.isfile(prj_path):
+                project = NetemProject.load(config, prj_path)
+            else:
+                project = NetemProject.load(config, prj_path)
+        except NetemError as err:
+            sys.exit("Unable to load/create project %s: %s" % (prj_path, err))
 
     # start console
-    console = NetemConsole(config, manager)
+    console = NetemConsole(config, project=project)
     console.cmdloop()

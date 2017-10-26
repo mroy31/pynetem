@@ -20,6 +20,7 @@ import subprocess
 import shlex
 import socket
 import logging
+import time
 from pynetem import NetemError
 
 
@@ -39,6 +40,7 @@ class _BaseInstance(object):
     def watch_process(self):
         logging.debug("Start watching process for %s" % self.name)
         while self.is_started:
+            time.sleep(0.2)
             r_code = self.process.poll()
             if r_code is not None:
                 out, err = self.process.communicate()
