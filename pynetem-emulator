@@ -45,7 +45,7 @@ if len(args) > 1:
 
 if __name__ == "__main__":
     config = NetemConfig()
-    log_format = '%(asctime)s - %(levelname)s: %(message)s'
+    log_format = '%(levelname)s: %(message)s'
     log_level = options.debug and logging.DEBUG or logging.INFO
     logging.basicConfig(format=log_format, level=log_level)
 
@@ -56,7 +56,8 @@ if __name__ == "__main__":
             if os.path.isfile(prj_path):
                 project = NetemProject.load(config, prj_path)
             else:
-                project = NetemProject.load(config, prj_path)
+                logging.info("Create empty project %s" % prj_path)
+                project = NetemProject.create(config, prj_path)
         except NetemError as err:
             sys.exit("Unable to load/create project %s: %s" % (prj_path, err))
 

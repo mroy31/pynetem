@@ -2,7 +2,8 @@ Source: pynetem
 Section: net
 Priority: extra
 Maintainer: Mickael Royer <mickael.royer@recherche.enac.fr>
-Build-Depends: debhelper (>= 9.0.0), python3 (>= 3.4.0)
+Build-Depends: debhelper (>= 10.0.0), python3-all (>= 3.4.0),
+               dh-python, python3-setuptools
 Standards-Version: 3.9.2.0
 X-Python3-Version: >= 3.4
 Homepage: http://mroy31.dyndns.org/~roy/repository/pynetem
