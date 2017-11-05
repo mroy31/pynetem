@@ -19,8 +19,8 @@ import os
 import logging
 from configobj import ConfigObj
 from pynetem import NetemError
-from pynetem.wrapper.qemu import RouterInstance, HostInstance
-from pynetem.wrapper.vde import SwitchInstance
+from pynetem.wrapper.switch import build_sw_instance
+from pynetem.wrapper.node.qemu import QEMUInstance
 
 
 class TopologieManager(object):
@@ -29,124 +29,88 @@ class TopologieManager(object):
         self.config = config
         self.netfile = netfile
 
-        self.routers, self.hosts, self.switches = [], [], []
+        self.nodes, self.switches = [], []
         try:
             self.__load()
         except NetemError as err:
             self.close()
             logging.error("Unable to load net file %s: %s" % (netfile, err))
 
+    def __load_switches(self, sw_section):
+        for s_name in sw_section:
+            s_inst = build_sw_instance(self.config, s_name, sw_section[s_name])
+            s_inst.start()
+            self.switches.append(s_inst)
+
     def __load(self):
         logging.debug("Start to load topology")
-
         network = ConfigObj(self.netfile)
-        autostart = network['config'].as_bool("autostart")
 
         # load switches
-        try:
-            switches_section = network["switches"]
-        except KeyError:
-            logging.warning("WARNING: No switch section")
+        if "switches" in network:
+            self.__load_switches(network["switches"])
         else:
-            for s_name in switches_section:
-                logging.debug("Create switch instance %s" % s_name)
-                need_tap = switches_section[s_name].as_bool("tap")
-                s_inst = SwitchInstance(self.config, s_name, need_tap)
-                if autostart:
-                    logging.debug("Start switch instance %s" % s_name)
-                    s_inst.start()
-                self.switches.append(s_inst)
+            logging.warning("WARNING: No switches section")
 
+        # first, be sure we can record images
         image_dir = os.path.join(os.path.dirname(self.netfile),
                                  network["config"]["image_dir"])
         if not os.path.isdir(image_dir):
             os.mkdir(image_dir)
-        # load routers
-        try:
-            routers_section = network["routers"]
-        except KeyError:
-            logging.warning("WARNING: No router section")
-        else:
-            for r_name in routers_section:
-                logging.debug("Create router instance %s" % r_name)
-                b_img = routers_section[r_name]["type"]
-                img = os.path.join(image_dir, "%s.img" % r_name)
-                console = routers_section[r_name].as_int("console")
-                r_inst = RouterInstance(self.config, r_name, img,
-                                        b_img, console)
+        # load nodes
+        if "nodes" in network:
+            nodes_section = network["nodes"]
+            for n_name in nodes_section:
+                logging.debug("Create node instance %s" % n_name)
+                n_inst = QEMUInstance(self.config, image_dir, n_name,
+                                      nodes_section[n_name])
 
                 # create interfaces
-                nb_if = routers_section[r_name].as_int("if_numbers")
+                nb_if = nodes_section[n_name].as_int("if_numbers")
                 for i in range(nb_if):
                     if_name = "if%d" % i
-                    s_connected = routers_section[r_name][if_name]
-                    r_inst.add_if(s_connected)
+                    s_name = nodes_section[n_name][if_name]
+                    logging.debug("Attach switch %s to %s" % (s_name, n_name))
+                    n_inst.add_sw_if(self.get_switch(s_name))
 
-                # start if necessary
-                if autostart:
-                    logging.debug("Start router instance %s" % r_name)
-                    r_inst.start()
-                    logging.debug("Router %s is available on telnet port %d"
-                                  % (r_name, console))
-                self.routers.append(r_inst)
+                n_inst.start()
+                self.nodes.append(n_inst)
 
-        # load hosts
-        try:
-            hosts_section = network["hosts"]
-        except KeyError:
-            logging.warning("WARNING: No router section")
-        else:
-            for h_name in hosts_section:
-                logging.debug("Create hosts instance %s" % h_name)
-                b_img = hosts_section[h_name]["type"]
-                img = os.path.join(image_dir, "%s.img" % h_name)
-                console = hosts_section[h_name].as_int("console")
-                h_inst = HostInstance(self.config, h_name, img, b_img, console)
-
-                # create interfaces
-                nb_if = hosts_section[h_name].as_int("if_numbers")
-                for i in range(nb_if):
-                    if_name = "if%d" % i
-                    s_connected = hosts_section[h_name][if_name]
-                    h_inst.add_if(s_connected)
-
-                # start if necessary
-                if autostart:
-                    logging.debug("Start host instance %s" % h_name)
-                    h_inst.start()
-                    logging.debug("Host %s is available on telnet port %d"
-                                  % (h_name, console))
-                self.hosts.append(h_inst)
+    def get_switch(self, sw_name):
+        for instance in self.switches:
+            if instance.get_name() == sw_name:
+                return instance
+        return None
 
     def get_node(self, instance_name):
-        for instance in self.routers + self.hosts:
+        for instance in self.nodes:
             if instance.get_name() == instance_name:
                 return instance
         return None
 
     def stop(self, instance_name):
-        for instance in self.routers + self.hosts + self.switches:
+        for instance in self.nodes:
             if instance.get_name() == instance_name:
                 if instance.is_started():
                     instance.stop()
 
     def start(self, instance_name):
-        for instance in self.routers + self.hosts + self.switches:
+        for instance in self.nodes:
             if instance.get_name() == instance_name:
                 if not instance.is_started():
                     instance.start()
 
     def stopall(self):
-        for instance in self.routers + self.hosts + self.switches:
+        for instance in self.nodes + self.switches:
             instance.stop()
 
     def startall(self):
-        for instance in self.routers + self.hosts + self.switches:
+        for instance in self.nodes + self.switches:
             instance.start()
 
     def reload(self):
         self.stopall()
-        self.routers, self.hosts, self.switches = [], [], []
+        self.nodes, self.switches = [], []
         self.__load()
 
     def status(self):
@@ -154,18 +118,13 @@ class TopologieManager(object):
 Switches:
 \t%s
 
-Routers:
-\t%s
-
-Hosts:
+Nodes:
 \t%s
 """ % (
         "\n\t".join(["Switch %s is %s" % (s.get_name(), s.get_status())
                     for s in self.switches]),
-        "\n\t".join(["Router %s is %s" % (r.get_name(), r.get_status())
-                    for r in self.routers]),
-        "\n\t".join(["Host %s is %s" % (h.get_name(), h.get_status())
-                    for h in self.hosts])
+        "\n\t".join(["Node %s is %s" % (n.get_name(), n.get_status())
+                    for n in self.nodes])
     )
 
     def close(self):

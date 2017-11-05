@@ -6,6 +6,7 @@ conf/*
 *~
 *.pyc
 build*
+conf/*
 
 syntax: regexp
 .*\#.*\#$

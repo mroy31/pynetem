@@ -24,7 +24,43 @@ import time
 from pynetem import NetemError
 
 
-class _BaseInstance(object):
+class _BaseWrapper(object):
+
+    def __init__(self, config):
+        self.config = config
+
+    def _command(self, cmd_line):
+        args = shlex.split(cmd_line)
+        ret = subprocess.call(args)
+        if ret != 0:
+            msg = "Unable to execute command %s" % (cmd_line,)
+            logging.error(msg)
+            raise NetemError(msg)
+
+    def _daemon_command(self, cmd):
+        s_name = self.config.get("general", "daemon_socket")
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        try:
+            sock.connect(s_name)
+        except socket.error as err:
+            raise NetemError("Unable to connect to daemon: %s" % err)
+
+        sock.sendall(cmd.encode("utf-8"))
+        ans = sock.recv(1024).decode("utf-8").strip()
+        if ans != "OK":
+            raise NetemError("Daemon returns an error: %s" % ans)
+    
+    def is_switch(self):
+        return False
+
+    def is_router(self):
+        return False
+
+    def is_host(self):
+        return False
+
+
+class _BaseInstance(_BaseWrapper):
 
     def __init__(self, config, name):
         self.name = name
@@ -84,24 +120,3 @@ class _BaseInstance(object):
 
     def get_status(self):
         return self.is_started is not None and "Started" or "Stopped"
-
-    def _command(self, cmd_line):
-        args = shlex.split(cmd_line)
-        ret = subprocess.call(args)
-        if ret != 0:
-            msg = "Unable to execute command %s" % (cmd_line,)
-            logging.error(msg)
-            raise NetemError(msg)
-
-    def _daemon_command(self, cmd):
-        s_name = self.config.get("general", "daemon_socket")
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        try:
-            sock.connect(s_name)
-        except socket.error as err:
-            raise NetemError("Unable to connect to daemon: %s" % err)
-
-        sock.sendall(cmd.encode("utf-8"))
-        ans = sock.recv(1024).decode("utf-8").strip()
-        if ans != "OK":
-            raise NetemError("Daemon returns an error: %s" % ans)

@@ -1,8 +1,7 @@
 [config]
-autostart = true
 image_dir = images
 
-[routers]
+[nodes]
 
 [[R1]]
 type = juniper
@@ -10,11 +9,9 @@ console = 2001
 if_numbers = 1
 if0 = Switch1
 
-
-[hosts]
-
 [[User1]]
 type = squeeze
+memory = 192
 console = 3001
 if_numbers = 1
 if0 = Switch1
@@ -23,4 +20,9 @@ if0 = Switch1
 [switches]
 
 [[Switch1]]
+type = vde
 tap = true
+
+[[Switch2]]
+type = ovs
+mirroring = true

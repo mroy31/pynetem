@@ -41,12 +41,9 @@ class NetemProject(object):
         with zipfile.ZipFile(prj_path, mode="w") as net_zip:
             net_zip.writestr(TOPOLOGY_FILE, """
 [config]
-autostart = true
 image_dir = images
 
-[routers]
-
-[hosts]
+[nodes]
 
 [switches]
 """)

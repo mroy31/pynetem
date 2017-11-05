@@ -23,6 +23,13 @@ class NetemConfig(object):
     custom_conf = None
     __global_conf = '/etc/pynetem.conf'
     __config = None
+    __instance = None
+
+    @classmethod
+    def instance(cls):
+        if cls.__instance is None:
+            cls.__instance = cls()
+        return cls.__instance
 
     def __init__(self):
         if NetemConfig.__config is None:
