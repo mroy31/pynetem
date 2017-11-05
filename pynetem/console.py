@@ -101,8 +101,15 @@ class NetemConsole(cmd.Cmd):
     @require_project
     def do_console(self, arg):
         "open a console for the given router/host"
-        node = self.current_project.topology.get_node(arg)
-        if node is None:
-            print("Error: node %s not found in the network" % arg)
-            return
-        node.open_shell()
+        if arg == "all":
+            for node in self.current_project.topology.get_all_nodes():
+                try:
+                    node.open_shell()
+                except NetemError as err:
+                    print("WARNING: %s" % err)
+        else:
+            node = self.current_project.topology.get_node(arg)
+            if node is None:
+                print("Error: node %s not found in the network" % arg)
+                return
+            node.open_shell()

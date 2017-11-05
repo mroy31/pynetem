@@ -82,11 +82,17 @@ class TopologieManager(object):
                 return instance
         return None
 
+    def get_all_switches(self):
+        return self.switches
+
     def get_node(self, instance_name):
         for instance in self.nodes:
             if instance.get_name() == instance_name:
                 return instance
         return None
+
+    def get_all_nodes(self):
+        return self.nodes
 
     def stop(self, instance_name):
         for instance in self.nodes:
