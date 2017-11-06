@@ -108,9 +108,11 @@ class QEMUInstance(_BaseInstance):
     def open_shell(self):
         if self.shell_process is not None and self.shell_process.poll() is None:
             raise NetemError("The console is already opened")
-        term_cmd = self.config.get("general", "terminal")
-        cmd_line = "%s telnet localhost %d" % (term_cmd, self.telnet_port)
-        args = shlex.split(cmd_line)
+        term_cmd = self.config.get("general", "terminal") % {
+            "title": self.name,
+            "cmd": "telnet localhost %d" % self.telnet_port,
+        }
+        args = shlex.split(term_cmd)
         self.shell_process = subprocess.Popen(args, stdin=subprocess.PIPE,
                                               stdout=subprocess.PIPE,
                                               stderr=subprocess.PIPE,

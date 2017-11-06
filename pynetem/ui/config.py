@@ -33,7 +33,7 @@ class NetemConfig(object):
 
     def __init__(self):
         if NetemConfig.__config is None:
-            NetemConfig.__config = configparser.SafeConfigParser()
+            NetemConfig.__config = configparser.SafeConfigParser(interpolation=None)
 
             default_config_path = os.path.abspath(os.path.dirname(__file__))
             NetemConfig.__config.readfp(open(default_config_path
