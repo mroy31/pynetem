@@ -18,6 +18,7 @@ Depends: ${misc:Depends}, ${python3:Depends},
          qemu-utils,
          uml-utilities,
          vde2,
+         openvswitch-switch,
          python3-configobj
 Description: PyNetem is network emulator working with qemu/vde
  PyNetem is a network emulator based on qemu and vde

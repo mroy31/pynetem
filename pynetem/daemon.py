@@ -42,6 +42,7 @@ class NetemDaemonHandler(BaseRequestHandler):
             "ovs_create": {"args": 1},
             "ovs_delete": {"args": 1},
             "ovs_add_port": {"args": 2},
+            "ovs_add_mirror_port": {"args": 2},
             "ovs_del_port": {"args": 2},
         }
 
@@ -131,9 +132,9 @@ class NetemDaemonHandler(BaseRequestHandler):
         logging.debug("Delete port %s from switch %s" % (p_name, sw_name))
         self.__command("ovs-vsctl del-port %s %s" % (sw_name, p_name))
 
-    def __command(self, cmd_line):
+    def __command(self, cmd_line, shell=False):
         args = shlex.split(cmd_line)
-        ret = subprocess.call(args)
+        ret = subprocess.call(args, shell=shell)
         if ret != 0:
             msg = "Unable to excecute command %s" % (cmd_line,)
             logging.error(msg)

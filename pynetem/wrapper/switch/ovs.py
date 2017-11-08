@@ -51,9 +51,6 @@ class OVSwitchInstance(_BaseWrapper):
                                  "%s" % (self.__sw_name, if_name))
             self.__sw_interfaces.remove(if_name)
 
-    def add_port_mirroring(self, p_name):
-        pass
-
     def start(self):
         if not self.__is_started:
             logging.debug("Start ovswitch %s" % self.__sw_name)

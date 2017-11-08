@@ -25,4 +25,3 @@ tap = true
 
 [[Switch2]]
 type = ovs
-mirroring = true

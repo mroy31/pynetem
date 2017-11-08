@@ -1,5 +1,6 @@
 include MANIFEST.in
 include MANIFEST
+include README.md
 include COPYING
 include pynetem/ui/defaults.conf
 include doc/*
