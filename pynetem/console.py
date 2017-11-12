@@ -39,9 +39,8 @@ class NetemConsole(cmd.Cmd):
     intro = 'Welcome to network emulator. Type help or ? to list commands.\n'
     prompt = '[net-emulator] '
 
-    def __init__(self, config, project=None):
+    def __init__(self, project=None):
         super(NetemConsole, self).__init__()
-        self.config = config
         self.current_project = project
 
     def do_quit(self, arg):
@@ -55,7 +54,7 @@ class NetemConsole(cmd.Cmd):
         if self.current_project is not None:
             self.current_project.close()
         try:
-            self.current_project = NetemProject.load(self.config, prj_path)
+            self.current_project = NetemProject.load(prj_path)
         except NetemError as err:
             print("ERROR: %s" % err)
 
@@ -64,7 +63,7 @@ class NetemConsole(cmd.Cmd):
         if self.current_project is not None:
             self.current_project.close()
         try:
-            self.current_project = NetemProject.create(self.config, prj_path)
+            self.current_project = NetemProject.create(prj_path)
         except NetemError as err:
             print("ERROR: %s" % err)
 
@@ -92,6 +91,20 @@ class NetemConsole(cmd.Cmd):
     def do_stop(self, arg):
         "Stop the nodes and switches"
         self.current_project.topology.stopall()
+
+    @require_project
+    def do_restart(self, arg):
+        "Restart the specified node or all the network"
+        if arg.strip() != "":
+            node = self.current_project.topology.get_node(arg.strip())
+            if node is None:
+                print("ERROR: node %s does not exist" % arg)
+            else:
+                node.stop()
+                node.start()
+        else:
+            self.current_project.topology.stopall()
+            self.current_project.topology.startall()
 
     @require_project
     def do_status(self, arg):

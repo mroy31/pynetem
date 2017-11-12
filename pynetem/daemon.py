@@ -76,25 +76,29 @@ class NetemDaemonHandler(BaseRequestHandler):
         logging.debug("Delete tap %s" % name)
         self.__command("tunctl -d %s" % (name,))
 
+    def __is_pid(self, pid):
+        try:
+            int(pid)
+        except ValueError:
+            return False
+        else:
+            return True
+
     def netns_create(self, name):
         logging.debug("Create netns %s" % name)
-        is_pid = False
-        try:
-            int(name)
-        except ValueError:
-            pass
-        else:
-            is_pid = True
-
-        if not is_pid:
+        if not self.__is_pid(name):
             self.__command("ip netns add %s" % name)
         else:
-            self.__command("ln -s /proc/%s/ns/net /var/run/netns/%s"
-                           % (self.name, self.name))
+            if not os.path.isdir("/var/run/netns"):
+                os.mkdir("/var/run/netns")
+            self.__command("ln -s /proc/%s/ns/net /var/run/netns/%s" % (name, name))
 
     def netns_delete(self, name):
         logging.debug("Delete netns %s" % name)
-        self.__command("ip netns del %s" % name)
+        if not self.__is_pid(name):
+            self.__command("ip netns del %s" % name)
+        else:
+            self.__command("rm /var/run/netns/%s" % name)
 
     def link_create(self, if1, if2):
         logging.debug("Create link %s<-->%s" % (if1, if2))
@@ -107,7 +111,6 @@ class NetemDaemonHandler(BaseRequestHandler):
     def link_netns(self, if_name, netns):
         logging.debug("Attach link %s to namespace %s" % (if_name, netns))
         self.__command("ip link set %s netns %s" % (if_name, netns))
-        self.__command("ip netns exec %s ip link set %s up" % (netns, if_name))
 
     def link_set_vtap(self, if_name, netns):
         logging.debug("Set link %s of namespace %s macvtap" % (if_name, netns))

@@ -19,6 +19,7 @@ import subprocess
 import os
 import shlex
 from pynetem import NetemError
+from pynetem.ui.config import NetemConfig
 from pynetem.wrapper import _BaseInstance
 
 
@@ -44,8 +45,8 @@ class QEMUInstance(_BaseInstance):
     instance_type = ""
     qemu_bin = "qemu-system-i386"
 
-    def __init__(self, config, image_dir, name, node_config):
-        super(QEMUInstance, self).__init__(config, name)
+    def __init__(self, image_dir, img_type, name, node_config):
+        super(QEMUInstance, self).__init__(name)
 
         self.memory = "memory" in node_config and node_config["memory"] or None
         self.need_acpi = "acpi" not in node_config and True or node_config.as_bool("acpi")
@@ -55,15 +56,15 @@ class QEMUInstance(_BaseInstance):
         self.interfaces = []
 
         if not os.path.isfile(self.img):
-            base_img_dir = config.get("general", "image_dir")
-            b_img = os.path.join(base_img_dir, "%s.img" % node_config["type"])
+            base_img_dir = NetemConfig.instance().get("general", "image_dir")
+            b_img = os.path.join(base_img_dir, "%s.img" % img_type)
             cmd = "%s create -f qcow2 -b %s %s" % (QEMU_IMG, b_img, self.img)
             self._command(cmd)
 
     def get_memory(self):
         if self.memory is not None:
             return self.memory
-        return self.config.get("qemu", "memory")
+        return NetemConfig.instance().get("qemu", "memory")
 
     def add_sw_if(self, sw_instance):
         if_parms = {
@@ -108,7 +109,7 @@ class QEMUInstance(_BaseInstance):
     def open_shell(self):
         if self.shell_process is not None and self.shell_process.poll() is None:
             raise NetemError("The console is already opened")
-        term_cmd = self.config.get("general", "terminal") % {
+        term_cmd = NetemConfig.instance().get("general", "terminal") % {
             "title": self.name,
             "cmd": "telnet localhost %d" % self.telnet_port,
         }
@@ -138,3 +139,6 @@ class QEMUInstance(_BaseInstance):
             if if_c["tap"] is not None:
                 if_c["sw_instance"].detach_interface(if_c["tap"])
                 self._daemon_command("tap_delete %s" % if_c["tap"])
+
+    def save(self):
+        pass  # nothing to do

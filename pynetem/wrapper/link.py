@@ -20,9 +20,16 @@ from pynetem.wrapper import _BaseWrapper
 
 
 class NetemLinkFactory(_BaseWrapper):
+    __instance = None
 
-    def __init__(self, config):
-        super(NetemLinkFactory, self).__init__(config)
+    @classmethod
+    def instance(cls):
+        if cls.__instance is None:
+            cls.__instance = cls()
+        return cls.__instance
+
+    def __init__(self):
+        super(NetemLinkFactory, self).__init__()
         self.__links = []
         self.__ns_list = []
 
@@ -41,26 +48,20 @@ class NetemLinkFactory(_BaseWrapper):
         self._daemon_command("link_create %s %s" % (l_ifname, r_ifname))
         self.__links.append({
             "l_if": l_ifname,
-            "l_ns": None,
+            "l_ns": l_ns,
             "r_if": r_ifname,
-            "r_ns": None
+            "r_ns": r_ns
         })
         # attach to net namespace
         self.set_ns(l_ifname, l_ns)
         self.set_ns(r_ifname, r_ns)
 
     def set_ns(self, if_name, netns):
-        if netns not in self.__ns_list:
-            self._daemon_command("netns_create %s" % netns)
-            self.__ns_list.append(netns)
-
-        c_netns = None
-        for lk_infos in self.__links:
-            if if_name == lk_infos["l_if"]:
-                c_netns = lk_infos["l_ns"]
-            elif if_name == lk_infos["r_if"]:
-                c_netns = lk_infos["r_ns"]
-        if c_netns is not None and c_netns != netns:
+        if netns is not None:
+            if netns not in self.__ns_list:
+                logging.debug("Create netns %s for node %s" % (netns, if_name))
+                self._daemon_command("netns_create %s" % netns)
+                self.__ns_list.append(netns)
             self._daemon_command("link_netns %s %s" % (if_name, netns))
 
     def delete_link(self, l_ifname, r_ifname):

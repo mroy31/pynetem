@@ -1,20 +1,32 @@
 [config]
 image_dir = images
+config_dir = configs
 
 [nodes]
 
 [[R1]]
-type = juniper
+type = qemu.juniper
 console = 2001
 if_numbers = 1
 if0 = Switch1
 
 [[User1]]
-type = squeeze
+type = qemu.squeeze
 memory = 192
 console = 3001
 if_numbers = 1
 if0 = Switch1
+
+[[R2]]
+type = docker.xorp
+if_numbers = 1
+if0 = Switch2
+
+[[User2]]
+type = docker.host
+save_state = false
+if_numbers = 1
+if0 = Switch2
 
 
 [switches]

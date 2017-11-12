@@ -27,11 +27,11 @@ SWITCH_CLASSES = {
 }
 
 
-def build_sw_instance(config, sw_name, sw_config):
+def build_sw_instance(sw_name, sw_config):
     logging.debug("Create switch instance %s" % sw_name)
     try:
         sw_type = sw_config["type"]
-        s_inst = SWITCH_CLASSES[sw_type](config, sw_name, sw_config)
+        s_inst = SWITCH_CLASSES[sw_type](sw_name, sw_config)
     except KeyError:
         raise NetemError("Wrong switch type for %s" % sw_name)
     return s_inst

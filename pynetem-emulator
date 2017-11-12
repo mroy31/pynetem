@@ -44,7 +44,7 @@ if len(args) > 1:
     sys.exit("Too many arguments -> %s" % usage)
 
 if __name__ == "__main__":
-    config = NetemConfig()
+    config = NetemConfig.instance()
     log_format = '%(levelname)s: %(message)s'
     log_level = options.debug and logging.DEBUG or logging.INFO
     logging.basicConfig(format=log_format, level=log_level)
@@ -54,13 +54,13 @@ if __name__ == "__main__":
         prj_path = args[0]
         try:
             if os.path.isfile(prj_path):
-                project = NetemProject.load(config, prj_path)
+                project = NetemProject.load(prj_path)
             else:
                 logging.info("Create empty project %s" % prj_path)
-                project = NetemProject.create(config, prj_path)
+                project = NetemProject.create(prj_path)
         except NetemError as err:
             sys.exit("Unable to load/create project %s: %s" % (prj_path, err))
 
     # start console
-    console = NetemConsole(config, project=project)
+    console = NetemConsole(project=project)
     console.cmdloop()

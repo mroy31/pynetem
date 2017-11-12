@@ -22,8 +22,8 @@ from pynetem import NETEM_ID
 
 class OVSwitchInstance(_BaseWrapper):
 
-    def __init__(self, config, sw_name, sw_config):
-        super(OVSwitchInstance, self).__init__(config)
+    def __init__(self, sw_name, sw_config):
+        super(OVSwitchInstance, self).__init__()
 
         self.name = sw_name
         self.__is_started = False

@@ -22,23 +22,30 @@ import socket
 import logging
 import time
 from pynetem import NetemError
+from pynetem.ui.config import NetemConfig
 
 
 class _BaseWrapper(object):
 
-    def __init__(self, config):
-        self.config = config
-
-    def _command(self, cmd_line):
+    def _command(self, cmd_line, check_output=True):
         args = shlex.split(cmd_line)
-        ret = subprocess.call(args)
-        if ret != 0:
-            msg = "Unable to execute command %s" % (cmd_line,)
-            logging.error(msg)
-            raise NetemError(msg)
+        if check_output:
+            try:
+                result = subprocess.check_output(args)
+            except subprocess.CalledProcessError:
+                msg = "Unable to execute command %s" % (cmd_line,)
+                logging.error(msg)
+                raise NetemError(msg)
+            return result.decode("utf-8").strip("\n")
+        else:
+            ret_code = subprocess.call(args)
+            if ret_code != 0:
+                msg = "Unable to execute command %s" % (cmd_line,)
+                logging.error(msg)
+                raise NetemError(msg)
 
     def _daemon_command(self, cmd):
-        s_name = self.config.get("general", "daemon_socket")
+        s_name = NetemConfig.instance().get("general", "daemon_socket")
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
             sock.connect(s_name)
@@ -59,12 +66,14 @@ class _BaseWrapper(object):
     def is_host(self):
         return False
 
+    def clean(self):
+        pass
+
 
 class _BaseInstance(_BaseWrapper):
 
-    def __init__(self, config, name):
+    def __init__(self, name):
         self.name = name
-        self.config = config
         self.process = None
 
         self.is_started = False

@@ -20,15 +20,15 @@ import logging
 from configobj import ConfigObj
 from pynetem import NetemError
 from pynetem.wrapper.switch import build_sw_instance
-from pynetem.wrapper.node.qemu import QEMUInstance
+from pynetem.wrapper.node import build_node_instance
 
 
 class TopologieManager(object):
 
-    def __init__(self, config, netfile):
-        self.config = config
+    def __init__(self, netfile):
         self.netfile = netfile
 
+        self.saved_state = []
         self.nodes, self.switches = [], []
         try:
             self.__load()
@@ -38,7 +38,7 @@ class TopologieManager(object):
 
     def __load_switches(self, sw_section):
         for s_name in sw_section:
-            s_inst = build_sw_instance(self.config, s_name, sw_section[s_name])
+            s_inst = build_sw_instance(s_name, sw_section[s_name])
             s_inst.start()
             self.switches.append(s_inst)
 
@@ -49,21 +49,21 @@ class TopologieManager(object):
         # load switches
         if "switches" in network:
             self.__load_switches(network["switches"])
-        else:
-            logging.warning("WARNING: No switches section")
 
-        # first, be sure we can record images
+        # first, be sure we can record images and configs
         image_dir = os.path.join(os.path.dirname(self.netfile),
                                  network["config"]["image_dir"])
-        if not os.path.isdir(image_dir):
-            os.mkdir(image_dir)
+        config_dir = os.path.join(os.path.dirname(self.netfile),
+                                  network["config"]["config_dir"])
+        for path in (image_dir, config_dir):
+            if not os.path.isdir(path):
+                os.mkdir(path)
         # load nodes
         if "nodes" in network:
             nodes_section = network["nodes"]
             for n_name in nodes_section:
-                logging.debug("Create node instance %s" % n_name)
-                n_inst = QEMUInstance(self.config, image_dir, n_name,
-                                      nodes_section[n_name])
+                n_inst = build_node_instance(image_dir, config_dir, n_name,
+                                             nodes_section[n_name])
 
                 # create interfaces
                 nb_if = nodes_section[n_name].as_int("if_numbers")
@@ -75,6 +75,13 @@ class TopologieManager(object):
 
                 n_inst.start()
                 self.nodes.append(n_inst)
+
+                # record save_state option
+                need_save = True
+                if "save_state" in nodes_section[n_name]:
+                    need_save = nodes_section[n_name].as_bool("save_state")
+                if need_save:
+                    self.saved_state.append(n_inst)
 
     def get_switch(self, sw_name):
         for instance in self.switches:
@@ -116,8 +123,15 @@ class TopologieManager(object):
 
     def reload(self):
         self.stopall()
+        for n in self.nodes:
+            n.clean()
         self.nodes, self.switches = [], []
+        self.saved_state = []
         self.__load()
+
+    def save(self):
+        for n in self.saved_state:
+            n.save()
 
     def status(self):
         return """
@@ -135,3 +149,5 @@ Nodes:
 
     def close(self):
         self.stopall()
+        for node in self.nodes:
+            node.clean()

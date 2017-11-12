@@ -23,6 +23,7 @@ import zipfile
 import tempfile
 import shutil
 from pynetem import NetemError
+from pynetem.ui.config import NetemConfig
 from pynetem.topology import TopologieManager
 
 TOPOLOGY_FILE = "network.ini"
@@ -31,7 +32,7 @@ TOPOLOGY_FILE = "network.ini"
 class NetemProject(object):
 
     @classmethod
-    def create(cls, config, prj_path):
+    def create(cls, prj_path):
         if os.path.isfile(prj_path):
             raise NetemError("Project %s already exist" % prj_path)
         _, ext = os.path.splitext(prj_path)
@@ -42,26 +43,26 @@ class NetemProject(object):
             net_zip.writestr(TOPOLOGY_FILE, """
 [config]
 image_dir = images
+config_dir = configs
 
 [nodes]
 
 [switches]
 """)
-        return cls(config, prj_path)
+        return cls(prj_path)
 
     @classmethod
-    def load(cls, config, prj_path):
+    def load(cls, prj_path):
         if not os.path.isfile(prj_path):
             raise NetemError("Project %s does not exist" % prj_path)
         _, ext = os.path.splitext(prj_path)
         if ext.lower() != ".pnet" or not zipfile.is_zipfile(prj_path):
             raise NetemError("Project %s has wrong ext "
                              "or is not a zip file" % prj_path)
-        return cls(config, prj_path)
+        return cls(prj_path)
 
-    def __init__(self, config, prj_path):
+    def __init__(self, prj_path):
         self.prj_path = prj_path
-        self.config = config
         self.tmp_folder = tempfile.mkdtemp(prefix="netem")
         with zipfile.ZipFile(prj_path) as prj_zip:
             prj_zip.extractall(path=self.tmp_folder)
@@ -70,16 +71,17 @@ image_dir = images
         if not os.path.isfile(topology_file):
             raise NetemError("Project %s does not contain "
                              "a topology file" % prj_path)
-        self.topology = TopologieManager(config, topology_file)
+        self.topology = TopologieManager(topology_file)
 
     def edit_topology(self):
         topology_file = os.path.join(self.tmp_folder, TOPOLOGY_FILE)
-        cmd_line = "%s %s" % (self.config.get("general", "editor"),
+        cmd_line = "%s %s" % (NetemConfig.instance().get("general", "editor"),
                               topology_file)
         self.__command(cmd_line)
 
     def save(self):
         with zipfile.ZipFile(self.prj_path, mode="w") as prj_zip:
+            self.topology.save()
             for root, dirs, files in os.walk(self.tmp_folder):
                 for f in files:
                     f_path = os.path.join(root, f)

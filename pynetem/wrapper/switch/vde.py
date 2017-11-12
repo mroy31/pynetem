@@ -22,8 +22,8 @@ from pynetem.wrapper import _BaseInstance
 
 class VdeSwitchInstance(_BaseInstance):
 
-    def __init__(self, config, name, sw_config):
-        super(VdeSwitchInstance, self).__init__(config, name)
+    def __init__(self, name, sw_config):
+        super(VdeSwitchInstance, self).__init__(name)
         need_tap = sw_config.as_bool("tap")
         self.tap_name = None
         if need_tap:
