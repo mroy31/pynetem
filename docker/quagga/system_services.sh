@@ -3,25 +3,25 @@ set -e
 source /build/buildconfig
 set -x
 
-## Install init process.
-cp /build/iinit.sh /usr/bin/
-chmod +x /usr/bin/iinit.sh
-
-## ssh, telnet, inetd, rpcbind, ...
-$minimal_apt_get_install rpcbind openssh-server openbsd-inetd bind9 \
-strongswan lighttpd postfix isc-dhcp-server dovecot-pop3d telnetd ftpd
-
-## disable telnetd and ftpd by default
-sed -i"" -e "s/^\([^#]\)/#\1/g" /etc/inetd.conf
-
-## Install Quagga
-$minimal_apt_get_install quagga
+## Install Quagga and supervisor
+$minimal_apt_get_install quagga supervisor
 if [ -d "/etc/quagga/" ]; then
     cd /etc/quagga/
-    touch zebra.conf ripd.conf ripngd.conf ospfd.conf ospf6d.conf bgpd.conf
-    ln -s /boot.conf Quagga.conf
+    cp /build/conf/zebra.conf .
+    touch ospfd.conf bgpd.conf pimd.conf
+    chown quagga:quagga zebra.conf ospfd.conf bgpd.conf pimd.conf
 fi
+# create /var/run/quagga
+mkdir /var/run/quagga
+chown quagga:quagga /var/run/quagga
+# add root to quagga group
+gpasswd -a root quagga
 
-cp /build/quaggaboot.sh /usr/local/bin
-chmod 755 /usr/local/bin/quaggaboot.sh
-ln -s /usr/lib/quagga/* /usr/local/bin
+# update quagga to 1.2
+dpkg -i /build/debs/*deb
+
+# copy script to load/save config
+cp /build/conf/load-quagga.sh /usr/local/bin/load-quagga.sh
+chmod 755 /usr/local/bin/load-quagga.sh
+cp /build/conf/save-quagga.sh /usr/local/bin/save-quagga.sh
+chmod 755 /usr/local/bin/save-quagga.sh

@@ -42,7 +42,7 @@ class NetemLinkFactory(_BaseWrapper):
 
     def create_link(self, l_ifname, r_ifname, l_ns=None, r_ns=None):
         if self.is_link_exists(l_ifname, r_ifname):
-            logging.warning("Links %s already exist")
+            logging.warning("Links %s-%s already exist" % (l_ifname, r_ifname))
             return
         # create the link
         self._daemon_command("link_create %s %s" % (l_ifname, r_ifname))

@@ -18,6 +18,7 @@
 import os
 import subprocess
 import shlex
+import logging
 from pynetem import NETEM_ID
 from pynetem import NetemError
 from pynetem.ui.config import NetemConfig
@@ -50,6 +51,7 @@ class DockerNode(_BaseWrapper):
         return self.__pid
 
     def __create(self):
+        logging.debug("Create docker container %s" % self.container_name)
         self._command("docker create --privileged --cap-add=ALL --net=none "
                       "-h %s --name %s %s" % (self.name, self.container_name, 
                                               self.__image))
@@ -66,6 +68,7 @@ class DockerNode(_BaseWrapper):
 
     def start(self):
         if not self.__running:
+            logging.debug("Start docker container %s" % self.container_name)
             self._command("docker start %s" % self.container_name)
             self.__pid = self._command("docker inspect --format '{{.State.Pid}}' "
                                        "%s" % self.container_name)
@@ -112,27 +115,31 @@ class DockerNode(_BaseWrapper):
 
     def stop(self):
         if self.__running:
+            logging.debug("Stop docker container %s" % self.container_name)
             if self.__shell is not None and self.__shell.poll() is None:
                 self.__shell.terminate()
                 self.__shell = None
-            self._command("docker stop %s" % self.container_name)
             for if_c in self.__interfaces:
                 if if_c["sw_instance"] is None:
                     continue
                 if_c["sw_instance"].detach_interface(if_c["left_if"])
+                self.__link_factory.delete_link(if_c["left_if"],
+                                                if_c["right_if"])
+            self._command("docker stop %s" % self.container_name)
             self.__pid = None
             self.__running = False
 
     def clean(self):
         self.stop()
         self._command("docker rm %s" % self.container_name)
+        self.__interfaces = []
 
-    def _docker_exec(self, cmd, interactive=False):
+    def _docker_exec(self, cmd, interactive=False, check_output=True):
         cmd_line = "docker exec"
         if interactive:
             cmd_line += " -i"
         cmd_line += " %s %s" % (self.container_name, cmd)
-        self._command(cmd_line, check_output=True)
+        self._command(cmd_line, check_output=check_output)
 
 
 class HostNode(DockerNode):
@@ -158,7 +165,8 @@ class HostNode(DockerNode):
     def save(self):
         self._docker_exec("network-config.py -s %s" % self.CONFIG_FILE)
         self._command("docker cp %s:%s "
-                      "%s" % (self.container_name, self.CONFIG_FILE, self.__conf_path()))
+                      "%s" % (self.container_name, self.CONFIG_FILE,
+                              self.__conf_path()))
 
 
 class XorpRouter(DockerNode):
@@ -191,16 +199,31 @@ class XorpRouter(DockerNode):
 
 class QuaggaRouter(DockerNode):
     IMG = "rca/quagga"
+    SHELL = "/usr/bin/vtysh"
+    TMP_CONF = "/tmp/quagga.conf"
 
     def __init__(self, conf_dir, name, node_config):
         super(QuaggaRouter, self).__init__(conf_dir, name, self.IMG)
 
+    def __conf_path(self):
+        return os.path.join(self.conf_dir, "%s.quagga.conf" % self.name)
+
     def start(self):
         super(QuaggaRouter, self).start()
         # load quagga config if available and start quagga
+        conf_path = self.__conf_path()
+        if os.path.isfile(conf_path):
+            self._docker_exec("supervisorctl start all:")
+            self._command("docker cp %s %s:%s" % (conf_path,
+                                                  self.container_name,
+                                                  self.TMP_CONF))
+            self._docker_exec("load-quagga.sh %s" % self.TMP_CONF)
 
     def save(self):
-        pass
+        self._docker_exec("save-quagga.sh %s" % self.TMP_CONF)
+        self._command("docker cp %s:%s "
+                      "%s" % (self.container_name, self.TMP_CONF, 
+                              self.__conf_path()))
 
 
 DOCKER_NODES = {

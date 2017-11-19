@@ -1,4 +1,4 @@
-FROM debian:jessie
+FROM debian:stretch
 MAINTAINER Mickael Royer <mickael.royer@enac.fr>
 
 ENV HOME=/root VTYSH_PAGER=more TERM=vt100 PAGER=less
@@ -9,4 +9,6 @@ RUN /build/prepare.sh && \
 	/build/utilities.sh && \
 	/build/cleanup.sh
 
-CMD ["/usr/bin/iinit.sh"]
+RUN mkdir -p /var/log/supervisor
+COPY conf/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+CMD ["/usr/bin/supervisord"]

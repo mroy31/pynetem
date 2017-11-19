@@ -4,15 +4,17 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
-CONFIG_FILE	../pynetem/wrapper/node/docker.py	/^    CONFIG_FILE = "\/etc\/xorp\/config.boot"$/;"	kind:variable	line:166
-CONFIG_FILE	../pynetem/wrapper/node/docker.py	/^    CONFIG_FILE = "\/tmp\/custom.net.conf"$/;"	kind:variable	line:140
-DOCKER_NODES	../pynetem/wrapper/node/docker.py	/^DOCKER_NODES = {$/;"	kind:variable	line:206
-DockerNode	../pynetem/wrapper/node/docker.py	/^class DockerNode(_BaseWrapper):$/;"	kind:class	line:28
+CONFIG_FILE	../pynetem/wrapper/node/docker.py	/^    CONFIG_FILE = "\/etc\/xorp\/config.boot"$/;"	kind:variable	line:174
+CONFIG_FILE	../pynetem/wrapper/node/docker.py	/^    CONFIG_FILE = "\/tmp\/custom.net.conf"$/;"	kind:variable	line:147
+CONF_TPL	../pynetem/wrapper/node/docker.py	/^    CONF_TPL = "%s.quagga.%s.conf"$/;"	kind:variable	line:204
+DAEMONS	../pynetem/wrapper/node/docker.py	/^    DAEMONS = ["zebra", "ospfd", "bgpd", "pimd"]$/;"	kind:variable	line:203
+DOCKER_NODES	../pynetem/wrapper/node/docker.py	/^DOCKER_NODES = {$/;"	kind:variable	line:234
+DockerNode	../pynetem/wrapper/node/docker.py	/^class DockerNode(_BaseWrapper):$/;"	kind:class	line:29
 DynamicParmAttribution	../pynetem/wrapper/node/qemu.py	/^class DynamicParmAttribution(object):$/;"	kind:class	line:26
-HostNode	../pynetem/wrapper/node/docker.py	/^class HostNode(DockerNode):$/;"	kind:class	line:138
-IMG	../pynetem/wrapper/node/docker.py	/^    IMG = "rca\/host"$/;"	kind:variable	line:139
-IMG	../pynetem/wrapper/node/docker.py	/^    IMG = "rca\/quagga"$/;"	kind:variable	line:193
-IMG	../pynetem/wrapper/node/docker.py	/^    IMG = "rca\/xorp"$/;"	kind:variable	line:165
+HostNode	../pynetem/wrapper/node/docker.py	/^class HostNode(DockerNode):$/;"	kind:class	line:145
+IMG	../pynetem/wrapper/node/docker.py	/^    IMG = "rca\/host"$/;"	kind:variable	line:146
+IMG	../pynetem/wrapper/node/docker.py	/^    IMG = "rca\/quagga"$/;"	kind:variable	line:201
+IMG	../pynetem/wrapper/node/docker.py	/^    IMG = "rca\/xorp"$/;"	kind:variable	line:173
 NETEM_ID	../pynetem/__init__.py	/^NETEM_ID = "pynetem"$/;"	kind:variable	line:19
 NetemConfig	../pynetem/ui/config.py	/^class NetemConfig(object):$/;"	kind:class	line:22
 NetemConsole	../pynetem/console.py	/^class NetemConsole(cmd.Cmd):$/;"	kind:class	line:38
@@ -24,23 +26,25 @@ NetemProject	../pynetem/project.py	/^class NetemProject(object):$/;"	kind:class	
 OVSwitchInstance	../pynetem/wrapper/switch/ovs.py	/^class OVSwitchInstance(_BaseWrapper):$/;"	kind:class	line:23
 QEMUInstance	../pynetem/wrapper/node/qemu.py	/^class QEMUInstance(_BaseInstance):$/;"	kind:class	line:44
 QEMU_IMG	../pynetem/wrapper/node/qemu.py	/^QEMU_IMG = "qemu-img"$/;"	kind:variable	line:41
-QuaggaRouter	../pynetem/wrapper/node/docker.py	/^class QuaggaRouter(DockerNode):$/;"	kind:class	line:192
-SHELL	../pynetem/wrapper/node/docker.py	/^    SHELL = "\/bin\/bash"$/;"	kind:variable	line:29
-SHELL	../pynetem/wrapper/node/docker.py	/^    SHELL = "\/usr\/sbin\/xorpsh"$/;"	kind:variable	line:167
+QuaggaRouter	../pynetem/wrapper/node/docker.py	/^class QuaggaRouter(DockerNode):$/;"	kind:class	line:200
+SHELL	../pynetem/wrapper/node/docker.py	/^    SHELL = "\/bin\/bash"$/;"	kind:variable	line:30
+SHELL	../pynetem/wrapper/node/docker.py	/^    SHELL = "\/usr\/bin\/vtysh"$/;"	kind:variable	line:202
+SHELL	../pynetem/wrapper/node/docker.py	/^    SHELL = "\/usr\/sbin\/xorpsh"$/;"	kind:variable	line:175
 SWITCH_CLASSES	../pynetem/wrapper/switch/__init__.py	/^SWITCH_CLASSES = {$/;"	kind:variable	line:24
 TOPOLOGY_FILE	../pynetem/project.py	/^TOPOLOGY_FILE = "network.ini"$/;"	kind:variable	line:29
 TopologieManager	../pynetem/topology.py	/^class TopologieManager(object):$/;"	kind:class	line:26
 VdeSwitchInstance	../pynetem/wrapper/switch/vde.py	/^class VdeSwitchInstance(_BaseInstance):$/;"	kind:class	line:23
-XorpRouter	../pynetem/wrapper/node/docker.py	/^class XorpRouter(DockerNode):$/;"	kind:class	line:164
+XorpRouter	../pynetem/wrapper/node/docker.py	/^class XorpRouter(DockerNode):$/;"	kind:class	line:172
 _BaseInstance	../pynetem/wrapper/__init__.py	/^class _BaseInstance(_BaseWrapper):$/;"	kind:class	line:73
 _BaseWrapper	../pynetem/wrapper/__init__.py	/^class _BaseWrapper(object):$/;"	kind:class	line:28
-__attach_interface	../pynetem/wrapper/node/docker.py	/^    def __attach_interface(self, if_name, target_name):$/;"	kind:member	line:90
+__attach_interface	../pynetem/wrapper/node/docker.py	/^    def __attach_interface(self, if_name, target_name):$/;"	kind:member	line:93
 __command	../pynetem/daemon.py	/^    def __command(self, cmd_line, shell=False):$/;"	kind:member	line:138
 __command	../pynetem/project.py	/^    def __command(self, cmd_line):$/;"	kind:function	line:95
-__conf_path	../pynetem/wrapper/node/docker.py	/^    def __conf_path(self):$/;"	kind:member	line:145
-__conf_path	../pynetem/wrapper/node/docker.py	/^    def __conf_path(self):$/;"	kind:member	line:172
+__conf_path	../pynetem/wrapper/node/docker.py	/^    def __conf_path(self):$/;"	kind:member	line:152
+__conf_path	../pynetem/wrapper/node/docker.py	/^    def __conf_path(self):$/;"	kind:member	line:180
+__conf_path	../pynetem/wrapper/node/docker.py	/^    def __conf_path(self, daemon):$/;"	kind:member	line:209
 __config	../pynetem/ui/config.py	/^    __config = None$/;"	kind:variable	line:25
-__create	../pynetem/wrapper/node/docker.py	/^    def __create(self):$/;"	kind:member	line:52
+__create	../pynetem/wrapper/node/docker.py	/^    def __create(self):$/;"	kind:member	line:53
 __getattr__	../pynetem/ui/config.py	/^    def __getattr__(self, name):$/;"	kind:member	line:47
 __global_conf	../pynetem/ui/config.py	/^    __global_conf = '\/etc\/pynetem.conf'$/;"	kind:variable	line:24
 __init__	../pynetem/console.py	/^    def __init__(self, project=None):$/;"	kind:member	line:42
@@ -50,10 +54,10 @@ __init__	../pynetem/topology.py	/^    def __init__(self, netfile):$/;"	kind:memb
 __init__	../pynetem/ui/config.py	/^    def __init__(self):$/;"	kind:member	line:34
 __init__	../pynetem/wrapper/__init__.py	/^    def __init__(self, name):$/;"	kind:member	line:75
 __init__	../pynetem/wrapper/link.py	/^    def __init__(self):$/;"	kind:member	line:31
-__init__	../pynetem/wrapper/node/docker.py	/^    def __init__(self, conf_dir, name, image_name):$/;"	kind:member	line:31
-__init__	../pynetem/wrapper/node/docker.py	/^    def __init__(self, conf_dir, name, node_config):$/;"	kind:member	line:142
-__init__	../pynetem/wrapper/node/docker.py	/^    def __init__(self, conf_dir, name, node_config):$/;"	kind:member	line:169
-__init__	../pynetem/wrapper/node/docker.py	/^    def __init__(self, conf_dir, name, node_config):$/;"	kind:member	line:195
+__init__	../pynetem/wrapper/node/docker.py	/^    def __init__(self, conf_dir, name, image_name):$/;"	kind:member	line:32
+__init__	../pynetem/wrapper/node/docker.py	/^    def __init__(self, conf_dir, name, node_config):$/;"	kind:member	line:149
+__init__	../pynetem/wrapper/node/docker.py	/^    def __init__(self, conf_dir, name, node_config):$/;"	kind:member	line:177
+__init__	../pynetem/wrapper/node/docker.py	/^    def __init__(self, conf_dir, name, node_config):$/;"	kind:member	line:206
 __init__	../pynetem/wrapper/node/qemu.py	/^    def __init__(self):$/;"	kind:member	line:29
 __init__	../pynetem/wrapper/node/qemu.py	/^    def __init__(self, image_dir, img_type, name, node_config):$/;"	kind:member	line:48
 __init__	../pynetem/wrapper/switch/ovs.py	/^    def __init__(self, sw_name, sw_config):$/;"	kind:member	line:25
@@ -67,15 +71,15 @@ __instance	../pynetem/ui/config.py	/^    __instance = None$/;"	kind:variable	lin
 __instance	../pynetem/wrapper/link.py	/^    __instance = None$/;"	kind:variable	line:23
 __is_netns_used	../pynetem/wrapper/link.py	/^    def __is_netns_used(self, netns):$/;"	kind:member	line:92
 __is_pid	../pynetem/daemon.py	/^    def __is_pid(self, pid):$/;"	kind:member	line:79
-__load	../pynetem/topology.py	/^    def __load(self):$/;"	kind:member	line:45
+__load	../pynetem/topology.py	/^    def __load(self):$/;"	kind:member	line:46
 __load_switches	../pynetem/topology.py	/^    def __load_switches(self, sw_section):$/;"	kind:member	line:39
 __strip_path	../pynetem/project.py	/^    def __strip_path(self, path):$/;"	kind:function	line:103
 __sw_if_cmdline	../pynetem/wrapper/node/qemu.py	/^    def __sw_if_cmdline(self, if_config):$/;"	kind:member	line:79
 __version__	../pynetem/__init__.py	/^__version__ = "0.3.0"$/;"	kind:variable	line:18
 _command	../pynetem/wrapper/__init__.py	/^    def _command(self, cmd_line, check_output=True):$/;"	kind:member	line:30
 _daemon_command	../pynetem/wrapper/__init__.py	/^    def _daemon_command(self, cmd):$/;"	kind:member	line:47
-_docker_exec	../pynetem/wrapper/node/docker.py	/^    def _docker_exec(self, cmd, interactive=False):$/;"	kind:member	line:130
-add_sw_if	../pynetem/wrapper/node/docker.py	/^    def add_sw_if(self, sw_instance):$/;"	kind:member	line:57
+_docker_exec	../pynetem/wrapper/node/docker.py	/^    def _docker_exec(self, cmd, interactive=False, check_output=True):$/;"	kind:member	line:137
+add_sw_if	../pynetem/wrapper/node/docker.py	/^    def add_sw_if(self, sw_instance):$/;"	kind:member	line:59
 add_sw_if	../pynetem/wrapper/node/qemu.py	/^    def add_sw_if(self, sw_instance):$/;"	kind:member	line:69
 attach_interface	../pynetem/wrapper/switch/ovs.py	/^    def attach_interface(self, if_name):$/;"	kind:member	line:42
 author	../setup.py	/^        author="Mikael Royer",$/;"	kind:variable	line:27
@@ -87,10 +91,10 @@ build_cmd_line	../pynetem/wrapper/switch/vde.py	/^    def build_cmd_line(self):$
 build_node_instance	../pynetem/wrapper/node/__init__.py	/^def build_node_instance(img_dir, conf_dir, n_name, n_config):$/;"	kind:function	line:24
 build_sw_instance	../pynetem/wrapper/switch/__init__.py	/^def build_sw_instance(sw_name, sw_config):$/;"	kind:function	line:30
 clean	../pynetem/wrapper/__init__.py	/^    def clean(self):$/;"	kind:member	line:69
-clean	../pynetem/wrapper/node/docker.py	/^    def clean(self):$/;"	kind:member	line:126
+clean	../pynetem/wrapper/node/docker.py	/^    def clean(self):$/;"	kind:member	line:132
 clear	../pynetem/wrapper/link.py	/^    def clear(self):$/;"	kind:member	line:85
 close	../pynetem/project.py	/^    def close(self):$/;"	kind:function	line:91
-close	../pynetem/topology.py	/^    def close(self):$/;"	kind:function	line:150
+close	../pynetem/topology.py	/^    def close(self):$/;"	kind:function	line:152
 cmd_func	../pynetem/console.py	/^    def cmd_func(self, *args, **kwargs):$/;"	kind:function	line:25
 config.py	../pynetem/ui/config.py	1;"	kind:file	line:1
 console.py	../pynetem/console.py	1;"	kind:file	line:1
@@ -115,21 +119,21 @@ do_stop	../pynetem/console.py	/^    def do_stop(self, arg):$/;"	kind:member	line
 docker.py	../pynetem/wrapper/node/docker.py	1;"	kind:file	line:1
 edit_topology	../pynetem/project.py	/^    def edit_topology(self):$/;"	kind:function	line:76
 format_addr	../docker/host/network-config.py	/^    def format_addr(addr_conf):$/;"	kind:function	line:45
-get_all_nodes	../pynetem/topology.py	/^    def get_all_nodes(self):$/;"	kind:member	line:101
-get_all_switches	../pynetem/topology.py	/^    def get_all_switches(self):$/;"	kind:member	line:92
+get_all_nodes	../pynetem/topology.py	/^    def get_all_nodes(self):$/;"	kind:member	line:103
+get_all_switches	../pynetem/topology.py	/^    def get_all_switches(self):$/;"	kind:member	line:94
 get_bind_addresses	../pynetem/ui/config.py	/^    def get_bind_addresses(self, service='net'):$/;"	kind:member	line:57
 get_interface_cmdline	../pynetem/wrapper/node/qemu.py	/^    def get_interface_cmdline(self):$/;"	kind:member	line:102
 get_mac_address	../pynetem/wrapper/node/qemu.py	/^    def get_mac_address(self):$/;"	kind:member	line:32
 get_memory	../pynetem/wrapper/node/qemu.py	/^    def get_memory(self):$/;"	kind:member	line:64
 get_name	../pynetem/wrapper/__init__.py	/^    def get_name(self):$/;"	kind:member	line:82
-get_name	../pynetem/wrapper/node/docker.py	/^    def get_name(self):$/;"	kind:member	line:46
+get_name	../pynetem/wrapper/node/docker.py	/^    def get_name(self):$/;"	kind:member	line:47
 get_name	../pynetem/wrapper/switch/ovs.py	/^    def get_name(self):$/;"	kind:member	line:39
-get_node	../pynetem/topology.py	/^    def get_node(self, instance_name):$/;"	kind:member	line:95
-get_pid	../pynetem/wrapper/node/docker.py	/^    def get_pid(self):$/;"	kind:member	line:49
+get_node	../pynetem/topology.py	/^    def get_node(self, instance_name):$/;"	kind:member	line:97
+get_pid	../pynetem/wrapper/node/docker.py	/^    def get_pid(self):$/;"	kind:member	line:50
 get_status	../pynetem/wrapper/__init__.py	/^    def get_status(self):$/;"	kind:member	line:130
 get_sw_type	../pynetem/wrapper/switch/ovs.py	/^    def get_sw_type(self):$/;"	kind:member	line:36
 get_sw_type	../pynetem/wrapper/switch/vde.py	/^    def get_sw_type(self):$/;"	kind:member	line:35
-get_switch	../pynetem/topology.py	/^    def get_switch(self, sw_name):$/;"	kind:member	line:86
+get_switch	../pynetem/topology.py	/^    def get_switch(self, sw_name):$/;"	kind:member	line:88
 getlist	../pynetem/ui/config.py	/^    def getlist(self, section, variable):$/;"	kind:member	line:53
 handle	../pynetem/daemon.py	/^    def handle(self):$/;"	kind:member	line:49
 instance	../pynetem/ui/config.py	/^    def instance(cls):$/;"	kind:member	line:29
@@ -153,7 +157,7 @@ load_net_config	../docker/host/network-config.py	/^def load_net_config(f_path):$
 netns_create	../pynetem/daemon.py	/^    def netns_create(self, name):$/;"	kind:member	line:87
 netns_delete	../pynetem/daemon.py	/^    def netns_delete(self, name):$/;"	kind:member	line:96
 network-config.py	../docker/host/network-config.py	1;"	kind:file	line:1
-open_shell	../pynetem/wrapper/node/docker.py	/^    def open_shell(self):$/;"	kind:member	line:96
+open_shell	../pynetem/wrapper/node/docker.py	/^    def open_shell(self):$/;"	kind:member	line:99
 open_shell	../pynetem/wrapper/node/qemu.py	/^    def open_shell(self):$/;"	kind:member	line:109
 ovs.py	../pynetem/wrapper/switch/ovs.py	1;"	kind:file	line:1
 ovs_add_port	../pynetem/daemon.py	/^    def ovs_add_port(self, sw_name, p_name):$/;"	kind:member	line:129
@@ -167,18 +171,18 @@ project.py	../pynetem/project.py	1;"	kind:file	line:1
 prompt	../pynetem/console.py	/^    prompt = '[net-emulator] '$/;"	kind:variable	line:40
 qemu.py	../pynetem/wrapper/node/qemu.py	1;"	kind:file	line:1
 qemu_bin	../pynetem/wrapper/node/qemu.py	/^    qemu_bin = "qemu-system-i386"$/;"	kind:variable	line:46
-reload	../pynetem/topology.py	/^    def reload(self):$/;"	kind:member	line:124
+reload	../pynetem/topology.py	/^    def reload(self):$/;"	kind:member	line:126
 remove_netns	../pynetem/wrapper/link.py	/^    def remove_netns(self, netns):$/;"	kind:member	line:80
 require_project	../pynetem/console.py	/^def require_project(func):$/;"	kind:function	line:23
 run	../pynetem/daemon.py	/^    def run(self):$/;"	kind:member	line:156
 run	../pynetem/utils.py	/^def run(cmd_line):$/;"	kind:function	line:24
 run_background	../pynetem/utils.py	/^def run_background(cmd_line):$/;"	kind:function	line:38
 save	../pynetem/project.py	/^    def save(self):$/;"	kind:function	line:82
-save	../pynetem/topology.py	/^    def save(self):$/;"	kind:member	line:132
-save	../pynetem/wrapper/node/docker.py	/^    def save(self):$/;"	kind:member	line:110
-save	../pynetem/wrapper/node/docker.py	/^    def save(self):$/;"	kind:member	line:158
-save	../pynetem/wrapper/node/docker.py	/^    def save(self):$/;"	kind:member	line:186
-save	../pynetem/wrapper/node/docker.py	/^    def save(self):$/;"	kind:member	line:202
+save	../pynetem/topology.py	/^    def save(self):$/;"	kind:member	line:134
+save	../pynetem/wrapper/node/docker.py	/^    def save(self):$/;"	kind:member	line:113
+save	../pynetem/wrapper/node/docker.py	/^    def save(self):$/;"	kind:member	line:165
+save	../pynetem/wrapper/node/docker.py	/^    def save(self):$/;"	kind:member	line:194
+save	../pynetem/wrapper/node/docker.py	/^    def save(self):$/;"	kind:member	line:226
 save	../pynetem/wrapper/node/qemu.py	/^    def save(self):$/;"	kind:member	line:143
 save_net_config	../docker/host/network-config.py	/^def save_net_config(f_path, all_if):$/;"	kind:function	line:44
 scripts	../setup.py	/^        scripts=["pynetem-emulator", "pynetem-daemon"],$/;"	kind:variable	line:30
@@ -186,23 +190,23 @@ set	../pynetem/ui/config.py	/^    def set(self, section, variable, value):$/;"	k
 set_ns	../pynetem/wrapper/link.py	/^    def set_ns(self, if_name, netns):$/;"	kind:member	line:59
 setup	../pynetem/daemon.py	/^    def setup(self):$/;"	kind:member	line:30
 setup.py	../setup.py	1;"	kind:file	line:1
-start	../pynetem/topology.py	/^    def start(self, instance_name):$/;"	kind:member	line:110
+start	../pynetem/topology.py	/^    def start(self, instance_name):$/;"	kind:member	line:112
 start	../pynetem/wrapper/__init__.py	/^    def start(self):$/;"	kind:member	line:101
-start	../pynetem/wrapper/node/docker.py	/^    def start(self):$/;"	kind:member	line:148
-start	../pynetem/wrapper/node/docker.py	/^    def start(self):$/;"	kind:member	line:175
-start	../pynetem/wrapper/node/docker.py	/^    def start(self):$/;"	kind:member	line:198
-start	../pynetem/wrapper/node/docker.py	/^    def start(self):$/;"	kind:member	line:67
+start	../pynetem/wrapper/node/docker.py	/^    def start(self):$/;"	kind:member	line:155
+start	../pynetem/wrapper/node/docker.py	/^    def start(self):$/;"	kind:member	line:183
+start	../pynetem/wrapper/node/docker.py	/^    def start(self):$/;"	kind:member	line:213
+start	../pynetem/wrapper/node/docker.py	/^    def start(self):$/;"	kind:member	line:69
 start	../pynetem/wrapper/switch/ovs.py	/^    def start(self):$/;"	kind:member	line:54
-startall	../pynetem/topology.py	/^    def startall(self):$/;"	kind:member	line:120
-status	../pynetem/topology.py	/^    def status(self):$/;"	kind:member	line:136
+startall	../pynetem/topology.py	/^    def startall(self):$/;"	kind:member	line:122
+status	../pynetem/topology.py	/^    def status(self):$/;"	kind:member	line:138
 stop	../pynetem/daemon.py	/^    def stop(self):$/;"	kind:member	line:164
-stop	../pynetem/topology.py	/^    def stop(self, instance_name):$/;"	kind:member	line:104
+stop	../pynetem/topology.py	/^    def stop(self, instance_name):$/;"	kind:member	line:106
 stop	../pynetem/wrapper/__init__.py	/^    def stop(self):$/;"	kind:member	line:117
-stop	../pynetem/wrapper/node/docker.py	/^    def stop(self):$/;"	kind:member	line:113
+stop	../pynetem/wrapper/node/docker.py	/^    def stop(self):$/;"	kind:member	line:116
 stop	../pynetem/wrapper/node/qemu.py	/^    def stop(self):$/;"	kind:member	line:136
 stop	../pynetem/wrapper/switch/ovs.py	/^    def stop(self):$/;"	kind:member	line:60
 stop	../pynetem/wrapper/switch/vde.py	/^    def stop(self):$/;"	kind:member	line:49
-stopall	../pynetem/topology.py	/^    def stopall(self):$/;"	kind:member	line:116
+stopall	../pynetem/topology.py	/^    def stopall(self):$/;"	kind:member	line:118
 tap_create	../pynetem/daemon.py	/^    def tap_create(self, name, user):$/;"	kind:member	line:70
 tap_delete	../pynetem/daemon.py	/^    def tap_delete(self, name):$/;"	kind:member	line:75
 topology.py	../pynetem/topology.py	1;"	kind:file	line:1

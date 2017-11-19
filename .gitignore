@@ -5,6 +5,7 @@ conf/*
 .DS_Store
 *~
 *.pyc
+*.pnet
 build*
 conf/*
 
