@@ -24,7 +24,7 @@ from pynetem.wrapper.node.docker import DOCKER_NODES
 def build_node_instance(img_dir, conf_dir, n_name, n_config):
     logging.debug("Create node instance %s" % n_name)
     if "type" in n_config:
-        nc_type = n_config["type"].split('.')
+        nc_type = n_config["type"].split('.', 1)
         n_type, n_image = "qemu", None
         if len(nc_type) == 1:
             n_image = nc_type[0]

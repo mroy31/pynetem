@@ -73,6 +73,16 @@ class NetemConsole(cmd.Cmd):
         self.current_project.save()
 
     @require_project
+    def do_check(self, arg):
+        """Check the network file"""
+        try:
+            self.current_project.topology.check()
+        except NetemError as err:
+            print(err)
+        else:
+            print("Network file is OK")
+
+    @require_project
     def do_reload(self, arg):
         """Reload the project"""
         self.current_project.topology.reload()
@@ -84,27 +94,22 @@ class NetemConsole(cmd.Cmd):
 
     @require_project
     def do_start(self, arg):
-        "Start the nodes and switches"
-        self.current_project.topology.startall()
+        "Start nodes"
+        for node in self.__get_nodes(arg):
+            node.start()
 
     @require_project
     def do_stop(self, arg):
-        "Stop the nodes and switches"
-        self.current_project.topology.stopall()
+        "Stop nodes"
+        for node in self.__get_nodes(arg):
+            node.stop()
 
     @require_project
     def do_restart(self, arg):
-        "Restart the specified node or all the network"
-        if arg.strip() != "":
-            node = self.current_project.topology.get_node(arg.strip())
-            if node is None:
-                print("ERROR: node %s does not exist" % arg)
-            else:
-                node.stop()
-                node.start()
-        else:
-            self.current_project.topology.stopall()
-            self.current_project.topology.startall()
+        "Restart nodes in the network"
+        for node in self.__get_nodes(arg):
+            node.stop()
+            node.start()
 
     @require_project
     def do_status(self, arg):
@@ -114,15 +119,21 @@ class NetemConsole(cmd.Cmd):
     @require_project
     def do_console(self, arg):
         "open a console for the given router/host"
+        for node in self.__get_nodes(arg):
+            try:
+                node.open_shell()
+            except NetemError as err:
+                print("WARNING: %s" % err)
+
+    def __get_nodes(self, arg):
         if arg == "all":
-            for node in self.current_project.topology.get_all_nodes():
-                try:
-                    node.open_shell()
-                except NetemError as err:
-                    print("WARNING: %s" % err)
+            return self.current_project.topology.get_all_nodes()
         else:
-            node = self.current_project.topology.get_node(arg)
-            if node is None:
-                print("Error: node %s not found in the network" % arg)
-                return
-            node.open_shell()
+            nodes = []
+            n_ids = arg.split()
+            for n_id in n_ids:
+                node = self.current_project.topology.get_node(arg)
+                if node is None:
+                    print("Warning: node %s not found in the network" % n_id)
+                else:
+                    nodes.append(node)

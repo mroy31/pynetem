@@ -13,6 +13,7 @@ Requirements
  * python3-configobj
  * qemu
  * vde2
+ * docker-ce
  * openvswitch-switch
 
 Installation
@@ -41,3 +42,15 @@ Then you can use pynetem-emulator to create/launch project. For example:
 Topology
 --------
 An example of topology is available in the file doc/example.net
+
+Docker Node
+-----------
+If you want to use docker, you need to build expected images.
+ * rca/quagga
+ * rca/xorp
+ * rca/host
+
+To do that, you need to use the command docker build, for example
+
+    $ cd docker/host
+    $ docker build -t rca/host .

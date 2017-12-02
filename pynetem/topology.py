@@ -19,6 +19,7 @@ import os
 import logging
 from configobj import ConfigObj
 from pynetem import NetemError
+from pynetem.check import check_network
 from pynetem.wrapper.switch import build_sw_instance
 from pynetem.wrapper.node import build_node_instance
 
@@ -36,6 +37,19 @@ class TopologieManager(object):
             self.close()
             logging.error("Unable to load net file %s: %s" % (netfile, err))
 
+    def check(self):
+        network = ConfigObj(self.netfile)
+        # check network files before start it
+        errors = check_network(network)
+        if len(errors) > 0:
+            msg = ""
+            for e_mod in errors:
+                err_msg = "\n\t".join(errors[e_mod]["errors"])
+                msg += "%s:\n\t%s\n" % (errors[e_mod]["desc"], err_msg)
+            raise NetemError("The network file has errors\n  %s" % msg)
+        
+        return network
+
     def __load_switches(self, sw_section):
         for s_name in sw_section:
             s_inst = build_sw_instance(s_name, sw_section[s_name])
@@ -45,8 +59,7 @@ class TopologieManager(object):
 
     def __load(self):
         logging.debug("Start to load topology")
-        network = ConfigObj(self.netfile)
-
+        network = self.check()
         # load switches
         if "switches" in network:
             self.__load_switches(network["switches"])
@@ -137,14 +150,9 @@ class TopologieManager(object):
 
     def status(self):
         return """
-Switches:
-\t%s
-
-Nodes:
+Status of nodes:
 \t%s
 """ % (
-        "\n\t".join(["Switch %s is %s" % (s.get_name(), s.get_status())
-                    for s in self.switches]),
         "\n\t".join(["Node %s is %s" % (n.get_name(), n.get_status())
                     for n in self.nodes])
     )
