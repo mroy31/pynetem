@@ -116,6 +116,19 @@ class TopologieManager(object):
     def get_all_nodes(self):
         return self.nodes
 
+    def capture(self, if_id):
+        if_ids = if_id.split(".")
+        if len(if_ids) == 2:
+            node_id, if_number = if_ids
+            node = self.get_node(node_id)
+            if node is None:
+                raise NetemError("Node %s does not exist" % node_id)
+            try:
+                if_number = int(if_number)
+            except (TypeError, ValueError):
+                raise NetemError("%s is not a correct identifier" % if_number)
+            node.capture(if_number)
+
     def stop(self, instance_name):
         for instance in self.nodes:
             if instance.get_name() == instance_name:

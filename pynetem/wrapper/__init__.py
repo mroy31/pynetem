@@ -27,18 +27,18 @@ from pynetem.ui.config import NetemConfig
 
 class _BaseWrapper(object):
 
-    def _command(self, cmd_line, check_output=True):
+    def _command(self, cmd_line, check_output=True, shell=False):
         args = shlex.split(cmd_line)
         if check_output:
             try:
-                result = subprocess.check_output(args)
+                result = subprocess.check_output(args, shell=shell)
             except subprocess.CalledProcessError:
                 msg = "Unable to execute command %s" % (cmd_line,)
                 logging.error(msg)
                 raise NetemError(msg)
             return result.decode("utf-8").strip("\n")
         else:
-            ret_code = subprocess.call(args)
+            ret_code = subprocess.call(args, shell=shell)
             if ret_code != 0:
                 msg = "Unable to execute command %s" % (cmd_line,)
                 logging.error(msg)

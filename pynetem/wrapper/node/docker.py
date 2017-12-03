@@ -39,6 +39,7 @@ class DockerNode(_BaseWrapper):
         self.__shell = None
         self.__image = image_name
         self.__interfaces = []
+        self.__capture_processes = {}
         self.__link_factory = NetemLinkFactory.instance()
         self.container_name = "%s.%s" % (NETEM_ID, self.name)
         # create container
@@ -110,6 +111,25 @@ class DockerNode(_BaseWrapper):
                                             stderr=subprocess.PIPE,
                                             shell=False)
 
+    def capture(self, if_number):
+        if len(self.__interfaces) > if_number:
+            if if_number in self.__capture_processes:
+                process = self.__capture_processes[if_number]
+                if process.poll() is None:
+                    raise NetemError("Capture process is already running")
+
+            if_obj = self.__interfaces[if_number]
+            if if_obj["sw_instance"] is not None:
+                if_name = "%s.%s" % (if_obj["sw_instance"].get_name(), self.name)
+                cmd_line = shlex.split("wireshark -k -i %s" % if_name)
+                self.__capture_processes[if_number] = subprocess.Popen(cmd_line)
+            else:
+                raise NetemError("%s: interface %d is not "
+                                 "plugged" % (self.name, if_number))
+        else:
+            raise NetemError("%s: interface %d does not "
+                             "exist" % (self.name, if_number))
+
     def save(self):
         raise NotImplementedError
 
@@ -119,6 +139,9 @@ class DockerNode(_BaseWrapper):
             if self.__shell is not None and self.__shell.poll() is None:
                 self.__shell.terminate()
                 self.__shell = None
+            for k in self.__capture_processes:
+                self.__capture_processes[k].terminate()
+                self.__capture_processes = {}
             for if_c in self.__interfaces:
                 if if_c["sw_instance"] is None:
                     continue

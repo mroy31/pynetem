@@ -83,6 +83,11 @@ class NetemConsole(cmd.Cmd):
             print("Network file is OK")
 
     @require_project
+    def do_capture(self, arg):
+        "Capture traffic on an interface"
+        self.current_project.topology.capture(arg)
+
+    @require_project
     def do_reload(self, arg):
         """Reload the project"""
         self.current_project.topology.reload()
@@ -137,3 +142,4 @@ class NetemConsole(cmd.Cmd):
                     print("Warning: node %s not found in the network" % n_id)
                 else:
                     nodes.append(node)
+            return nodes

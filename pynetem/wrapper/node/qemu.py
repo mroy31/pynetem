@@ -54,6 +54,7 @@ class QEMUInstance(_BaseInstance):
         self.telnet_port = node_config.as_int("console")
         self.img = os.path.join(image_dir, "%s.img" % name)
         self.interfaces = []
+        self.capture_processes = {}
 
         if not os.path.isfile(self.img):
             base_img_dir = NetemConfig.instance().get("general", "image_dir")
@@ -106,6 +107,33 @@ class QEMUInstance(_BaseInstance):
                 result.append(self.__sw_if_cmdline(i))
         return " ".join(result)
 
+    def capture(self, if_number):
+        if len(self.interfaces) > if_number:
+            if if_number in self.capture_processes:
+                process = self.capture_processes[if_number]
+                if process.poll() is None:
+                    raise NetemError("Capture process is already running")
+
+            if_obj = self.interfaces[if_number]
+            if if_obj["sw_instance"] is not None:
+                sw_type = if_obj["sw_instance"].get_sw_type()
+                if sw_type == "ovs":
+                    if_name = "%s.%d.%s" % (self.name, if_obj["vlan_id"], 
+                                            if_obj["sw_instance"].get_name())
+                elif sw_type == "vde":
+                    if_name = if_obj["sw_instance"].get_tap_name()
+                    if if_name is None:
+                        raise NetemError("Unable to launch capture, no tap"
+                                         "if exists on this switch")
+                cmd_ln = shlex.split("wireshark -k -i %s" % if_name)
+                self.capture_processes[if_number] = subprocess.Popen(cmd_ln)
+            else:
+                raise NetemError("%s: interface %d is not "
+                                 "plugged" % (self.name, if_number))
+        else:
+            raise NetemError("%s: interface %d does not "
+                             "exist" % (self.name, if_number))
+
     def open_shell(self):
         if self.shell_process is not None and self.shell_process.poll() is None:
             raise NetemError("The console is already opened")
@@ -135,6 +163,9 @@ class QEMUInstance(_BaseInstance):
 
     def stop(self):
         super(QEMUInstance, self).stop()
+        for k in self.capture_processes:
+            self.capture_processes[k].terminate()
+            self.capture_processes = {}
         for if_c in self.interfaces:
             if if_c["tap"] is not None:
                 if_c["sw_instance"].detach_interface(if_c["tap"])

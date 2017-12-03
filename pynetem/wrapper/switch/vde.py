@@ -35,6 +35,9 @@ class VdeSwitchInstance(_BaseInstance):
     def get_sw_type(self):
         return "vde"
 
+    def get_tap_name(self):
+        return self.tap_name
+
     def build_cmd_line(self):
         cmd_line = "vde_switch -M /tmp/%s.mgnt -x "\
                    "-s /tmp/%s.ctl" % (self.name, self.name)
