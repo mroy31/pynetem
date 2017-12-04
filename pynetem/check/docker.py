@@ -38,7 +38,7 @@ class DockerNodeCheck(_BaseCheck):
         return self.has_errors()
 
     def __check_image(self, name, node_type):
-        null, image = node_type.split(".")
+        null, image = node_type.split(".", 1)
         if image not in ("host", "xorp", "quagga"):
             self.add_error("%s: image %s is not valid" % (name, image))
 

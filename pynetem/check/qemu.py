@@ -48,7 +48,7 @@ class QemuNodeCheck(_BaseCheck):
         return self.has_errors()
 
     def __check_image(self, node_type):
-        null, image = node_type.split(".")
+        null, image = node_type.split(".", 1)
         img_folder = NetemConfig.instance().get("general", "image_dir")
         img_path = os.path.join(img_folder, "%s.img" % image)
         if not os.path.isfile(img_path):

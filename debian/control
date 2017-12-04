@@ -20,5 +20,8 @@ Depends: ${misc:Depends}, ${python3:Depends},
          vde2,
          openvswitch-switch,
          python3-configobj
-Description: PyNetem is network emulator working with qemu/vde
- PyNetem is a network emulator based on qemu and vde
+Recommends: docker-ce
+Description: PyNetem is network emulator working with qemu/docker
+ PyNetem is a network emulator based on 
+  * qemu or docker for node emulation
+  * vde or ovs for swith emulation
