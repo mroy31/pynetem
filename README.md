@@ -13,7 +13,7 @@ Requirements
  * python3-configobj
  * qemu
  * vde2
- * docker-ce
+ * docker-ce (optionnal)
  * openvswitch-switch
 
 Installation

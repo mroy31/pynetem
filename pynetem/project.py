@@ -79,6 +79,15 @@ config_dir = configs
                               topology_file)
         self.__command(cmd_line)
 
+    def is_topology_modified(self):
+        tmp_file = os.path.join(self.tmp_folder, TOPOLOGY_FILE)
+        with open(tmp_file) as tmp_hd:
+            tmp_content = tmp_hd.read().encode("utf-8")
+        with zipfile.ZipFile(self.prj_path, mode="r") as prj_zip:
+            with prj_zip.open(TOPOLOGY_FILE) as rec_file:
+                rec_content = rec_file.read()
+        return tmp_content != rec_content
+
     def save(self):
         with zipfile.ZipFile(self.prj_path, mode="w") as prj_zip:
             self.topology.save()

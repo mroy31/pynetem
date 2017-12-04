@@ -43,11 +43,25 @@ class NetemConsole(cmd.Cmd):
         super(NetemConsole, self).__init__()
         self.current_project = project
 
-    def do_quit(self, arg):
-        "Quit the network emulator"
+    def __quit(self):
         if self.current_project is not None:
+            if self.current_project.is_topology_modified():
+                q = input("The topology has been modified, "
+                          "are you you want to quit netem (Y/N): ")
+                while q not in ("Y", "N"):
+                    q = input("Wrong answer, expect Y or N: ")
+                if q == "N":
+                    return None
             self.current_project.close()
         return True
+
+    def do_quit(self, arg):
+        "Quit the network emulator"
+        return self.__quit()
+
+    def do_exit(self, arg):
+        "Quit the network emulator"
+        return self.__quit()
 
     def do_load(self, prj_path):
         """Load a qnet project"""
