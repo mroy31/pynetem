@@ -54,8 +54,9 @@ class _BaseWrapper(object):
 
         sock.sendall(cmd.encode("utf-8"))
         ans = sock.recv(1024).decode("utf-8").strip()
-        if ans != "OK":
+        if not ans.startswith("OK"):
             raise NetemError("Daemon returns an error: %s" % ans)
+        return ans.replace("OK ", "")
     
     def is_switch(self):
         return False

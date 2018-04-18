@@ -36,7 +36,6 @@ class DockerNode(_BaseWrapper):
         self.conf_dir = conf_dir
         self.__running = False
         self.__pid = None
-        self.__shell = None
         self.__image = image_name
         self.__interfaces = []
         self.__capture_processes = {}
@@ -53,9 +52,10 @@ class DockerNode(_BaseWrapper):
 
     def __create(self):
         logging.debug("Create docker container %s" % self.container_name)
-        self._command("docker create --privileged --cap-add=ALL --net=none "
-                      "-h %s --name %s %s" % (self.name, self.container_name, 
-                                              self.__image))
+        self._daemon_command("docker_create "
+                             "{} {} {}".format(self.name,
+                                               self.container_name,
+                                               self.__image))
 
     def add_sw_if(self, sw_instance):
         if_parms = {
@@ -70,9 +70,9 @@ class DockerNode(_BaseWrapper):
     def start(self):
         if not self.__running:
             logging.debug("Start docker container %s" % self.container_name)
-            self._command("docker start %s" % self.container_name)
-            self.__pid = self._command("docker inspect --format '{{.State.Pid}}' "
-                                       "%s" % self.container_name)
+            self._daemon_command("docker_start {}".format(self.container_name))
+            self.__pid = self._daemon_command("docker_pid "
+                                              "%s" % self.container_name)
             for if_conf in self.__interfaces:
                 if if_conf["peer"] == "switch":
                     sw_instance = if_conf["sw_instance"]
@@ -92,24 +92,16 @@ class DockerNode(_BaseWrapper):
             self.__running = True
 
     def __attach_interface(self, if_name, target_name):
-        self._command("docker exec %s ip link set %s "
-                      "name %s" % (self.container_name, if_name, target_name))
-        self._command("docker exec %s ip link set %s "
-                      "up" % (self.container_name, target_name))
+        self._daemon_command("docker_attach_interface %s %s "
+                             "%s" % (self.container_name, if_name,
+                                     target_name))
 
     def open_shell(self):
-        if self.__shell is not None and self.__shell.poll() is None:
-            raise NetemError("The console is already opened")
         if self.__running:
-            term_cmd = NetemConfig.instance().get("general", "terminal") % {
-                "title": self.name,
-                "cmd": "docker exec -it %s %s" % (self.container_name, self.SHELL)
-            }
-            args = shlex.split(term_cmd)
-            self.__shell = subprocess.Popen(args, stdin=subprocess.PIPE,
-                                            stdout=subprocess.PIPE,
-                                            stderr=subprocess.PIPE,
-                                            shell=False)
+            term_cmd = NetemConfig.instance().get("general", "terminal")
+            self._daemon_command("docker_shell %s %s %s "
+                                 "%s" % (self.container_name, self.name, 
+                                         self.SHELL, term_cmd))
 
     def capture(self, if_number):
         if len(self.__interfaces) > if_number:
@@ -120,7 +112,8 @@ class DockerNode(_BaseWrapper):
 
             if_obj = self.__interfaces[if_number]
             if if_obj["sw_instance"] is not None:
-                if_name = "%s.%s" % (if_obj["sw_instance"].get_name(), self.name)
+                if_name = "%s.%s" % (if_obj["sw_instance"].get_name(),
+                                     self.name)
                 cmd_line = shlex.split("wireshark -k -i %s" % if_name)
                 self.__capture_processes[if_number] = subprocess.Popen(cmd_line)
             else:
@@ -136,9 +129,6 @@ class DockerNode(_BaseWrapper):
     def stop(self):
         if self.__running:
             logging.debug("Stop docker container %s" % self.container_name)
-            if self.__shell is not None and self.__shell.poll() is None:
-                self.__shell.terminate()
-                self.__shell = None
             for k in self.__capture_processes:
                 self.__capture_processes[k].terminate()
                 self.__capture_processes = {}
@@ -148,21 +138,20 @@ class DockerNode(_BaseWrapper):
                 if_c["sw_instance"].detach_interface(if_c["left_if"])
                 self.__link_factory.delete_link(if_c["left_if"],
                                                 if_c["right_if"])
-            self._command("docker stop %s" % self.container_name)
+            self._daemon_command("docker_stop {}".format(self.container_name))
             self.__pid = None
             self.__running = False
 
     def clean(self):
         self.stop()
-        self._command("docker rm %s" % self.container_name)
+        self._daemon_command("docker_rm {}".format(self.container_name))
         self.__interfaces = []
 
-    def _docker_exec(self, cmd, interactive=False, check_output=True):
-        cmd_line = "docker exec"
-        if interactive:
-            cmd_line += " -i"
-        cmd_line += " %s %s" % (self.container_name, cmd)
-        self._command(cmd_line, check_output=check_output)
+    def _docker_exec(self, cmd):
+        self._daemon_command("docker_exec %s %s" % (self.container_name, cmd))
+
+    def _docker_cp(self, source, dest):
+        self._daemon_command("docker_cp %s %s" % (source, dest))
 
 
 class HostNode(DockerNode):
@@ -180,16 +169,14 @@ class HostNode(DockerNode):
         # set network config if available
         conf_path = self.__conf_path()
         if os.path.isfile(conf_path):
-            self._command("docker cp %s %s:%s" % (self.__conf_path(),
-                                                  self.container_name,
-                                                  self.CONFIG_FILE))
+            dest = "%s:%s" % (self.container_name, self.CONFIG_FILE)
+            self._docker_cp(conf_path, dest)
             self._docker_exec("network-config.py -l %s" % self.CONFIG_FILE)
 
     def save(self):
         self._docker_exec("network-config.py -s %s" % self.CONFIG_FILE)
-        self._command("docker cp %s:%s "
-                      "%s" % (self.container_name, self.CONFIG_FILE,
-                              self.__conf_path()))
+        source = "%s:%s" % (self.container_name, self.CONFIG_FILE)
+        self._docker_cp(source, self.__conf_path())
 
 
 class XorpRouter(DockerNode):
@@ -208,16 +195,15 @@ class XorpRouter(DockerNode):
         # load xorp config if available and start xorp
         conf_path = self.__conf_path()
         if os.path.isfile(conf_path):
-            self._command("docker cp %s %s:%s" % (self.__conf_path(),
-                                                  self.container_name,
-                                                  self.CONFIG_FILE))
+            dest = "%s:%s" % (self.container_name, self.CONFIG_FILE)
+            self._docker_cp(conf_path, dest)
         # then restart xorp processes
         self._docker_exec("/etc/init.d/xorp restart")
 
     def save(self):
         self._docker_exec("xorpsh -c 'configure' -c 'save /tmp/xorp.conf'")
-        self._command("docker cp %s:/tmp/xorp.conf "
-                      "%s" % (self.container_name, self.__conf_path()))
+        source = "%s:/tmp/xorp.conf" % self.container_name
+        self._docker_cp(source, self.__conf_path())
 
 
 class QuaggaRouter(DockerNode):
@@ -237,16 +223,14 @@ class QuaggaRouter(DockerNode):
         conf_path = self.__conf_path()
         if os.path.isfile(conf_path):
             self._docker_exec("supervisorctl start all:")
-            self._command("docker cp %s %s:%s" % (conf_path,
-                                                  self.container_name,
-                                                  self.TMP_CONF))
+            dest = "%s:%s" % (self.container_name, self.TMP_CONF)
+            self._docker_cp(conf_path, dest)
             self._docker_exec("load-quagga.sh %s" % self.TMP_CONF)
 
     def save(self):
         self._docker_exec("save-quagga.sh %s" % self.TMP_CONF)
-        self._command("docker cp %s:%s "
-                      "%s" % (self.container_name, self.TMP_CONF, 
-                              self.__conf_path()))
+        source = "%s:%s" % (self.container_name, self.TMP_CONF)
+        self._docker_cp(source, self.__conf_path())
 
 
 DOCKER_NODES = {

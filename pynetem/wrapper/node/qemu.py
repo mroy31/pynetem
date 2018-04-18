@@ -118,7 +118,7 @@ class QEMUInstance(_BaseInstance):
             if if_obj["sw_instance"] is not None:
                 sw_type = if_obj["sw_instance"].get_sw_type()
                 if sw_type == "ovs":
-                    if_name = "%s.%d.%s" % (self.name, if_obj["vlan_id"], 
+                    if_name = "%s.%d.%s" % (self.name, if_obj["vlan_id"],
                                             if_obj["sw_instance"].get_name())
                 elif sw_type == "vde":
                     if_name = if_obj["sw_instance"].get_tap_name()
@@ -142,10 +142,12 @@ class QEMUInstance(_BaseInstance):
             "cmd": "telnet localhost %d" % self.telnet_port,
         }
         args = shlex.split(term_cmd)
-        self.shell_process = subprocess.Popen(args, stdin=subprocess.PIPE,
-                                              stdout=subprocess.PIPE,
-                                              stderr=subprocess.PIPE,
-                                              shell=False)
+        self.shell_process = subprocess.Popen(
+            args,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=False)
 
     def build_cmd_line(self):
         noacpi = "-no-acpi"

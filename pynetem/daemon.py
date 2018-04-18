@@ -15,6 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import re
 import os
 import threading
 from socketserver import UnixStreamServer, BaseRequestHandler
@@ -31,19 +32,28 @@ class NetemDaemonHandler(BaseRequestHandler):
         BaseRequestHandler.setup(self)
         self.config = NetemConfig()
         self.__cmd_list = {
-            "tap_create": {"args": 2},
-            "tap_delete": {"args": 1},
-            "netns_create": {"args": 1},
-            "netns_delete": {"args": 1},
-            "link_create": {"args": 2},
-            "link_delete": {"args": 1},
-            "link_netns": {"args": 2},
-            "link_set_vtap": {"args": 2},
-            "ovs_create": {"args": 1},
-            "ovs_delete": {"args": 1},
-            "ovs_add_port": {"args": 2},
-            "ovs_add_mirror_port": {"args": 2},
-            "ovs_del_port": {"args": 2},
+            "tap_create": "^tap_create (\S+) (\S+)$",
+            "tap_delete": "^tap_delete (\S+)$",
+            "netns_create": "^netns_create (\S+)$",
+            "netns_delete": "^netns_delete (\S+)$",
+            "link_create": "^link_create (\S+) (\S+)$",
+            "link_delete": "^link_delete (\S+)$",
+            "link_netns": "^link_netns (\S+) (\S+)$",
+            "link_set_vtap": "^link_set_vtap (\S+) (\S+)$",
+            "ovs_create": "^ovs_create (\S+)$",
+            "ovs_delete": "^ovs_delete (\S+)$",
+            "ovs_add_port": "^ovs_add_port (\S+) (\S+)$",
+            "ovs_add_mirror_port": "^ovs_add_mirror_port (\S+) (\S+)$",
+            "ovs_del_port": "^ovs_del_port (\S+) (\S+)$",
+            "docker_create": "^docker_create (\S+) (\S+) (\S+)$",
+            "docker_start": "^docker_start (\S+)$",
+            "docker_stop": "^docker_stop (\S+)$",
+            "docker_rm": "^docker_rm (\S+)$",
+            "docker_attach_interface": "^docker_attach_interface (\S+) (\S+) (\S+)$",
+            "docker_pid": "^docker_pid (\S+)$",
+            "docker_cp": "^docker_cp (\S+) (\S+)$",
+            "docker_exec": "^docker_exec (\S+) (.+)$",
+            "docker_shell": "^docker_shell (\S+) (\S+) (\S+) (.+)$",
         }
 
     def handle(self):
@@ -51,21 +61,80 @@ class NetemDaemonHandler(BaseRequestHandler):
         logging.debug("Receive data: %s" % cmd)
 
         try:
-            cmd_args = cmd.split()
-            if cmd_args[0] not in self.__cmd_list:
+            cmd_name = cmd.split()[0]
+            if cmd_name not in self.__cmd_list:
                 raise NetemError("Unknown command %s" % cmd)
-            cmd_infos = self.__cmd_list[cmd_args[0]]
-            # verify argument number
-            if len(cmd_args[1:]) != cmd_infos["args"]:
+            cmd_regexp = self.__cmd_list[cmd_name]
+            # verify arguments
+            match_obj = re.match(cmd_regexp, cmd)
+            if match_obj is None:
                 raise NetemError("Wrong number of args for "
-                                 "command %s" % cmd_args[0])
+                                 "command %s" % cmd_name)
             # execute command
-            getattr(self, cmd_args[0])(*cmd_args[1:])
+            ret = getattr(self, cmd_name)(*match_obj.groups())
         except NetemError as err:
             msg = "ERROR: %s" % err
             self.request.sendall(msg.encode("utf-8"))
         else:
-            self.request.sendall("OK".encode("utf-8"))
+            ans = "OK"
+            if ret is not None:
+                ans += " %s" % ret
+            self.request.sendall(ans.encode("utf-8"))
+
+    def docker_create(self, name, container_name, image):
+        logging.debug("Create docker container %s" % container_name)
+        self.__command("docker create --privileged --cap-add=ALL --net=none "
+                       "-h %s --name %s %s" % (name, container_name, image))
+
+    def docker_attach_interface(self, container_name, if_name, target_name):
+        logging.debug("Docker : attach if %s to container "
+                      "%s" % (if_name, container_name))
+        self.__command("docker exec %s ip link set %s "
+                       "name %s" % (container_name, if_name, target_name))
+        self.__command("docker exec %s ip link set %s "
+                       "up" % (container_name, target_name))
+
+    def docker_start(self, container_name):
+        logging.debug("Start docker container %s" % container_name)
+        self.__command("docker start %s" % container_name)
+
+    def docker_stop(self, container_name):
+        logging.debug("Stop docker container %s" % container_name)
+        # before stop shell if exist
+        if container_name in self.__docker_shells:
+            ps = self.__docker_shells[container_name]
+            if ps.poll() is None:
+                ps.terminate()
+            del self.__docker_shells[container_name]
+        self.__command("docker stop %s" % container_name)
+
+    def docker_rm(self, container_name):
+        logging.debug("Delete docker container %s" % container_name)
+        self.__command("docker rm %s" % container_name)
+
+    def docker_pid(self, container_name):
+        logging.debug("Get PID of docker container %s" % container_name)
+        pid = self.__command("docker inspect --format '{{.State.Pid}}' "
+                             "%s" % container_name, check_output=True)
+        return pid
+
+    def docker_cp(self, source, dest):
+        logging.debug("Docker cp from %s to %s" % (source, dest))
+        self.__command("docker cp %s %s" % (source, dest))
+
+    def docker_exec(self, container_name, cmd_line):
+        logging.debug("Docker %s : exec %s" % (container_name, cmd_line))
+        self.__command("docker exec %s %s" % (container_name, cmd_line))
+
+    def docker_shell(self, c_name, name, shell, term_cmd):
+        logging.debug("Docker open shell for container %s" % c_name)
+        term_cmd = term_cmd % {
+            "title": name,
+            "cmd": "docker exec -it %s %s" % (c_name, shell)
+        }
+        args = shlex.split(term_cmd)
+        subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, shell=False)
 
     def tap_create(self, name, user):
         logging.debug("Create tap %s" % name)
@@ -135,13 +204,22 @@ class NetemDaemonHandler(BaseRequestHandler):
         logging.debug("Delete port %s from switch %s" % (p_name, sw_name))
         self.__command("ovs-vsctl del-port %s %s" % (sw_name, p_name))
 
-    def __command(self, cmd_line, shell=False):
+    def __command(self, cmd_line, check_output=False, shell=False):
         args = shlex.split(cmd_line)
-        ret = subprocess.call(args, shell=shell)
-        if ret != 0:
-            msg = "Unable to excecute command %s" % (cmd_line,)
-            logging.error(msg)
-            raise NetemError(msg)
+        if check_output:
+            try:
+                result = subprocess.check_output(args, shell=shell)
+            except subprocess.CalledProcessError:
+                msg = "Unable to execute command %s" % (cmd_line,)
+                logging.error(msg)
+                raise NetemError(msg)
+            return result.decode("utf-8").strip("\n")
+        else:
+            ret = subprocess.call(args, shell=shell)
+            if ret != 0:
+                msg = "Unable to excecute command %s" % (cmd_line,)
+                logging.error(msg)
+                raise NetemError(msg)
 
 
 class NetemDaemonThread(threading.Thread):
