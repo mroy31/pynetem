@@ -49,6 +49,11 @@ if __name__ == "__main__":
     log_level = options.debug and logging.DEBUG or logging.INFO
     logging.basicConfig(format=log_format, level=log_level)
 
+    # test the connection with the daemon
+    s_name = config.get("general", "daemon_socket")
+    if not os.path.exists(s_name):
+        sys.exit("Unable to connect with the daemon, we have to quit")
+
     project = None
     if len(args) == 1:
         prj_path = args[0]

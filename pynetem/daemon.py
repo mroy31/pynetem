@@ -22,6 +22,7 @@ from socketserver import UnixStreamServer, BaseRequestHandler
 import subprocess
 import logging
 import shlex
+from pynetem import __version__
 from pynetem import NetemError
 from pynetem.ui.config import NetemConfig
 
@@ -32,6 +33,7 @@ class NetemDaemonHandler(BaseRequestHandler):
         BaseRequestHandler.setup(self)
         self.config = NetemConfig()
         self.__cmd_list = {
+            "version": "^version$",
             "tap_create": "^tap_create (\S+) (\S+)$",
             "tap_delete": "^tap_delete (\S+)$",
             "netns_create": "^netns_create (\S+)$",
@@ -81,6 +83,9 @@ class NetemDaemonHandler(BaseRequestHandler):
                 ans += " %s" % ret
             self.request.sendall(ans.encode("utf-8"))
 
+    def version(self):
+        return __version__
+
     def docker_create(self, name, container_name, image):
         logging.debug("Create docker container %s" % container_name)
         self.__command("docker create --privileged --cap-add=ALL --net=none "
@@ -100,12 +105,6 @@ class NetemDaemonHandler(BaseRequestHandler):
 
     def docker_stop(self, container_name):
         logging.debug("Stop docker container %s" % container_name)
-        # before stop shell if exist
-        if container_name in self.__docker_shells:
-            ps = self.__docker_shells[container_name]
-            if ps.poll() is None:
-                ps.terminate()
-            del self.__docker_shells[container_name]
         self.__command("docker stop %s" % container_name)
 
     def docker_rm(self, container_name):

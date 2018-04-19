@@ -14,7 +14,7 @@ Requirements
  * qemu
  * vde2
  * docker-ce (optionnal)
- * openvswitch-switch
+ * openvswitch-switch (optionnal)
 
 Installation
 ------------
@@ -54,3 +54,6 @@ To do that, you need to use the command docker build, for example
 
     $ cd docker/host
     $ docker build -t rca/host .
+
+Or, if you want to build all the docker image, you can use the script 
+build.sh available in the docker directory.
