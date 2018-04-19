@@ -31,6 +31,7 @@ def require_project(func):
         except NetemError as err:
             print("ERROR: %s" % err)
     cmd_func.__name__ = func.__name__
+    cmd_func.__doc__ = func.__doc__
 
     return cmd_func
 
@@ -98,7 +99,7 @@ class NetemConsole(cmd.Cmd):
 
     @require_project
     def do_capture(self, arg):
-        "Capture traffic on an interface"
+        """Capture traffic on an interface"""
         self.current_project.topology.capture(arg)
 
     @require_project
@@ -108,36 +109,36 @@ class NetemConsole(cmd.Cmd):
 
     @require_project
     def do_edit(self, arg):
-        "Edit the topology"""
+        """Edit the topology"""
         self.current_project.edit_topology()
 
     @require_project
     def do_start(self, arg):
-        "Start nodes"
+        """Start nodes, you can specify node name or 'all'"""
         for node in self.__get_nodes(arg):
             node.start()
 
     @require_project
     def do_stop(self, arg):
-        "Stop nodes"
+        """Stop nodes, you can specify node name or 'all'"""
         for node in self.__get_nodes(arg):
             node.stop()
 
     @require_project
     def do_restart(self, arg):
-        "Restart nodes in the network"
+        """Restart nodes in the network"""
         for node in self.__get_nodes(arg):
             node.stop()
             node.start()
 
     @require_project
     def do_status(self, arg):
-        "Display routeur/host status"
+        """Display routeur/host status"""
         print(self.current_project.topology.status())
 
     @require_project
     def do_console(self, arg):
-        "open a console for the given router/host"
+        """Open a console for the given router/host"""
         for node in self.__get_nodes(arg):
             try:
                 node.open_shell()

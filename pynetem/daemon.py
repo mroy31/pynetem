@@ -159,7 +159,8 @@ class NetemDaemonHandler(BaseRequestHandler):
         else:
             if not os.path.isdir("/var/run/netns"):
                 os.mkdir("/var/run/netns")
-            self.__command("ln -s /proc/%s/ns/net /var/run/netns/%s" % (name, name))
+            self.__command("ln -s /proc/%s/ns/net "
+                           "/var/run/netns/%s" % (name, name))
 
     def netns_delete(self, name):
         logging.debug("Delete netns %s" % name)
