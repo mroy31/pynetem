@@ -24,15 +24,25 @@ from pynetem.ui.config import NetemConfig
 from pynetem.project import NetemProject
 from pynetem.console import NetemConsole
 from pynetem import NetemError
+from pynetem import __version__
 
 
 usage = "usage: %prog [options] <network file>"
 parser = OptionParser(usage=usage)
+parser.set_defaults(debug=False, conffile=None, version=False)
 parser.add_option("-c", "--conf-file", type="string", dest="conffile",
                   metavar="FILE", help="Specify a custom conf file")
 parser.add_option("-d", "--debug", action="store_true", dest="debug",
                   help="Log more debug informations")
+parser.add_option("-v", "--version", action="store_true", dest="version",
+                  help="Log more debug informations")
 (options, args) = parser.parse_args()
+
+# if asked, show version and quit
+if options.version:
+    print(__version__)
+    sys.exit()
+
 # add custom config parms
 if options.conffile:
     if os.path.isfile(options.conffile):
