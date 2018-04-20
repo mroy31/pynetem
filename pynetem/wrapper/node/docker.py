@@ -98,10 +98,16 @@ class DockerNode(_BaseWrapper):
 
     def open_shell(self):
         if self.__running:
+            display, xauth = ":0.0", "null"
+            if "DISPLAY" in os.environ:
+                display = os.environ["DISPLAY"]    
+            if "XAUTHORITY" in os.environ:
+                xauth = os.environ["XAUTHORITY"]    
+
             term_cmd = NetemConfig.instance().get("general", "terminal")
-            self._daemon_command("docker_shell %s %s %s "
-                                 "%s" % (self.container_name, self.name, 
-                                         self.SHELL, term_cmd))
+            self._daemon_command("docker_shell %s %s %s %s %s "
+                                 "%s" % (self.container_name, self.name,
+                                         self.SHELL, display, xauth, term_cmd))
 
     def capture(self, if_number):
         if len(self.__interfaces) > if_number:

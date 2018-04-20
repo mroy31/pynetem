@@ -55,7 +55,7 @@ class NetemDaemonHandler(BaseRequestHandler):
             "docker_pid": "^docker_pid (\S+)$",
             "docker_cp": "^docker_cp (\S+) (\S+)$",
             "docker_exec": "^docker_exec (\S+) (.+)$",
-            "docker_shell": "^docker_shell (\S+) (\S+) (\S+) (.+)$",
+            "docker_shell": "^docker_shell (\S+) (\S+) (\S+) (\S+) (\S+) (.+)$",
         }
 
     def handle(self):
@@ -125,15 +125,18 @@ class NetemDaemonHandler(BaseRequestHandler):
         logging.debug("Docker %s : exec %s" % (container_name, cmd_line))
         self.__command("docker exec %s %s" % (container_name, cmd_line))
 
-    def docker_shell(self, c_name, name, shell, term_cmd):
+    def docker_shell(self, c_name, name, shell, display, xauth, term_cmd):
         logging.debug("Docker open shell for container %s" % c_name)
         term_cmd = term_cmd % {
             "title": name,
             "cmd": "docker exec -it %s %s" % (c_name, shell)
         }
         args = shlex.split(term_cmd)
+        env = {"DISPLAY": display}
+        if xauth != "null":
+            env["XAUTHORITY"] = xauth
         subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, shell=False)
+                         stderr=subprocess.PIPE, shell=False, env=env)
 
     def tap_create(self, name, user):
         logging.debug("Create tap %s" % name)
