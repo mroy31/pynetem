@@ -79,6 +79,11 @@ config_dir = configs
                               topology_file)
         self.__command(cmd_line)
 
+    def view_topology(self):
+        topology_file = os.path.join(self.tmp_folder, TOPOLOGY_FILE)
+        with open(topology_file) as t_hd:
+            print(t_hd.read())
+
     def is_topology_modified(self):
         tmp_file = os.path.join(self.tmp_folder, TOPOLOGY_FILE)
         with open(tmp_file) as tmp_hd:

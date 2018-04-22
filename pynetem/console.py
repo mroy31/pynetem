@@ -113,6 +113,11 @@ class NetemConsole(cmd.Cmd):
         self.current_project.edit_topology()
 
     @require_project
+    def do_view(self, arg):
+        """View the topology"""
+        self.current_project.view_topology()
+
+    @require_project
     def do_start(self, arg):
         """Start nodes, you can specify node name or 'all'"""
         for node in self.__get_nodes(arg):
