@@ -28,6 +28,12 @@ class CommonCheck(_BaseCheck):
         return "Global check"
 
     def check(self, network):
+        # check config
+        for key in ("image_dir", "config_dir"):
+            if key not in network["config"]:
+                self.add_error("key %s is mandatory in the config part" % key)
+
+        # check nodes
         for n_name in network["nodes"]:
             if "type" not in network["nodes"][n_name]:
                 self.add_error("You do not specify type for node %s" % n_name)
@@ -36,6 +42,7 @@ class CommonCheck(_BaseCheck):
                 if not re.match("^(qemu|docker)\.\S+$", n_type):
                     self.add_error("Node %s has wrong type" % n_name)
 
+        # check switches
         for s_name in network["switches"]:
             if "type" not in network["switches"][s_name]:
                 self.add_error("You do not specify type for "

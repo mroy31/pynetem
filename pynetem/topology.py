@@ -128,6 +128,8 @@ class TopologieManager(object):
             except (TypeError, ValueError):
                 raise NetemError("%s is not a correct identifier" % if_number)
             node.capture(if_number)
+        else:
+            logging.warning("if_name must follow the form <host>.<if_number>")
 
     def stop(self, instance_name):
         for instance in self.nodes:
