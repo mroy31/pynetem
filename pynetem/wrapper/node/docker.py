@@ -105,6 +105,14 @@ class DockerNode(_BaseWrapper):
             raise NetemError("%s: interface %d does not "
                              "exist" % (self.name, if_number))
 
+    def set_if_state(self, if_number, state):
+        if len(self.__interfaces) > if_number:
+            if_name = "eth%s" % if_number
+            self._docker_exec("ip link set {} {}".format(if_name, state))
+        else:
+            raise NetemError("%s: interface %d does not "
+                             "exist" % (self.name, if_number))
+
     def save(self):
         raise NotImplementedError
 

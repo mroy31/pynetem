@@ -172,10 +172,11 @@ class NetemConsole(cmd.Cmd):
             except NetemError as err:
                 print("WARNING: %s" % err)
 
-    @netmem_cmd(reg_exp="^(\S+) (up|down)$", require_project=True)
+    @netmem_cmd(reg_exp="^(\S+\.[0-9]+) (up|down)$", require_project=True)
     def do_ifstate(self, if_name, state):
         """Enable/disable a node interface. The ifname have to 
-        follow this syntax : <node_id>.<if_name>"""
+        follow this syntax : <node_id>.<if_number>"""
+        self.current_project.topology.set_if_state(if_name, state)
 
     def close(self):
         if self.current_project is not None:

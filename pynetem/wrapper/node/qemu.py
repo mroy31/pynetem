@@ -132,6 +132,9 @@ class QEMUInstance(_BaseInstance):
             raise NetemError("%s: interface %d does not "
                              "exist" % (self.name, if_number))
 
+    def set_if_state(self, if_number, state):
+        raise NetemError("ifstate command is not supported for qemu nodes.")
+
     def open_shell(self):
         if self.shell_process is not None and self.shell_process.poll() is None:
             raise NetemError("The console is already opened")

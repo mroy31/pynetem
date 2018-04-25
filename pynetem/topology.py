@@ -117,19 +117,12 @@ class TopologieManager(object):
         return self.nodes
 
     def capture(self, if_id):
-        if_ids = if_id.split(".")
-        if len(if_ids) == 2:
-            node_id, if_number = if_ids
-            node = self.get_node(node_id)
-            if node is None:
-                raise NetemError("Node %s does not exist" % node_id)
-            try:
-                if_number = int(if_number)
-            except (TypeError, ValueError):
-                raise NetemError("%s is not a correct identifier" % if_number)
-            node.capture(if_number)
-        else:
-            logging.warning("if_name must follow the form <host>.<if_number>")
+        node, if_number = self.__get_node_if(if_id)
+        node.capture(if_number)
+
+    def set_if_state(self, if_id, state):
+        node, if_number = self.__get_node_if(if_id)
+        node.set_if_state(if_number, state)
 
     def stop(self, instance_name):
         for instance in self.nodes:
@@ -174,3 +167,18 @@ Status of nodes:
         self.stopall()
         for node in self.nodes:
             node.clean()
+
+    def __get_node_if(self, if_id):
+        if_ids = if_id.split(".")
+        if len(if_ids) == 2:
+            node_id, if_number = if_ids
+            node = self.get_node(node_id)
+            if node is None:
+                raise NetemError("Node %s does not exist" % node_id)
+            try:
+                if_number = int(if_number)
+            except (TypeError, ValueError):
+                raise NetemError("%s is not a correct identifier" % if_number)
+        else:
+            logging.warning("if_name must follow the form <host>.<if_number>")
+        return node, if_number
