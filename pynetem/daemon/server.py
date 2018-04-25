@@ -51,6 +51,7 @@ CMD_LIST = {
     "docker_cp": "^docker_cp (\S+) (\S+)$",
     "docker_exec": "^docker_exec (\S+) (.+)$",
     "docker_shell": "^docker_shell (\S+) (\S+) (\S+) (\S+) (\S+) (.+)$",
+    "docker_capture": "^docker_capture (\S+) (\S+) (\S+) (\S+)$",
     "clean": "^clean (\S+)$",
 }
 
@@ -142,11 +143,17 @@ class NetemDaemonHandler(BaseRequestHandler):
             "cmd": "docker exec -it %s %s" % (c_name, shell)
         }
         args = shlex.split(term_cmd)
-        env = {"DISPLAY": display}
-        if xauth != "null":
-            env["XAUTHORITY"] = xauth
         subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, shell=False, env=env)
+                         stderr=subprocess.PIPE, shell=False,
+                         env=self.__set_x11_env(display, xauth))
+
+    def docker_capture(self, display, xauth, c_name, if_name):
+        logging.debug("Docker launch capture on if %s:%s" % (c_name, if_name))
+        cmd = "/bin/bash -c 'docker exec {0} tcpdump -s 0 -U -w - -i {1} "\
+              "2>/dev/null | wireshark -o 'gui.window_title:{1}@{0}' "\
+              "-k -i - &'".format(c_name, if_name)
+        subprocess.call(shlex.split(cmd), 
+                        env=self.__set_x11_env(display, xauth))
 
     def tap_create(self, name, user):
         logging.debug("Create tap %s" % name)
@@ -261,6 +268,12 @@ class NetemDaemonHandler(BaseRequestHandler):
     def __call(self, cmd_line):
         args = shlex.split(cmd_line)
         return subprocess.call(args)
+
+    def __set_x11_env(self, display, xauth):
+        env = {"DISPLAY": display}
+        if xauth != "null":
+            env["XAUTHORITY"] = xauth
+        return env
 
 
 class NetemDaemonThread(threading.Thread):

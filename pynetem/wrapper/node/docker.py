@@ -16,8 +16,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import os
-import subprocess
-import shlex
 import logging
 from pynetem import NetemError
 from pynetem.ui.config import NetemConfig
@@ -92,32 +90,17 @@ class DockerNode(_BaseWrapper):
 
     def open_shell(self):
         if self.__running:
-            display, xauth = ":0.0", "null"
-            if "DISPLAY" in os.environ:
-                display = os.environ["DISPLAY"]    
-            if "XAUTHORITY" in os.environ:
-                xauth = os.environ["XAUTHORITY"]    
-
+            display, xauth = self._get_x11_env()
             term_cmd = NetemConfig.instance().get("general", "terminal")
             self.daemon.docker_shell(self.container_name, self.name,
                                      self.SHELL, display, xauth, term_cmd)
 
     def capture(self, if_number):
         if len(self.__interfaces) > if_number:
-            if if_number in self.__capture_processes:
-                process = self.__capture_processes[if_number]
-                if process.poll() is None:
-                    raise NetemError("Capture process is already running")
-
-            if_obj = self.__interfaces[if_number]
-            if if_obj["sw_instance"] is not None:
-                if_name = "%s.%s" % (if_obj["sw_instance"].get_name(),
-                                     self.name)
-                cmd_l = shlex.split("wireshark -k -i %s" % if_name)
-                self.__capture_processes[if_number] = subprocess.Popen(cmd_l)
-            else:
-                raise NetemError("%s: interface %d is not "
-                                 "plugged" % (self.name, if_number))
+            if_name = "eth%s" % if_number
+            display, xauth = self._get_x11_env()
+            self.daemon.docker_capture(display, xauth,
+                                       self.container_name, if_name)
         else:
             raise NetemError("%s: interface %d does not "
                              "exist" % (self.name, if_number))
@@ -154,6 +137,14 @@ class DockerNode(_BaseWrapper):
 
     def _docker_cp(self, source, dest):
         self.daemon.docker_cp(source, dest)
+
+    def _get_x11_env(self):
+        display, xauth = ":0.0", "null"
+        if "DISPLAY" in os.environ:
+            display = os.environ["DISPLAY"]    
+        if "XAUTHORITY" in os.environ:
+            xauth = os.environ["XAUTHORITY"]    
+        return display, xauth
 
 
 class HostNode(DockerNode):
