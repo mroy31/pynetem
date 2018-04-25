@@ -14,22 +14,3 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
-from distutils.core import setup
-import pynetem
-
-
-if __name__ == "__main__":
-    setup(
-        name="pynetem", version=pynetem.__version__,
-        url="http://mroy31.dyndns.org/~roy/repositories.git/pynetem",
-        description="Network simulator based on qemu/docker and vde/ovs",
-        author="Mikael Royer",
-        author_email="mickael.royer@recherche.enac.fr",
-        license="GNU GPL v2",
-        scripts=["pynetem-emulator", "pynetem-daemon"],
-        packages=["pynetem", "pynetem.check", "pynetem.daemon",
-                  "pynetem.wrapper", "pynetem.wrapper.node",
-                  "pynetem.wrapper.switch", "pynetem.ui"],
-        package_data={'pynetem.ui': ['defaults.conf']},
-    )

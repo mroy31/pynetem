@@ -22,17 +22,20 @@ import subprocess
 import zipfile
 import tempfile
 import shutil
-from pynetem import NetemError
+import random
+import string
+from pynetem import NetemError, NETEM_ID
 from pynetem.ui.config import NetemConfig
 from pynetem.topology import TopologieManager
 
+random.seed()
 TOPOLOGY_FILE = "network.ini"
 
 
 class NetemProject(object):
 
     @classmethod
-    def create(cls, prj_path):
+    def create(cls, daemon, prj_path):
         if os.path.isfile(prj_path):
             raise NetemError("Project %s already exist" % prj_path)
         _, ext = os.path.splitext(prj_path)
@@ -49,29 +52,41 @@ config_dir = configs
 
 [switches]
 """)
-        return cls(prj_path)
+        return cls(daemon, prj_path)
 
     @classmethod
-    def load(cls, prj_path):
+    def load(cls, daemon, prj_path):
         if not os.path.isfile(prj_path):
             raise NetemError("Project %s does not exist" % prj_path)
         _, ext = os.path.splitext(prj_path)
         if ext.lower() != ".pnet" or not zipfile.is_zipfile(prj_path):
             raise NetemError("Project %s has wrong ext "
                              "or is not a zip file" % prj_path)
-        return cls(prj_path)
+        return cls(daemon, prj_path)
 
-    def __init__(self, prj_path):
+    def __init__(self, daemon, prj_path):
+        # set a random projet id
+        rnd_str = "".join(random.choices(string.ascii_lowercase, k=6))
+        self.__id = "%s%s" % (NETEM_ID, rnd_str,)
+
+        self.daemon = daemon
         self.prj_path = prj_path
         self.tmp_folder = tempfile.mkdtemp(prefix="netem")
         with zipfile.ZipFile(prj_path) as prj_zip:
             prj_zip.extractall(path=self.tmp_folder)
 
+        # init topology
         topology_file = os.path.join(self.tmp_folder, TOPOLOGY_FILE)
         if not os.path.isfile(topology_file):
             raise NetemError("Project %s does not contain "
                              "a topology file" % prj_path)
-        self.topology = TopologieManager(topology_file)
+        self.topology = TopologieManager(self.__id, topology_file)
+
+    def get_id(self):
+        return self.__id
+
+    def load_topology(self):
+        self.topology.load()
 
     def edit_topology(self):
         topology_file = os.path.join(self.tmp_folder, TOPOLOGY_FILE)

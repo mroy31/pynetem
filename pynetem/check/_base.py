@@ -46,10 +46,19 @@ class _BaseCheck(object):
             if if_name not in node:
                 self.add_error("%s: %s is not present" % (n_name, if_name))
                 continue
+
             sw_id = node[if_name]
             if sw_id != "__null__" and sw_id not in network["switches"]:
                 self.add_error("%s: switch %s does not "
                                "exist" % (n_name, sw_id))
+                continue
+
+            if node["type"].startswith("docker.") and sw_id != "__null__":
+                # only ovs switch is supported
+                sw = network["switches"][sw_id]
+                if sw["type"] != "ovs":
+                    self.add_error("%s:%s -> docker node can only connect "
+                                   "with ovs switch" % (n_name, if_name))
 
     def check_args(self, name, node, args_dict):
         for key in args_dict:

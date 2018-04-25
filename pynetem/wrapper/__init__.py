@@ -18,14 +18,16 @@
 import threading
 import subprocess
 import shlex
-import socket
 import logging
 import time
 from pynetem import NetemError
-from pynetem.ui.config import NetemConfig
+from pynetem.daemon.client import NetemDaemonClient
 
 
 class _BaseWrapper(object):
+
+    def __init__(self):
+        self.daemon = NetemDaemonClient.instance()
 
     def _command(self, cmd_line, check_output=True, shell=False):
         args = shlex.split(cmd_line)
@@ -43,20 +45,6 @@ class _BaseWrapper(object):
                 msg = "Unable to execute command %s" % (cmd_line,)
                 logging.error(msg)
                 raise NetemError(msg)
-
-    def _daemon_command(self, cmd):
-        s_name = NetemConfig.instance().get("general", "daemon_socket")
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        try:
-            sock.connect(s_name)
-        except socket.error as err:
-            raise NetemError("Unable to connect to daemon: %s" % err)
-
-        sock.sendall(cmd.encode("utf-8"))
-        ans = sock.recv(1024).decode("utf-8").strip()
-        if not ans.startswith("OK"):
-            raise NetemError("Daemon returns an error: %s" % ans)
-        return ans.replace("OK ", "")
     
     def is_switch(self):
         return False
@@ -74,6 +62,7 @@ class _BaseWrapper(object):
 class _BaseInstance(_BaseWrapper):
 
     def __init__(self, name):
+        self.daemon = NetemDaemonClient.instance()
         self.name = name
         self.process = None
 

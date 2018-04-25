@@ -1,5 +1,5 @@
 # pynetem: network emulator
-# Copyright (C) 2015-2017 Mickael Royer <mickael.royer@recherche.enac.fr>
+# Copyright (C) 2015-2018 Mickael Royer <mickael.royer@recherche.enac.fr>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,6 +25,34 @@ import shlex
 from pynetem import __version__
 from pynetem import NetemError
 from pynetem.ui.config import NetemConfig
+from pynetem.utils import get_exc_desc
+
+CMD_LIST = {
+    "version": "^version$",
+    "tap_create": "^tap_create (\S+) (\S+)$",
+    "tap_delete": "^tap_delete (\S+)$",
+    "netns_create": "^netns_create (\S+)$",
+    "netns_delete": "^netns_delete (\S+)$",
+    "link_create": "^link_create (\S+) (\S+)$",
+    "link_delete": "^link_delete (\S+)$",
+    "link_netns": "^link_netns (\S+) (\S+)$",
+    "link_set_vtap": "^link_set_vtap (\S+) (\S+)$",
+    "ovs_create": "^ovs_create (\S+)$",
+    "ovs_delete": "^ovs_delete (\S+)$",
+    "ovs_add_port": "^ovs_add_port (\S+) (\S+)$",
+    "ovs_add_mirror_port": "^ovs_add_mirror_port (\S+) (\S+)$",
+    "ovs_del_port": "^ovs_del_port (\S+) (\S+)$",
+    "docker_create": "^docker_create (\S+) (\S+) (\S+)$",
+    "docker_start": "^docker_start (\S+)$",
+    "docker_stop": "^docker_stop (\S+)$",
+    "docker_rm": "^docker_rm (\S+)$",
+    "docker_attach_interface": "^docker_attach_interface (\S+) (\S+) (\S+)$",
+    "docker_pid": "^docker_pid (\S+)$",
+    "docker_cp": "^docker_cp (\S+) (\S+)$",
+    "docker_exec": "^docker_exec (\S+) (.+)$",
+    "docker_shell": "^docker_shell (\S+) (\S+) (\S+) (\S+) (\S+) (.+)$",
+    "clean": "^clean (\S+)$",
+}
 
 
 class NetemDaemonHandler(BaseRequestHandler):
@@ -32,41 +60,21 @@ class NetemDaemonHandler(BaseRequestHandler):
     def setup(self):
         BaseRequestHandler.setup(self)
         self.config = NetemConfig()
-        self.__cmd_list = {
-            "version": "^version$",
-            "tap_create": "^tap_create (\S+) (\S+)$",
-            "tap_delete": "^tap_delete (\S+)$",
-            "netns_create": "^netns_create (\S+)$",
-            "netns_delete": "^netns_delete (\S+)$",
-            "link_create": "^link_create (\S+) (\S+)$",
-            "link_delete": "^link_delete (\S+)$",
-            "link_netns": "^link_netns (\S+) (\S+)$",
-            "link_set_vtap": "^link_set_vtap (\S+) (\S+)$",
-            "ovs_create": "^ovs_create (\S+)$",
-            "ovs_delete": "^ovs_delete (\S+)$",
-            "ovs_add_port": "^ovs_add_port (\S+) (\S+)$",
-            "ovs_add_mirror_port": "^ovs_add_mirror_port (\S+) (\S+)$",
-            "ovs_del_port": "^ovs_del_port (\S+) (\S+)$",
-            "docker_create": "^docker_create (\S+) (\S+) (\S+)$",
-            "docker_start": "^docker_start (\S+)$",
-            "docker_stop": "^docker_stop (\S+)$",
-            "docker_rm": "^docker_rm (\S+)$",
-            "docker_attach_interface": "^docker_attach_interface (\S+) (\S+) (\S+)$",
-            "docker_pid": "^docker_pid (\S+)$",
-            "docker_cp": "^docker_cp (\S+) (\S+)$",
-            "docker_exec": "^docker_exec (\S+) (.+)$",
-            "docker_shell": "^docker_shell (\S+) (\S+) (\S+) (\S+) (\S+) (.+)$",
-        }
 
     def handle(self):
         cmd = self.request.recv(1024).decode("utf-8").strip()
         logging.debug("Receive data: %s" % cmd)
 
+        msg = ""
         try:
-            cmd_name = cmd.split()[0]
-            if cmd_name not in self.__cmd_list:
+            cmd_args = cmd.split()
+            if len(cmd_args) < 1:
+                raise NetemError("The sent command is empty")
+
+            cmd_name = cmd_args[0]
+            if cmd_name not in CMD_LIST:
                 raise NetemError("Unknown command %s" % cmd)
-            cmd_regexp = self.__cmd_list[cmd_name]
+            cmd_regexp = CMD_LIST[cmd_name]
             # verify arguments
             match_obj = re.match(cmd_regexp, cmd)
             if match_obj is None:
@@ -76,12 +84,14 @@ class NetemDaemonHandler(BaseRequestHandler):
             ret = getattr(self, cmd_name)(*match_obj.groups())
         except NetemError as err:
             msg = "ERROR: %s" % err
-            self.request.sendall(msg.encode("utf-8"))
+        except Exception as ex:
+            logging.error(get_exc_desc())
+            msg = "ERROR: Unknown exception happen see log for details"
         else:
-            ans = "OK"
+            msg = "OK"
             if ret is not None:
-                ans += " %s" % ret
-            self.request.sendall(ans.encode("utf-8"))
+                msg += " %s" % ret
+        self.request.sendall(msg.encode("utf-8"))
 
     def version(self):
         return __version__
@@ -190,13 +200,20 @@ class NetemDaemonHandler(BaseRequestHandler):
                        "type macvtap mode vepa" % (netns, if_name))
         self.__command("ip netns exec %s ip link set macvtap0 up" % netns)
 
+    def __is_ovsbr_exist(self, sw_name):
+        args = shlex.split("ovs-vsctl br-exists %s" % sw_name)
+        return subprocess.call(args) != 2
+
     def ovs_create(self, sw_name):
         logging.debug("Create switch %s" % sw_name)
+        if self.__is_ovsbr_exist(sw_name):
+            return "EXIST"
         self.__command("ovs-vsctl add-br %s" % sw_name)
 
     def ovs_delete(self, sw_name):
         logging.debug("Delete switch %s" % sw_name)
-        self.__command("ovs-vsctl del-br %s" % sw_name)
+        if self.__is_ovsbr_exist(sw_name):
+            self.__command("ovs-vsctl del-br %s" % sw_name)
 
     def ovs_add_port(self, sw_name, p_name):
         logging.debug("Add port %s to switch %s" % (p_name, sw_name))
@@ -206,6 +223,23 @@ class NetemDaemonHandler(BaseRequestHandler):
     def ovs_del_port(self, sw_name, p_name):
         logging.debug("Delete port %s from switch %s" % (p_name, sw_name))
         self.__command("ovs-vsctl del-port %s %s" % (sw_name, p_name))
+
+    def clean(self, prj_id):
+        logging.debug("Clean project %s" % prj_id)
+        # remove existing docker containers
+        d_cmd = "docker container list --format '{{.Names}}' --all"
+        containers = self.__command(d_cmd, check_output=True).split("\n")
+        for container_name in containers:
+            if container_name.startswith(prj_id):
+                self.docker_stop(container_name)
+                self.docker_rm(container_name)
+
+        # remove existing ovs switches
+        s_cmd = "ovs-vsctl list-br"
+        switches = self.__command(s_cmd, check_output=True).split("\n")
+        for s_name in switches:
+            if s_name.startswith(prj_id):
+                self.ovs_delete(s_name)
 
     def __command(self, cmd_line, check_output=False, shell=False):
         args = shlex.split(cmd_line)
@@ -223,6 +257,10 @@ class NetemDaemonHandler(BaseRequestHandler):
                 msg = "Unable to excecute command %s" % (cmd_line,)
                 logging.error(msg)
                 raise NetemError(msg)
+
+    def __call(self, cmd_line):
+        args = shlex.split(cmd_line)
+        return subprocess.call(args)
 
 
 class NetemDaemonThread(threading.Thread):

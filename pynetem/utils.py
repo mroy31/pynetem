@@ -18,6 +18,7 @@
 import subprocess
 import shlex
 import logging
+import traceback
 from pynetem import NetemError
 
 
@@ -38,3 +39,11 @@ def run(cmd_line):
 def run_background(cmd_line):
     args = shlex.split(cmd_line)
     return subprocess.Popen(args, close_fds=True)
+
+
+def get_exc_desc():
+    return """
+-------------Traceback lines-----------------
+%s
+---------------------------------------------
+""" % traceback.format_exc()

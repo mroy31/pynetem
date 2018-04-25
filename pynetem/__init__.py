@@ -16,7 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 __version__ = "0.4.2"
-NETEM_ID = "pynetem"
+NETEM_ID = "netem"
 
 
 class NetemError(Exception):

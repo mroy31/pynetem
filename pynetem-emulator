@@ -23,7 +23,9 @@ from optparse import OptionParser
 from pynetem.ui.config import NetemConfig
 from pynetem.project import NetemProject
 from pynetem.console import NetemConsole
+from pynetem.daemon.client import NetemDaemonClient
 from pynetem import NetemError
+from pynetem.utils import get_exc_desc
 from pynetem import __version__
 
 
@@ -38,44 +40,57 @@ parser.add_option("-v", "--version", action="store_true", dest="version",
                   help="Log more debug informations")
 (options, args) = parser.parse_args()
 
-# if asked, show version and quit
-if options.version:
-    print(__version__)
-    sys.exit()
-
-# add custom config parms
-if options.conffile:
-    if os.path.isfile(options.conffile):
-        NetemConfig.custom_conf = options.conffile
-    else:
-        sys.exit("The config file does not exist.")
-
-if len(args) > 1:
-    sys.exit("Too many arguments -> %s" % usage)
-
 if __name__ == "__main__":
+    # if asked, show version and quit
+    if options.version:
+        print(__version__)
+        sys.exit()
+
+    if len(args) > 1:
+        sys.exit("Too many arguments -> %s" % usage)
+
+    # add custom config parms
+    if options.conffile:
+        if os.path.isfile(options.conffile):
+            NetemConfig.custom_conf = options.conffile
+        else:
+            sys.exit("The config file does not exist.")
+
     config = NetemConfig.instance()
     log_format = '%(levelname)s: %(message)s'
     log_level = options.debug and logging.DEBUG or logging.INFO
     logging.basicConfig(format=log_format, level=log_level)
 
-    # test the connection with the daemon
+    # test the connection with the daemon and its version
     s_name = config.get("general", "daemon_socket")
-    if not os.path.exists(s_name):
+    daemon = NetemDaemonClient().instance()
+    daemon.set_socket_path(s_name)
+    try:
+        d_version = daemon.version()
+    except NetemError:
         sys.exit("Unable to connect with the daemon, we have to quit")
+    if d_version != __version__:
+        sys.exit("Version mismatch between the client an the server: "
+                 "%s != %s" % (d_version, __version__))
 
     project = None
     if len(args) == 1:
         prj_path = args[0]
+        if os.path.isfile(prj_path):
+            project = NetemProject.load(daemon, prj_path)
+        else:
+            logging.info("Create empty project %s" % prj_path)
+            project = NetemProject.create(daemon, prj_path)
+
         try:
-            if os.path.isfile(prj_path):
-                project = NetemProject.load(prj_path)
-            else:
-                logging.info("Create empty project %s" % prj_path)
-                project = NetemProject.create(prj_path)
+            project.load_topology()
         except NetemError as err:
             sys.exit("Unable to load/create project %s: %s" % (prj_path, err))
+        except Exception as ex:
+            print(get_exc_desc())
+            daemon.clean(project.get_id())
+            sys.exit("Unhandled excetion during the load/create of project")
 
     # start console
-    console = NetemConsole(project=project)
+    console = NetemConsole(daemon, project=project)
     console.cmdloop()

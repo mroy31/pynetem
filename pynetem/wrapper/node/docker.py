@@ -19,7 +19,6 @@ import os
 import subprocess
 import shlex
 import logging
-from pynetem import NETEM_ID
 from pynetem import NetemError
 from pynetem.ui.config import NetemConfig
 from pynetem.wrapper import _BaseWrapper
@@ -28,19 +27,19 @@ from pynetem.wrapper.link import NetemLinkFactory
 
 class DockerNode(_BaseWrapper):
     SHELL = "/bin/bash"
+    IMG = None
 
-    def __init__(self, conf_dir, name, image_name):
+    def __init__(self, prj_id, conf_dir, name, image_name):
         super(DockerNode, self).__init__()
 
         self.name = name
         self.conf_dir = conf_dir
         self.__running = False
         self.__pid = None
-        self.__image = image_name
         self.__interfaces = []
         self.__capture_processes = {}
         self.__link_factory = NetemLinkFactory.instance()
-        self.container_name = "%s.%s" % (NETEM_ID, self.name)
+        self.container_name = "%s.%s" % (prj_id, self.name)
         # create container
         self.__create()
 
@@ -52,10 +51,7 @@ class DockerNode(_BaseWrapper):
 
     def __create(self):
         logging.debug("Create docker container %s" % self.container_name)
-        self._daemon_command("docker_create "
-                             "{} {} {}".format(self.name,
-                                               self.container_name,
-                                               self.__image))
+        self.daemon.docker_create(self.name, self.container_name, self.IMG)
 
     def add_sw_if(self, sw_instance):
         if_parms = {
@@ -70,9 +66,8 @@ class DockerNode(_BaseWrapper):
     def start(self):
         if not self.__running:
             logging.debug("Start docker container %s" % self.container_name)
-            self._daemon_command("docker_start {}".format(self.container_name))
-            self.__pid = self._daemon_command("docker_pid "
-                                              "%s" % self.container_name)
+            self.daemon.docker_start(self.container_name)
+            self.__pid = self.daemon.docker_pid(self.container_name)
             for if_conf in self.__interfaces:
                 if if_conf["peer"] == "switch":
                     sw_instance = if_conf["sw_instance"]
@@ -92,9 +87,8 @@ class DockerNode(_BaseWrapper):
             self.__running = True
 
     def __attach_interface(self, if_name, target_name):
-        self._daemon_command("docker_attach_interface %s %s "
-                             "%s" % (self.container_name, if_name,
-                                     target_name))
+        self.daemon.docker_attach_interface(self.container_name, if_name,
+                                            target_name)
 
     def open_shell(self):
         if self.__running:
@@ -105,9 +99,8 @@ class DockerNode(_BaseWrapper):
                 xauth = os.environ["XAUTHORITY"]    
 
             term_cmd = NetemConfig.instance().get("general", "terminal")
-            self._daemon_command("docker_shell %s %s %s %s %s "
-                                 "%s" % (self.container_name, self.name,
-                                         self.SHELL, display, xauth, term_cmd))
+            self.daemon.docker_shell(self.container_name, self.name,
+                                     self.SHELL, display, xauth, term_cmd)
 
     def capture(self, if_number):
         if len(self.__interfaces) > if_number:
@@ -120,8 +113,8 @@ class DockerNode(_BaseWrapper):
             if if_obj["sw_instance"] is not None:
                 if_name = "%s.%s" % (if_obj["sw_instance"].get_name(),
                                      self.name)
-                cmd_line = shlex.split("wireshark -k -i %s" % if_name)
-                self.__capture_processes[if_number] = subprocess.Popen(cmd_line)
+                cmd_l = shlex.split("wireshark -k -i %s" % if_name)
+                self.__capture_processes[if_number] = subprocess.Popen(cmd_l)
             else:
                 raise NetemError("%s: interface %d is not "
                                  "plugged" % (self.name, if_number))
@@ -144,28 +137,28 @@ class DockerNode(_BaseWrapper):
                 if_c["sw_instance"].detach_interface(if_c["left_if"])
                 self.__link_factory.delete_link(if_c["left_if"],
                                                 if_c["right_if"])
-            self._daemon_command("docker_stop {}".format(self.container_name))
+            self.daemon.docker_stop(self.container_name)
             self.__pid = None
             self.__running = False
 
     def clean(self):
         self.stop()
-        self._daemon_command("docker_rm {}".format(self.container_name))
+        self.daemon.docker_rm(self.container_name)
         self.__interfaces = []
 
+    def get_status(self):
+        return self.__running and "Started" or "Stopped"
+
     def _docker_exec(self, cmd):
-        self._daemon_command("docker_exec %s %s" % (self.container_name, cmd))
+        self.daemon.docker_exec(self.container_name, cmd)
 
     def _docker_cp(self, source, dest):
-        self._daemon_command("docker_cp %s %s" % (source, dest))
+        self.daemon.docker_cp(source, dest)
 
 
 class HostNode(DockerNode):
     IMG = "rca/host"
     CONFIG_FILE = "/tmp/custom.net.conf"
-
-    def __init__(self, conf_dir, name, node_config):
-        super(HostNode, self).__init__(conf_dir, name, self.IMG)
 
     def __conf_path(self):
         return os.path.join(self.conf_dir, "%s.net.conf" % self.name)
@@ -190,9 +183,6 @@ class XorpRouter(DockerNode):
     CONFIG_FILE = "/etc/xorp/config.boot"
     SHELL = "/usr/sbin/xorpsh"
 
-    def __init__(self, conf_dir, name, node_config):
-        super(XorpRouter, self).__init__(conf_dir, name, self.IMG)
-
     def __conf_path(self):
         return os.path.join(self.conf_dir, "%s.xorp.conf" % self.name)
 
@@ -216,9 +206,6 @@ class QuaggaRouter(DockerNode):
     IMG = "rca/quagga"
     SHELL = "/usr/bin/vtysh"
     TMP_CONF = "/tmp/quagga.conf"
-
-    def __init__(self, conf_dir, name, node_config):
-        super(QuaggaRouter, self).__init__(conf_dir, name, self.IMG)
 
     def __conf_path(self):
         return os.path.join(self.conf_dir, "%s.quagga.conf" % self.name)

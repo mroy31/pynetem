@@ -1,5 +1,5 @@
 # pynetem: network emulator
-# Copyright (C) 2015-2017 Mickael Royer <mickael.royer@recherche.enac.fr>
+# Copyright (C) 2015-2018 Mickael Royer <mickael.royer@recherche.enac.fr>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,18 +17,17 @@
 
 import logging
 from pynetem.wrapper import _BaseWrapper
-from pynetem import NETEM_ID
 
 
 class OVSwitchInstance(_BaseWrapper):
 
-    def __init__(self, sw_name, sw_config):
+    def __init__(self, prj_id, sw_name, sw_config):
         super(OVSwitchInstance, self).__init__()
 
         self.name = sw_name
         self.__is_started = False
         self.__sw_interfaces = []
-        self.__sw_name = "%s.%s" % (NETEM_ID, sw_name)
+        self.__sw_name = "%s.%s" % (prj_id, sw_name)
 
     def is_switch(self):
         return True
@@ -41,28 +40,28 @@ class OVSwitchInstance(_BaseWrapper):
 
     def attach_interface(self, if_name):
         if self.__is_started and if_name not in self.__sw_interfaces:
-            self._daemon_command("ovs_add_port %s "
-                                 "%s" % (self.__sw_name, if_name))
+            self.daemon.ovs_add_port(self.__sw_name, if_name)
             self.__sw_interfaces.append(if_name)
 
     def detach_interface(self, if_name):
         if self.__is_started and if_name in self.__sw_interfaces:
-            self._daemon_command("ovs_del_port %s "
-                                 "%s" % (self.__sw_name, if_name))
+            self.daemon.ovs_del_port(self.__sw_name, if_name)
             self.__sw_interfaces.remove(if_name)
 
     def start(self):
-        if not self.__is_started:
-            logging.debug("Start ovswitch %s" % self.__sw_name)
-            self._daemon_command("ovs_create %s" % self.__sw_name)
-            self.__is_started = True
+        if self.__is_started:
+            return
+        logging.debug("Start ovswitch %s" % self.__sw_name)
+        ret = self.daemon.ovs_create(self.__sw_name)
+        if ret == "EXIST":
+            logging.warning("The switch %s already exists." % self.__sw_name)
+        self.__is_started = True
 
     def stop(self):
         if self.__is_started:
             logging.debug("Stop ovswitch %s" % self.__sw_name)
             for if_name in self.__sw_interfaces:
-                self._daemon_command("ovs_del_port %s "
-                                     "%s" % (self.__sw_name, if_name))
-            self._daemon_command("ovs_delete %s" % self.__sw_name)
+                self.daemon.ovs_del_port(self.__sw_name, if_name)
+            self.daemon.ovs_delete(self.__sw_name)
             self.__is_started = False
             self.__sw_interfaces = []

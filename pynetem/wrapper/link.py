@@ -45,7 +45,7 @@ class NetemLinkFactory(_BaseWrapper):
             logging.warning("Links %s-%s already exist" % (l_ifname, r_ifname))
             return
         # create the link
-        self._daemon_command("link_create %s %s" % (l_ifname, r_ifname))
+        self.daemon.link_create(l_ifname, r_ifname)
         self.__links.append({
             "l_if": l_ifname,
             "l_ns": l_ns,
@@ -60,15 +60,15 @@ class NetemLinkFactory(_BaseWrapper):
         if netns is not None:
             if netns not in self.__ns_list:
                 logging.debug("Create netns %s for node %s" % (netns, if_name))
-                self._daemon_command("netns_create %s" % netns)
+                self.daemon.netns_create(netns)
                 self.__ns_list.append(netns)
-            self._daemon_command("link_netns %s %s" % (if_name, netns))
+            self.daemon.link_netns(if_name, netns)
 
     def delete_link(self, l_ifname, r_ifname):
         link = None
         for lk_infos in self.__links:
             if lk_infos["l_if"] in (l_ifname, r_ifname):
-                self._daemon_command("link_delete %s" % lk_infos["l_if"])
+                self.daemon.link_delete(lk_infos["l_if"])
                 self.__links.remove(lk_infos)
                 link = lk_infos
                 break
@@ -79,14 +79,14 @@ class NetemLinkFactory(_BaseWrapper):
 
     def remove_netns(self, netns):
         if netns in self.__ns_list:
-            self._daemon_command("netns_delete %s" % netns)
+            self.daemon.netns_delete(netns)
             self.__ns_list.remove(netns)
 
     def clear(self):
         for lk_infos in self.__links:
-            self._daemon_command("link_delete %s" % lk_infos["l_if"])
+            self.daemon.link_delete(lk_infos["l_if"])
         for netns in self.__ns_list:
-            self._daemon_command("netns_delete %s" % netns)
+            self.daemon.netns_delete(netns)
         self.__links, self.__ns_list = [], []
 
     def __is_netns_used(self, netns):

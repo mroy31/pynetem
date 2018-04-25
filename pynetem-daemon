@@ -25,7 +25,7 @@ import logging
 import time
 from optparse import OptionParser
 from pynetem.ui.config import NetemConfig
-from pynetem.daemon import NetemDaemonThread
+from pynetem.daemon.server import NetemDaemonThread
 
 
 usage = "usage: %prog [options]"

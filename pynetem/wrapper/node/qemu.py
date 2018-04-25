@@ -91,9 +91,7 @@ class QEMUInstance(_BaseInstance):
                 # create tap and attach to ovswitch
                 tap_name = "%s.%s.%s" % (self.name, if_config["vlan_id"],
                                          if_config["sw_instance"].get_name())
-                self._daemon_command("tap_create "
-                                     "%s %s" % (tap_name,
-                                                os.environ["LOGNAME"]))
+                self.daemon.tap_create(tap_name, os.environ["LOGNAME"])
                 if_config["sw_instance"].attach_interface(tap_name)
                 cmd_line += " -net tap,ifname=%s,script=no,"\
                             "downscript=no,vlan=%d" % (tap_name, if_config["vlan_id"])
@@ -171,7 +169,7 @@ class QEMUInstance(_BaseInstance):
         for if_c in self.interfaces:
             if if_c["tap"] is not None:
                 if_c["sw_instance"].detach_interface(if_c["tap"])
-                self._daemon_command("tap_delete %s" % if_c["tap"])
+                self.daemon.tap_delete(if_c["tap"])
 
     def save(self):
         pass  # nothing to do

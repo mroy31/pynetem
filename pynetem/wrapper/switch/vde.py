@@ -22,7 +22,7 @@ from pynetem.wrapper import _BaseInstance
 
 class VdeSwitchInstance(_BaseInstance):
 
-    def __init__(self, name, sw_config):
+    def __init__(self, prj_id, name, sw_config):
         super(VdeSwitchInstance, self).__init__(name)
         need_tap = sw_config.as_bool("tap")
         self.tap_name = None
@@ -43,9 +43,7 @@ class VdeSwitchInstance(_BaseInstance):
                    "-s /tmp/%s.ctl" % (self.name, self.name)
         if self.tap_name is not None:
             logging.debug("Create tap interface %s" % self.tap_name)
-            self._daemon_command("tap_create "
-                                 "%s %s" % (self.tap_name,
-                                            os.environ["LOGNAME"]))
+            self.daemon.tap_create(self.tap_name, os.environ["LOGNAME"])
             cmd_line += " -t %s" % self.tap_name
         return cmd_line
 
@@ -53,4 +51,4 @@ class VdeSwitchInstance(_BaseInstance):
         super(VdeSwitchInstance, self).stop()
         if self.tap_name is not None:
             logging.debug("Delete tap interface %s" % self.tap_name)
-            self._daemon_command("tap_delete %s" % self.tap_name)
+            self.daemon.tap_delete(self.tap_name)
