@@ -57,7 +57,8 @@ class DockerNode(_BaseWrapper):
             "sw_instance": sw_instance,
             "left_if": "%s.%s" % (sw_instance.get_name(), self.name),
             "right_if": "%s.%s" % (self.name, sw_instance.get_name()),
-            "target_if": "eth%d" % len(self.__interfaces)
+            "target_if": "eth%d" % len(self.__interfaces),
+            "state": "up"
         }
         self.__interfaces.append(if_parms)
 
@@ -107,8 +108,10 @@ class DockerNode(_BaseWrapper):
 
     def set_if_state(self, if_number, state):
         if len(self.__interfaces) > if_number:
-            if_name = "eth%s" % if_number
+            if_entry = self.__interfaces[if_number]
+            if_name = if_entry["target_if"]
             self._docker_exec("ip link set {} {}".format(if_name, state))
+            if_entry["state"] = state
         else:
             raise NetemError("%s: interface %d does not "
                              "exist" % (self.name, if_number))
@@ -138,7 +141,10 @@ class DockerNode(_BaseWrapper):
         self.__interfaces = []
 
     def get_status(self):
-        return self.__running and "Started" or "Stopped"
+        n_status = self.__running and "Started" or "Stopped"
+        if_status = "\n".join(["\t\t%s: %s" % (i["target_if"], i["state"]) 
+                               for i in self.__interfaces])
+        return "{0}\n{1}".format(n_status, if_status)
 
     def _docker_exec(self, cmd):
         self.daemon.docker_exec(self.container_name, cmd)

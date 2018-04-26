@@ -4,7 +4,7 @@ PyNetem
 Description
 -----------
 PyNetem is a network emulator written in python based on
- * Qemu for emulate nodes (host or router)
+ * Qemu or docker for emulate nodes (host or router)
  * Vde or OpenvSwitch for emulate hub/switch
 
 Requirements
