@@ -97,7 +97,8 @@ if __name__ == "__main__":
             except Exception as ex:
                 project.close()
                 print(get_exc_desc())
-                sys.exit("Unhandled excetion during the load/create of project")
+                sys.exit("Unhandled excetion during the "
+                         "load/create of project")
 
     # start console
     console = NetemConsole(daemon, project=project)

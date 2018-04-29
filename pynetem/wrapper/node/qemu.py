@@ -50,7 +50,8 @@ class QEMUInstance(_BaseInstance):
 
         self.p2p_sw = p2p_sw
         self.memory = "memory" in node_config and node_config["memory"] or None
-        self.need_acpi = "acpi" not in node_config and True or node_config.as_bool("acpi")
+        self.need_acpi = "acpi" not in node_config and True \
+                         or node_config.as_bool("acpi")
         self.shell_process = None
         self.telnet_port = node_config.as_int("console")
         self.img = os.path.join(image_dir, "%s.img" % name)
@@ -104,7 +105,8 @@ class QEMUInstance(_BaseInstance):
                 self.daemon.tap_create(tap_name, os.environ["LOGNAME"])
                 if_config["peer_instance"].attach_interface(tap_name)
                 cmd_line += " -net tap,ifname=%s,script=no,"\
-                            "downscript=no,vlan=%d" % (tap_name, if_config["vlan_id"])
+                            "downscript=no,"\
+                            "vlan=%d" % (tap_name, if_config["vlan_id"])
                 if_config["tap"] = tap_name
         return cmd_line
 
@@ -116,7 +118,7 @@ class QEMUInstance(_BaseInstance):
                                    if_config["peer_instance"],
                                    if_config["peer_if"])
         self.daemon.tap_create(tap_name, os.environ["LOGNAME"])
-        self.p2p_sw.add_connection(tap_name, self.inverse_ifname(tap_name))
+        self.p2p_sw.add_connection(tap_name)
         cmd_line += " -net tap,ifname=%s,script=no,"\
                     "downscript=no,vlan=%d" % (tap_name, if_config["vlan_id"])
         if_config["tap"] = tap_name
@@ -166,7 +168,8 @@ class QEMUInstance(_BaseInstance):
         raise NetemError("ifstate command is not supported for qemu nodes.")
 
     def open_shell(self):
-        if self.shell_process is not None and self.shell_process.poll() is None:
+        if self.shell_process is not None \
+                and self.shell_process.poll() is None:
             raise NetemError("The console is already opened")
         term_cmd = NetemConfig.instance().get("general", "terminal") % {
             "title": self.name,
@@ -204,8 +207,7 @@ class QEMUInstance(_BaseInstance):
                 if if_c["peer"] == "switch":
                     if_c["peer_instance"].detach_interface(if_c["tap"])
                 elif if_c["peer"] == "node":
-                    self.p2p_sw.delete_connection(if_c["tap"], 
-                                                  self.inverse_ifname(if_c["tap"]))
+                    self.p2p_sw.delete_connection(if_c["tap"])
                 self.daemon.tap_delete(if_c["tap"])
 
     def save(self):

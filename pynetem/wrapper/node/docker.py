@@ -86,8 +86,7 @@ class DockerNode(_BaseWrapper):
                     sw_instance = if_conf["peer_instance"]
                     sw_instance.attach_interface(if_conf["ifname"])
                 elif if_conf["peer"] == "node":
-                    self.p2p_sw.add_connection(if_conf["ifname"],
-                                               self.inverse_ifname(if_conf["ifname"]))
+                    self.p2p_sw.add_connection(if_conf["ifname"])
                 self.__attach_interface(p_if, if_conf["target_if"])
             self.__running = True
 
@@ -134,8 +133,7 @@ class DockerNode(_BaseWrapper):
                 if if_c["peer"] == "switch":
                     if_c["peer_instance"].detach_interface(if_c["ifname"])
                 elif if_c["peer"] == "node":
-                    self.p2p_sw.delete_connection(if_c["ifname"],
-                                                  self.inverse_ifname(if_c["ifname"]))
+                    self.p2p_sw.delete_connection(if_c["ifname"])
                 self.__lk_factory.delete(if_c["ifname"])
             self.daemon.docker_stop(self.container_name)
             self.__pid = None

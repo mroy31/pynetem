@@ -29,35 +29,34 @@ class NetemP2PSwitch(object):
         # create switch used for p2p connections
         self.daemon.ovs_create(self.__sw_name)
 
-    def add_connection(self, l_ifname, r_ifname):
-        tag = self.get_tag(l_ifname, r_ifname)
+    def add_connection(self, ifname):
+        tag = self.get_tag(ifname)
         # just connect the left node
-        self.daemon.ovs_add_port(self.__sw_name, l_ifname)
-        self.daemon.ovs_port_vlan(l_ifname, str(tag))
+        self.daemon.ovs_add_port(self.__sw_name, ifname)
+        self.daemon.ovs_port_vlan(ifname, str(tag))
         # store connection informations
-        self.__connections.append({
-            "l_ifname": l_ifname,
-            "r_ifname": r_ifname,
-            "tag": tag
-        })
+        self.__connections.append({"ifname": ifname, "tag": tag})
 
-    def delete_connection(self, l_ifname, r_ifname):
-        conn = self.get_connection(l_ifname, r_ifname)
+    def delete_connection(self, ifname):
+        conn = self.get_connection(ifname)
         if conn is not None:
-            self.daemon.ovs_del_port(self.__sw_name, l_ifname)
+            self.daemon.ovs_del_port(self.__sw_name, ifname)
             self.__connections.remove(conn)
 
-    def get_tag(self, l_ifname, r_ifname):
+    def get_tag(self, ifname):
         for c in self.__connections:
-            if c["l_ifname"] == r_ifname and c["r_ifname"] == l_ifname:
+            if c["ifname"] == self.__inverse_ifname(ifname):
                 return c["tag"]
         return 10 + len(self.__connections)
 
-    def get_connection(self, l_ifname, r_ifname):
+    def get_connection(self, ifname):
         for c in self.__connections:
-            if c["l_ifname"] == l_ifname and c["r_ifname"] == r_ifname:
+            if c["ifname"] == ifname:
                 return c
         return None
 
     def close(self):
         self.daemon.ovs_delete(self.__sw_name)
+
+    def __inverse_ifname(self, ifname):
+        return "{1}.{0}".format(*ifname.split(".", 1))
