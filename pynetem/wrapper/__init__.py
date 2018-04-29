@@ -107,6 +107,7 @@ class _BaseInstance(_BaseWrapper):
         self.process = subprocess.Popen(args, stdin=subprocess.PIPE,
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE,
+                                        start_new_session=True,
                                         shell=False)
         self.is_started = True
         # start thread to monitor process

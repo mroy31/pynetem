@@ -11,10 +11,10 @@ Requirements
 ------------
  * Python >= 3.4
  * python3-configobj
- * qemu
- * vde2
- * docker-ce (optionnal)
- * openvswitch-switch (optionnal)
+ * docker-ce
+ * openvswitch-switch
+ * qemu (optional)
+ * vde2 (optional)
 
 Installation
 ------------
@@ -45,7 +45,7 @@ An example of topology is available in the file doc/example.net
 
 Docker Node
 -----------
-If you want to use docker, you need to build expected images.
+To use docker, you need to build expected images.
  * rca/quagga
  * rca/xorp
  * rca/host

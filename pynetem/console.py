@@ -79,6 +79,10 @@ class NetemConsole(cmd.Cmd):
             self.current_project.close()
         return True
 
+    def emptyline(self):
+        # do nothing when an empty line is entered
+        pass
+
     @netmem_cmd()
     def do_quit(self):
         "Quit the network emulator"

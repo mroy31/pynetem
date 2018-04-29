@@ -19,6 +19,7 @@
 import sys
 import os
 import logging
+import signal
 from optparse import OptionParser
 from pynetem.ui.config import NetemConfig
 from pynetem.project import NetemProject
@@ -100,6 +101,13 @@ if __name__ == "__main__":
                 sys.exit("Unhandled excetion during the "
                          "load/create of project")
 
-    # start console
     console = NetemConsole(daemon, project=project)
+
+    # install signal handlers
+    def interrupt(s, f):
+        print("\n To quit pynetem, simply enter quit in the console !")
+
+    signal.signal(signal.SIGINT, interrupt)
+
+    # start console
     console.cmdloop()
