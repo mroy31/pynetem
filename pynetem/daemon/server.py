@@ -26,6 +26,7 @@ from pynetem import __version__
 from pynetem import NetemError
 from pynetem.ui.config import NetemConfig
 from pynetem.utils import get_exc_desc
+from pynetem.utils import cmd_call
 
 CMD_LIST = {
     "version": "^version$",
@@ -40,6 +41,7 @@ CMD_LIST = {
     "ovs_create": "^ovs_create (\S+)$",
     "ovs_delete": "^ovs_delete (\S+)$",
     "ovs_add_port": "^ovs_add_port (\S+) (\S+)$",
+    "ovs_port_vlan": "^ovs_port_vlan (\S+) ([0-9]+)$",
     "ovs_add_mirror_port": "^ovs_add_mirror_port (\S+) (\S+)$",
     "ovs_del_port": "^ovs_del_port (\S+) (\S+)$",
     "docker_create": "^docker_create (\S+) (\S+) (\S+)$",
@@ -149,10 +151,11 @@ class NetemDaemonHandler(BaseRequestHandler):
 
     def docker_capture(self, display, xauth, c_name, if_name):
         logging.debug("Docker launch capture on if %s:%s" % (c_name, if_name))
+        pretty_name = c_name.split(".", 1)[1]
         cmd = "/bin/bash -c 'docker exec {0} tcpdump -s 0 -U -w - -i {1} "\
-              "2>/dev/null | wireshark -o 'gui.window_title:{1}@{0}' "\
-              "-k -i - &'".format(c_name, if_name)
-        subprocess.call(shlex.split(cmd), 
+              "2>/dev/null | wireshark -o 'gui.window_title:{1}@{2}' "\
+              "-k -i - &'".format(c_name, if_name, pretty_name)
+        subprocess.call(shlex.split(cmd),
                         env=self.__set_x11_env(display, xauth))
 
     def tap_create(self, name, user):
@@ -208,8 +211,7 @@ class NetemDaemonHandler(BaseRequestHandler):
         self.__command("ip netns exec %s ip link set macvtap0 up" % netns)
 
     def __is_ovsbr_exist(self, sw_name):
-        args = shlex.split("ovs-vsctl br-exists %s" % sw_name)
-        return subprocess.call(args) != 2
+        return cmd_call("ovs-vsctl br-exists %s" % sw_name) != 2
 
     def ovs_create(self, sw_name):
         logging.debug("Create switch %s" % sw_name)
@@ -226,6 +228,10 @@ class NetemDaemonHandler(BaseRequestHandler):
         logging.debug("Add port %s to switch %s" % (p_name, sw_name))
         self.__command("ovs-vsctl add-port %s %s" % (sw_name, p_name))
         self.__command("ip link set %s up" % p_name)
+
+    def ovs_port_vlan(self, p_name, vlan):
+        logging.debug("Set port %s to belong to vlan %s" % (p_name, vlan))
+        self.__command("ovs-vsctl set port %s tag=%s" % (p_name, vlan))
 
     def ovs_del_port(self, sw_name, p_name):
         logging.debug("Delete port %s from switch %s" % (p_name, sw_name))
@@ -264,10 +270,6 @@ class NetemDaemonHandler(BaseRequestHandler):
                 msg = "Unable to excecute command %s" % (cmd_line,)
                 logging.error(msg)
                 raise NetemError(msg)
-
-    def __call(self, cmd_line):
-        args = shlex.split(cmd_line)
-        return subprocess.call(args)
 
     def __set_x11_env(self, display, xauth):
         env = {"DISPLAY": display}

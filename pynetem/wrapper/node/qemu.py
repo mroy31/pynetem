@@ -45,9 +45,10 @@ class QEMUInstance(_BaseInstance):
     instance_type = ""
     qemu_bin = "qemu-system-i386"
 
-    def __init__(self, image_dir, img_type, name, node_config):
+    def __init__(self, p2p_sw, image_dir, img_type, name, node_config):
         super(QEMUInstance, self).__init__(name)
 
+        self.p2p_sw = p2p_sw
         self.memory = "memory" in node_config and node_config["memory"] or None
         self.need_acpi = "acpi" not in node_config and True or node_config.as_bool("acpi")
         self.shell_process = None
@@ -67,35 +68,58 @@ class QEMUInstance(_BaseInstance):
             return self.memory
         return NetemConfig.instance().get("qemu", "memory")
 
-    def add_sw_if(self, sw_instance):
-        if_parms = {
+    def __add_if(self, peer_type, peer_instance, peer_if=None):
+        self.interfaces.append({
             "mac": parm_attribution.get_mac_address(),
-            "peer": "switch",
-            "sw_instance": sw_instance,
+            "peer": peer_type,
+            "peer_instance": peer_instance,
+            "peer_if": peer_if,
             "tap": None,
             "vlan_id": len(self.interfaces),
-        }
-        self.interfaces.append(if_parms)
+        })
+
+    def add_null_if(self):
+        self.__add_if("switch", None)
+
+    def add_sw_if(self, sw_instance):
+        self.__add_if("switch", sw_instance)
+
+    def add_node_if(self, node_instance, if_number):
+        self.__add_if("node", node_instance, peer_if=if_number)
 
     def __sw_if_cmdline(self, if_config):
         cmd_line = "-net nic,macaddr=%s,model=e1000,"\
                    "vlan=%d" % (if_config['mac'], if_config['vlan_id'])
-        if if_config['sw_instance'] is not None:
-            sw_type = if_config["sw_instance"].get_sw_type()
+        if if_config['peer_instance'] is not None:
+            sw_type = if_config["peer_instance"].get_sw_type()
             if sw_type == "vde":
-                sw_name = if_config["sw_instance"].get_name()
+                sw_name = if_config["peer_instance"].get_name()
                 cmd_line += " -net vde,sock=%s,"\
                             "vlan=%d" % ("/tmp/%s.ctl" % sw_name,
                                          if_config['vlan_id'])
             elif sw_type == "ovs":
                 # create tap and attach to ovswitch
-                tap_name = "%s.%s.%s" % (self.name, if_config["vlan_id"],
-                                         if_config["sw_instance"].get_name())
+                tap_name = self.gen_ifname(if_config["vlan_id"],
+                                           if_config["peer_instance"])
                 self.daemon.tap_create(tap_name, os.environ["LOGNAME"])
-                if_config["sw_instance"].attach_interface(tap_name)
+                if_config["peer_instance"].attach_interface(tap_name)
                 cmd_line += " -net tap,ifname=%s,script=no,"\
                             "downscript=no,vlan=%d" % (tap_name, if_config["vlan_id"])
                 if_config["tap"] = tap_name
+        return cmd_line
+
+    def __node_if_cmdline(self, if_config):
+        cmd_line = "-net nic,macaddr=%s,model=e1000,"\
+                   "vlan=%d" % (if_config['mac'], if_config['vlan_id'])
+        # create tap and attach to ovswitch
+        tap_name = self.gen_ifname(if_config["vlan_id"],
+                                   if_config["peer_instance"],
+                                   if_config["peer_if"])
+        self.daemon.tap_create(tap_name, os.environ["LOGNAME"])
+        self.p2p_sw.add_connection(tap_name, self.inverse_ifname(tap_name))
+        cmd_line += " -net tap,ifname=%s,script=no,"\
+                    "downscript=no,vlan=%d" % (tap_name, if_config["vlan_id"])
+        if_config["tap"] = tap_name
         return cmd_line
 
     def get_interface_cmdline(self):
@@ -103,6 +127,8 @@ class QEMUInstance(_BaseInstance):
         for i in self.interfaces:
             if i["peer"] == "switch":
                 result.append(self.__sw_if_cmdline(i))
+            if i["peer"] == "node":
+                result.append(self.__node_if_cmdline(i))
         return " ".join(result)
 
     def capture(self, if_number):
@@ -113,16 +139,20 @@ class QEMUInstance(_BaseInstance):
                     raise NetemError("Capture process is already running")
 
             if_obj = self.interfaces[if_number]
-            if if_obj["sw_instance"] is not None:
-                sw_type = if_obj["sw_instance"].get_sw_type()
+            if if_obj["peer"] == "switch" \
+                    and if_obj["peer_instance"] is not None:
+                sw_type = if_obj["peer_instance"].get_sw_type()
                 if sw_type == "ovs":
-                    if_name = "%s.%d.%s" % (self.name, if_obj["vlan_id"],
-                                            if_obj["sw_instance"].get_name())
+                    if_name = if_obj["tap"]
                 elif sw_type == "vde":
-                    if_name = if_obj["sw_instance"].get_tap_name()
+                    if_name = if_obj["peer_instance"].get_tap_name()
                     if if_name is None:
                         raise NetemError("Unable to launch capture, no tap"
                                          "if exists on this switch")
+                cmd_ln = shlex.split("wireshark -k -i %s" % if_name)
+                self.capture_processes[if_number] = subprocess.Popen(cmd_ln)
+            elif if_obj["peer"] == "node":
+                if_name = if_obj["tap"]
                 cmd_ln = shlex.split("wireshark -k -i %s" % if_name)
                 self.capture_processes[if_number] = subprocess.Popen(cmd_ln)
             else:
@@ -171,7 +201,11 @@ class QEMUInstance(_BaseInstance):
             self.capture_processes = {}
         for if_c in self.interfaces:
             if if_c["tap"] is not None:
-                if_c["sw_instance"].detach_interface(if_c["tap"])
+                if if_c["peer"] == "switch":
+                    if_c["peer_instance"].detach_interface(if_c["tap"])
+                elif if_c["peer"] == "node":
+                    self.p2p_sw.delete_connection(if_c["tap"], 
+                                                  self.inverse_ifname(if_c["tap"]))
                 self.daemon.tap_delete(if_c["tap"])
 
     def save(self):

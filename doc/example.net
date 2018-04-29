@@ -7,8 +7,9 @@ config_dir = configs
 [[R1]]
 type = qemu.juniper
 console = 2001
-if_numbers = 1
-if0 = Switch1
+if_numbers = 2
+if0 = sw.Switch1
+if1 = User2.1
 
 [[User1]]
 type = qemu.squeeze
@@ -25,8 +26,9 @@ if0 = Switch2
 [[User2]]
 type = docker.host
 save_state = false
-if_numbers = 1
+if_numbers = 2
 if0 = Switch2
+if1 = R1.1
 
 
 [switches]

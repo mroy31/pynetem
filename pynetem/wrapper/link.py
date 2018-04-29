@@ -35,8 +35,7 @@ class NetemLinkFactory(_BaseWrapper):
 
     def is_link_exists(self, l_ifname, r_ifname):
         for link in self.__links:
-            if link["l_if"] in (l_ifname, r_ifname)\
-                    or link["r_if"] in (l_ifname, r_ifname):
+            if link["l_if"] == l_ifname and link["r_if"] == r_ifname:
                 return True
         return False
 

@@ -17,26 +17,20 @@
 
 import subprocess
 import shlex
-import logging
 import traceback
-from pynetem import NetemError
 
 
-def run(cmd_line):
+def cmd_call(cmd_line):
     args = shlex.split(cmd_line)
-    try:
-        result = subprocess.check_output(args)
-    except subprocess.CalledProcessError:
-        msg = "Unable to excecute command %s" % (cmd_line,)
-        logging.error(msg)
-        raise NetemError(msg)
-
-    logging.debug("Execute command -> '%s', result -> '%s'"
-                  % (cmd_line, result))
-    return result
+    return subprocess.call(args)
 
 
-def run_background(cmd_line):
+def cmd_check_output(cmd_line):
+    args = shlex.split(cmd_line)
+    return subprocess.check_output(args)
+
+
+def cmd_run_background(cmd_line):
     args = shlex.split(cmd_line)
     return subprocess.Popen(args, close_fds=True)
 

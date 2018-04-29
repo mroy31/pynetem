@@ -18,6 +18,8 @@
 import re
 from pynetem.check._base import _BaseCheck
 
+NAME_RE = re.compile("^\w+$")
+
 
 class CommonCheck(_BaseCheck):
 
@@ -35,7 +37,10 @@ class CommonCheck(_BaseCheck):
 
         # check nodes
         for n_name in network["nodes"]:
-            if "type" not in network["nodes"][n_name]:
+            if NAME_RE.match(n_name) is None:
+                self.add_error("The node name %s is not compliant: it has to "
+                               "respect the regexp '^\w+$'" % n_name)
+            elif "type" not in network["nodes"][n_name]:
                 self.add_error("You do not specify type for node %s" % n_name)
             else:
                 n_type = network["nodes"][n_name]["type"]
@@ -44,7 +49,10 @@ class CommonCheck(_BaseCheck):
 
         # check switches
         for s_name in network["switches"]:
-            if "type" not in network["switches"][s_name]:
+            if NAME_RE.match(s_name) is None:
+                self.add_error("The sw name %s is not compliant: it has to "
+                               "respect the regexp '^\w+$'" % s_name)
+            elif "type" not in network["switches"][s_name]:
                 self.add_error("You do not specify type for "
                                "switch %s" % s_name)
             else:

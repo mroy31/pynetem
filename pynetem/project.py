@@ -118,7 +118,12 @@ config_dir = configs
                     prj_zip.write(f_path, arcname=arch_path)
 
     def close(self):
-        self.topology.close()
+        try:
+            self.topology.close()
+        except Exception as ex:
+            logging.error("Unable to close the project properly: %s" % ex)
+        # what happen before, clean the project
+        self.daemon.clean(self.get_id())
         shutil.rmtree(self.tmp_folder)
 
     def __command(self, cmd_line):

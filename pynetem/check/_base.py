@@ -15,6 +15,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import re
+
 
 class _BaseCheck(object):
 
@@ -47,18 +49,45 @@ class _BaseCheck(object):
                 self.add_error("%s: %s is not present" % (n_name, if_name))
                 continue
 
-            sw_id = node[if_name]
-            if sw_id != "__null__" and sw_id not in network["switches"]:
-                self.add_error("%s: switch %s does not "
-                               "exist" % (n_name, sw_id))
-                continue
+            peer_id = node[if_name]
+            if peer_id != "__null__":
+                if re.match("^sw\.\w+$", peer_id) is not None:
+                    (sw_id,) = re.match("^sw\.(\w+)$", peer_id).groups()
+                    if sw_id not in network["switches"]:
+                        self.add_error("%s: switch %s does not "
+                                       "exist" % (n_name, sw_id))
 
-            if node["type"].startswith("docker.") and sw_id != "__null__":
-                # only ovs switch is supported
-                sw = network["switches"][sw_id]
-                if sw["type"] != "ovs":
-                    self.add_error("%s:%s -> docker node can only connect "
-                                   "with ovs switch" % (n_name, if_name))
+                    elif node["type"].startswith("docker."):
+                        # only ovs switch is supported
+                        sw = network["switches"][sw_id]
+                        if sw["type"] != "ovs":
+                            self.add_error("%s:%s -> docker node can only "
+                                           "connect with ovs "
+                                           "switch" % (n_name, if_name))
+
+                elif re.match("^\w+\.\d+$", peer_id) is not None:
+                    n_id, if_num = re.match("^(\w+)\.(\d+)$", peer_id).groups()
+                    if n_id not in network["nodes"]:
+                        self.add_error("%s: peer node %s does not "
+                                       "exist" % (n_name, n_id))
+
+                    else:
+                        peer_if = "if%s" % if_num
+                        if peer_if not in network["nodes"][n_id]:
+                            self.add_error("%s: peer node %s does not have "
+                                           "the target "
+                                           "interface" % (n_name, n_id))
+                            continue
+                        peer_if_conf = network["nodes"][n_id][peer_if]
+                        if peer_if_conf != "%s.%d" % (n_name, if_id):
+                            self.add_error("%s: peer node %s does not have "
+                                           "the right config for the target "
+                                           "interface" % (n_name, n_id))
+                else:
+                    self.add_error("%s: the interface %d is not well "
+                                   "configured," " it must be __null__, "
+                                   "sw.<sw_name> or "
+                                   "<node_id>.<if_number>" % (n_name, if_id))
 
     def check_args(self, name, node, args_dict):
         for key in args_dict:

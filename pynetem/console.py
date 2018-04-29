@@ -180,7 +180,7 @@ class NetemConsole(cmd.Cmd):
 
     def close(self):
         if self.current_project is not None:
-            self.daemon.clean(self.current_project.get_id())
+            self.current_project.close()
         return True
 
     def error(self, err):

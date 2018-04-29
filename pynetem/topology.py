@@ -16,12 +16,14 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import os
+import re
 import logging
 from configobj import ConfigObj
 from pynetem import NetemError
 from pynetem.check import check_network
 from pynetem.wrapper.switch import build_sw_instance
 from pynetem.wrapper.node import build_node_instance
+from pynetem.wrapper.p2p import NetemP2PSwitch
 
 
 class TopologieManager(object):
@@ -29,6 +31,7 @@ class TopologieManager(object):
     def __init__(self, prj_id, netfile):
         self.prj_id = prj_id
         self.netfile = netfile
+        self.p2p_switch = NetemP2PSwitch(prj_id)
 
         self.saved_state = []
         self.nodes, self.switches = [], []
@@ -46,7 +49,7 @@ class TopologieManager(object):
                 err_msg = "\n\t".join(errors[e_mod]["errors"])
                 msg += "%s:\n\t%s\n" % (errors[e_mod]["desc"], err_msg)
             raise NetemError("The network file has errors\n  %s" % msg)
-        
+
         return network
 
     def __load_switches(self, sw_section):
@@ -71,24 +74,15 @@ class TopologieManager(object):
         for path in (image_dir, config_dir):
             if not os.path.isdir(path):
                 os.mkdir(path)
-        # load nodes
+
         if "nodes" in network:
+            # load nodes
             nodes_section = network["nodes"]
             for n_name in nodes_section:
-                n_inst = build_node_instance(self.prj_id,
+                n_inst = build_node_instance(self.prj_id, self.p2p_switch,
                                              image_dir, config_dir, n_name,
                                              nodes_section[n_name])
 
-                # create interfaces
-                nb_if = nodes_section[n_name].as_int("if_numbers")
-                for i in range(nb_if):
-                    if_name = "if%d" % i
-                    s_name = nodes_section[n_name][if_name]
-                    logging.debug("Attach switch %s to %s" % (s_name, n_name))
-                    n_inst.add_sw_if(self.get_switch(s_name))
-
-                logging.info("Start node %s" % n_name)
-                n_inst.start()
                 self.nodes.append(n_inst)
 
                 # record save_state option
@@ -97,6 +91,26 @@ class TopologieManager(object):
                     need_save = nodes_section[n_name].as_bool("save_state")
                 if need_save:
                     self.saved_state.append(n_inst)
+
+            # load nodes connections
+            for n_name in nodes_section:
+                n_inst = self.get_node(n_name)
+                nb_if = nodes_section[n_name].as_int("if_numbers")
+                for i in range(nb_if):
+                    if_name = "if%d" % i
+                    peer_name = nodes_section[n_name][if_name]
+                    if peer_name == "__null__":
+                        n_inst.add_null_if()
+                    elif peer_name.startswith("sw."):
+                        (s_name,) = re.match("^sw\.(\w+)$", peer_name).groups()
+                        n_inst.add_sw_if(self.get_switch(s_name))
+                    else:  # this is a connection to a node
+                        p_id, p_if = re.match("^(\w+)\.(\d+)$",
+                                              peer_name).groups()
+                        n_inst.add_node_if(self.get_node(p_id), p_if)
+
+                logging.info("Start node %s" % n_name)
+                n_inst.start()
 
     def get_switch(self, sw_name):
         for instance in self.switches:
@@ -167,6 +181,7 @@ Status of nodes:
         self.stopall()
         for node in self.nodes:
             node.clean()
+        self.p2p_switch.close()
 
     def __get_node_if(self, if_id):
         if_ids = if_id.split(".")

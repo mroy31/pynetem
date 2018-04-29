@@ -21,7 +21,7 @@ from pynetem.wrapper.node.qemu import QEMUInstance
 from pynetem.wrapper.node.docker import DOCKER_NODES
 
 
-def build_node_instance(prj_id, img_dir, conf_dir, n_name, n_config):
+def build_node_instance(prj_id, p2p_sw, img_dir, conf_dir, n_name, n_config):
     logging.debug("Create node instance %s" % n_name)
     if "type" in n_config:
         nc_type = n_config["type"].split('.', 1)
@@ -35,10 +35,11 @@ def build_node_instance(prj_id, img_dir, conf_dir, n_name, n_config):
 
         # create instance based on type field
         if n_type == "qemu":
-            return QEMUInstance(img_dir, n_image, n_name, n_config)
+            return QEMUInstance(p2p_sw, img_dir, n_image, n_name, n_config)
         if n_type == "docker":
             try:
-                return DOCKER_NODES[n_image](prj_id, conf_dir, n_name, n_config)
+                return DOCKER_NODES[n_image](p2p_sw, prj_id, conf_dir, 
+                                             n_name, n_config)
             except KeyError:
                 raise NetemError("docker image %s does not exist" % n_image)
 
