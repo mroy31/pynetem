@@ -36,7 +36,7 @@ class DockerNode(_BaseWrapper):
         self.__running = False
         self.__pid = None
         self.__interfaces = []
-        self.__link_factory = NetemLinkFactory.instance()
+        self.__lk_factory = NetemLinkFactory.instance()
         self.container_name = "%s.%s" % (prj_id, self.name)
         # create container
         self.__create()
@@ -53,15 +53,13 @@ class DockerNode(_BaseWrapper):
 
     def __add_if(self, peer_type, peer_instance, peer_if=None):
         if_id = len(self.__interfaces)
-        left_if, right_if = None, None
+        ifname = None
         if peer_instance is not None:
-            left_if = self.gen_ifname(if_id, peer_instance, peer_if)
-            right_if = self.internal_ifname(left_if)
+            ifname = self.gen_ifname(if_id, peer_instance, peer_if)
         self.__interfaces.append({
             "peer": peer_type,
             "peer_instance": peer_instance,
-            "left_if": left_if,
-            "right_if": right_if,
+            "ifname": ifname,
             "target_if": "eth%d" % if_id,
             "state": "up"
         })
@@ -81,30 +79,16 @@ class DockerNode(_BaseWrapper):
             self.daemon.docker_start(self.container_name)
             self.__pid = self.daemon.docker_pid(self.container_name)
             for if_conf in self.__interfaces:
+                if if_conf["peer"] == "null":
+                    continue  # skip this interface
+                p_if = self.__lk_factory.create(if_conf["ifname"], self.__pid)
                 if if_conf["peer"] == "switch":
                     sw_instance = if_conf["peer_instance"]
-                    if sw_instance is not None:
-                        sw_type = sw_instance.get_sw_type()
-                        if sw_type == "vde":
-                            raise NetemError("Docker node can not be "
-                                             "attached to vde switch")
-                        # create link attach to node and switch
-                        self.__link_factory.create_link(if_conf["left_if"],
-                                                        if_conf["right_if"],
-                                                        None,
-                                                        self.__pid)
-                        sw_instance.attach_interface(if_conf["left_if"])
-                        self.__attach_interface(if_conf["right_if"],
-                                                if_conf["target_if"])
+                    sw_instance.attach_interface(if_conf["ifname"])
                 elif if_conf["peer"] == "node":
-                    self.__link_factory.create_link(if_conf["left_if"],
-                                                    if_conf["right_if"],
-                                                    None,
-                                                    self.__pid)
-                    self.p2p_sw.add_connection(if_conf["left_if"],
-                                               self.inverse_ifname(if_conf["left_if"]))
-                    self.__attach_interface(if_conf["right_if"],
-                                            if_conf["target_if"])
+                    self.p2p_sw.add_connection(if_conf["ifname"],
+                                               self.inverse_ifname(if_conf["ifname"]))
+                self.__attach_interface(p_if, if_conf["target_if"])
             self.__running = True
 
     def __attach_interface(self, if_name, target_name):
@@ -148,12 +132,11 @@ class DockerNode(_BaseWrapper):
                 if if_c["peer_instance"] is None:
                     continue
                 if if_c["peer"] == "switch":
-                    if_c["peer_instance"].detach_interface(if_c["left_if"])
+                    if_c["peer_instance"].detach_interface(if_c["ifname"])
                 elif if_c["peer"] == "node":
-                    self.p2p_sw.delete_connection(if_c["left_if"],
-                                                  if_c["right_if"])
-                self.__link_factory.delete_link(if_c["left_if"],
-                                                if_c["right_if"])
+                    self.p2p_sw.delete_connection(if_c["ifname"],
+                                                  self.inverse_ifname(if_c["ifname"]))
+                self.__lk_factory.delete(if_c["ifname"])
             self.daemon.docker_stop(self.container_name)
             self.__pid = None
             self.__running = False

@@ -52,9 +52,6 @@ class _BaseWrapper(object):
     def inverse_ifname(self, ifname):
         return "{1}.{0}".format(*ifname.split(".", 1))
 
-    def internal_ifname(self, ifname):
-        return "{0}.int0".format(ifname.split(".", 1)[0])
-
     def gen_ifname(self, if_id, peer, p_if=None):
         name = "{}_{}.{}".format(self.get_name(), if_id, peer.get_name())
         if p_if is not None:
