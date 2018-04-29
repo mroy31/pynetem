@@ -15,8 +15,38 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import os
+import shutil
 from distutils.core import setup
+from distutils.command.clean import clean as distutils_clean
 import pynetem
+
+
+def force_unlink(path):
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
+
+
+def force_rmdir(path):
+    try:
+        shutil.rmtree(path)
+    except OSError:
+        pass
+
+
+class netem_clean(distutils_clean):
+    def run(self):
+        distutils_clean.run(self)
+
+        commands = list(self.distribution.command_obj.values())
+        for cmd in commands:
+            if hasattr(cmd, 'clean'):
+                cmd.clean()
+
+        force_unlink('MANIFEST')
+        force_rmdir('build')
 
 
 if __name__ == "__main__":
@@ -32,4 +62,7 @@ if __name__ == "__main__":
                   "pynetem.wrapper", "pynetem.wrapper.node",
                   "pynetem.wrapper.switch", "pynetem.ui"],
         package_data={'pynetem.ui': ['defaults.conf']},
+        cmdclass={
+            "clean": netem_clean,
+        }
     )
