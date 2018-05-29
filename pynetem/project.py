@@ -66,7 +66,7 @@ config_dir = configs
 
     def __init__(self, daemon, prj_path):
         # set a random projet id
-        rnd_str = "".join(random.choices(string.ascii_lowercase, k=6))
+        rnd_str = "".join(random.sample(string.ascii_lowercase, 6))
         self.__id = "%s%s" % (NETEM_ID, rnd_str,)
 
         self.daemon = daemon
