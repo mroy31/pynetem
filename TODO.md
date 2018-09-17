@@ -1,3 +1,4 @@
 
   * Add a reset command to purge the configuration of a node
-  * Use QMP API to save qemu node state
+  * Add loading indicator when node start/stop
+  * Use telnet commands to load/save junos config
