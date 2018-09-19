@@ -17,6 +17,7 @@
 
 import logging
 from pynetem.wrapper import _BaseWrapper
+from pynetem.wrapper.spinner import Spinner
 
 
 class OVSwitchInstance(_BaseWrapper):
@@ -51,17 +52,23 @@ class OVSwitchInstance(_BaseWrapper):
     def start(self):
         if self.__is_started:
             return
-        logging.debug("Start ovswitch %s" % self.__sw_name)
+        spinner = Spinner("Start ovs switch %s ... " % self.name)
+        spinner.start()
+
         ret = self.daemon.ovs_create(self.__sw_name)
         if ret == "EXIST":
             logging.warning("The switch %s already exists." % self.__sw_name)
         self.__is_started = True
+        spinner.stop()
 
     def stop(self):
         if self.__is_started:
-            logging.debug("Stop ovswitch %s" % self.__sw_name)
+            spinner = Spinner("Stop ovs switch %s ... " % self.name)
+            spinner.start()
+
             for if_name in self.__sw_interfaces:
                 self.daemon.ovs_del_port(self.__sw_name, if_name)
             self.daemon.ovs_delete(self.__sw_name)
             self.__is_started = False
             self.__sw_interfaces = []
+            spinner.stop()

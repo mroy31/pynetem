@@ -76,6 +76,7 @@ class NetemConsole(cmd.Cmd):
                     q = input("Wrong answer, expect Y or N: ")
                 if q == "N":
                     return None
+            print("Close the projet please wait before leaving...")
             self.current_project.close()
         return True
 

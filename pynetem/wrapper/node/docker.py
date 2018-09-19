@@ -21,6 +21,7 @@ from pynetem import NetemError
 from pynetem.ui.config import NetemConfig
 from pynetem.wrapper import _BaseWrapper
 from pynetem.wrapper.link import NetemLinkFactory
+from pynetem.wrapper.spinner import Spinner
 
 
 class DockerNode(_BaseWrapper):
@@ -75,7 +76,9 @@ class DockerNode(_BaseWrapper):
 
     def start(self):
         if not self.__running:
-            logging.debug("Start docker container %s" % self.container_name)
+            spinner = Spinner("Start node %s ... " % self.name)
+            spinner.start()
+
             self.daemon.docker_start(self.container_name)
             self.__pid = self.daemon.docker_pid(self.container_name)
             for if_conf in self.__interfaces:
@@ -89,6 +92,7 @@ class DockerNode(_BaseWrapper):
                     self.p2p_sw.add_connection(if_conf["ifname"])
                 self.__attach_interface(p_if, if_conf["target_if"])
             self.__running = True
+            spinner.stop()
 
     def __attach_interface(self, if_name, target_name):
         self.daemon.docker_attach_interface(self.container_name, if_name,
@@ -126,7 +130,9 @@ class DockerNode(_BaseWrapper):
 
     def stop(self):
         if self.__running:
-            logging.debug("Stop docker container %s" % self.container_name)
+            spinner = Spinner("Stop node %s ... " % self.name)
+            spinner.start()
+
             for if_c in self.__interfaces:
                 if if_c["peer_instance"] is None:
                     continue
@@ -138,6 +144,7 @@ class DockerNode(_BaseWrapper):
             self.daemon.docker_stop(self.container_name)
             self.__pid = None
             self.__running = False
+            spinner.stop()
 
     def clean(self):
         self.stop()

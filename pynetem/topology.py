@@ -55,7 +55,6 @@ class TopologieManager(object):
     def __load_switches(self, sw_section):
         for s_name in sw_section:
             s_inst = build_sw_instance(self.prj_id, s_name, sw_section[s_name])
-            logging.info("Start switch %s" % s_name)
             s_inst.start()
             self.switches.append(s_inst)
 
@@ -109,7 +108,6 @@ class TopologieManager(object):
                                               peer_name).groups()
                         n_inst.add_node_if(self.get_node(p_id), p_if)
 
-                logging.info("Start node %s" % n_name)
                 n_inst.start()
 
     def get_switch(self, sw_name):
