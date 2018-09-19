@@ -26,6 +26,7 @@ from pynetem.wrapper.spinner import Spinner
 
 class DockerNode(_BaseWrapper):
     SHELL = "/bin/bash"
+    BASH = "/bin/bash"
     IMG = None
 
     def __init__(self, p2p_sw, prj_id, conf_dir, name, image_name):
@@ -98,12 +99,13 @@ class DockerNode(_BaseWrapper):
         self.daemon.docker_attach_interface(self.container_name, if_name,
                                             target_name)
 
-    def open_shell(self):
+    def open_shell(self, debug=False):
         if self.__running:
             display, xauth = self._get_x11_env()
             term_cmd = NetemConfig.instance().get("general", "terminal")
+            shell_cmd = debug and self.BASH or self.SHELL
             self.daemon.docker_shell(self.container_name, self.name,
-                                     self.SHELL, display, xauth, term_cmd)
+                                     shell_cmd, display, xauth, term_cmd)
 
     def capture(self, if_number):
         if len(self.__interfaces) > if_number:

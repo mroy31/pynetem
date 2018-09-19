@@ -168,14 +168,22 @@ class NetemConsole(cmd.Cmd):
         """Display routeur/host status"""
         print(self.current_project.topology.status())
 
+    def __open_shell(self, node_id, debug):
+        for node in self.__get_nodes(node_id):
+            try:
+                node.open_shell(debug=debug)
+            except NetemError as err:
+                print("WARNING: %s" % err)
+
     @netmem_cmd(reg_exp="^(\S+)$", require_project=True)
     def do_console(self, node_id):
         """Open a console for the given router/host"""
-        for node in self.__get_nodes(node_id):
-            try:
-                node.open_shell()
-            except NetemError as err:
-                print("WARNING: %s" % err)
+        self.__open_shell(node_id, False)
+
+    @netmem_cmd(reg_exp="^(\S+)$", require_project=True)
+    def do_debug(self, node_id):
+        """Open a debug console (meaning bash) for the given router/host"""
+        self.__open_shell(node_id, True)
 
     @netmem_cmd(reg_exp="^(\S+\.[0-9]+) (up|down)$", require_project=True)
     def do_ifstate(self, if_name, state):

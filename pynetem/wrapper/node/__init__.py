@@ -38,8 +38,9 @@ def build_node_instance(prj_id, p2p_sw, img_dir, conf_dir, n_name, n_config):
             return QEMUInstance(p2p_sw, img_dir, n_image, n_name, n_config)
         if n_type == "docker":
             try:
-                return DOCKER_NODES[n_image](p2p_sw, prj_id, conf_dir, 
-                                             n_name, n_config)
+                return DOCKER_NODES[n_image](
+                    p2p_sw, prj_id,
+                    conf_dir, n_name, n_config)
             except KeyError:
                 raise NetemError("docker image %s does not exist" % n_image)
 
