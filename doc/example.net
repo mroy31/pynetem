@@ -5,7 +5,7 @@ config_dir = configs
 [nodes]
 
 [[R1]]
-type = qemu.juniper
+type = junos.12.1
 console = 2001
 if_numbers = 2
 if0 = sw.Switch1

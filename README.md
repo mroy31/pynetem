@@ -57,3 +57,10 @@ To do that, you need to use the command docker build, for example
 
 Or, if you want to build all the docker image, you can use the script 
 build.sh available in the docker directory.
+
+Junos Router
+------------
+PyNetem has a special mode to emulate junos router. In the topology file, you 
+need to use junos.<version> as node type. In this case, the configuration is 
+saved as plain text (instead of complete img of the disk), thanks to the
+telnet connection. 
