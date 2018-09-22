@@ -1,3 +1,2 @@
 
-  * Add loading indicator when node start/stop
-  * Use telnet commands to load/save junos config
+  * Update qemu launch command to use new netdev syntax
