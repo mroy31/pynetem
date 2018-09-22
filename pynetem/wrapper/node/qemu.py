@@ -64,6 +64,9 @@ class QEMUInstance(_BaseInstance):
             cmd = "%s create -f qcow2 -b %s %s" % (QEMU_IMG, b_img, self.img)
             self._command(cmd)
 
+    def get_type(self):
+        return "node.qemu"
+
     def get_memory(self):
         if self.memory is not None:
             return self.memory
@@ -92,13 +95,13 @@ class QEMUInstance(_BaseInstance):
         cmd_line = "-net nic,macaddr=%s,model=e1000,"\
                    "vlan=%d" % (if_config['mac'], if_config['vlan_id'])
         if if_config['peer_instance'] is not None:
-            sw_type = if_config["peer_instance"].get_sw_type()
-            if sw_type == "vde":
+            sw_type = if_config["peer_instance"].get_type()
+            if sw_type == "switch.vde":
                 sw_name = if_config["peer_instance"].get_name()
                 cmd_line += " -net vde,sock=%s,"\
                             "vlan=%d" % ("/tmp/%s.ctl" % sw_name,
                                          if_config['vlan_id'])
-            elif sw_type == "ovs":
+            elif sw_type == "switch.ovs":
                 # create tap and attach to ovswitch
                 tap_name = self.gen_ifname(if_config["vlan_id"],
                                            if_config["peer_instance"])
@@ -143,10 +146,10 @@ class QEMUInstance(_BaseInstance):
             if_obj = self.interfaces[if_number]
             if if_obj["peer"] == "switch" \
                     and if_obj["peer_instance"] is not None:
-                sw_type = if_obj["peer_instance"].get_sw_type()
-                if sw_type == "ovs":
+                sw_type = if_obj["peer_instance"].get_type()
+                if sw_type == "switch.ovs":
                     if_name = if_obj["tap"]
-                elif sw_type == "vde":
+                elif sw_type == "switch.vde":
                     if_name = if_obj["peer_instance"].get_tap_name()
                     if if_name is None:
                         raise NetemError("Unable to launch capture, no tap"

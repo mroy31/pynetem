@@ -29,11 +29,8 @@ class VdeSwitchInstance(_BaseInstance):
         if need_tap:
             self.tap_name = "VDE%s" % name
 
-    def is_switch(self):
-        return True
-
-    def get_sw_type(self):
-        return "vde"
+    def get_type(self):
+        return "switch.vde"
 
     def get_tap_name(self):
         return self.tap_name

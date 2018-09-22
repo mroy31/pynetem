@@ -28,6 +28,9 @@ class Spinner(object):
         self.spinner_generator = itertools.cycle(['-', '/', '|', '\\'])
         self.delay = delay
         self.text = text
+        # start the thread
+        self.busy = True
+        threading.Thread(target=self.spinner_task).start()
 
     def spinner_task(self):
         sys.stdout.write(self.text)
@@ -37,10 +40,6 @@ class Spinner(object):
             time.sleep(self.delay)
             sys.stdout.write('\b')
             sys.stdout.flush()
-
-    def start(self):
-        self.busy = True
-        threading.Thread(target=self.spinner_task).start()
 
     def stop(self):
         self.busy = False

@@ -44,7 +44,7 @@ class CommonCheck(_BaseCheck):
                 self.add_error("You do not specify type for node %s" % n_name)
             else:
                 n_type = network["nodes"][n_name]["type"]
-                if not re.match("^(qemu|docker)\.\S+$", n_type):
+                if not re.match("^(qemu|docker|junos)\.\S+$", n_type):
                     self.add_error("Node %s has wrong type" % n_name)
 
         # check switches

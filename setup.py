@@ -61,7 +61,9 @@ if __name__ == "__main__":
         packages=["pynetem", "pynetem.check", "pynetem.daemon",
                   "pynetem.wrapper", "pynetem.wrapper.node",
                   "pynetem.wrapper.switch", "pynetem.ui"],
-        package_data={'pynetem.ui': ['defaults.conf']},
+        package_data={
+            'pynetem.ui': ['defaults.conf']
+        },
         cmdclass={
             "clean": netem_clean,
         }

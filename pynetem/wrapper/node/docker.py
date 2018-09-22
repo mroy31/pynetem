@@ -1,5 +1,5 @@
 # pyNetmem, a network emulator
-# Copyright (C) 2016 Mickael Royer <mickael.royer@enac.fr>
+# Copyright (C) 2016-2018 Mickael Royer <mickael.royer@enac.fr>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,18 @@ from pynetem import NetemError
 from pynetem.ui.config import NetemConfig
 from pynetem.wrapper import _BaseWrapper
 from pynetem.wrapper.link import NetemLinkFactory
-from pynetem.wrapper.spinner import Spinner
+
+
+def require_running(func):
+    def running_func(self, *args, **kwargs):
+        if not self.running:
+            print("Warning: try to execute action "
+                  "%s on stopped node" % func.__name__)
+            return
+        return func(self, *args, **kwargs)
+
+    running_func.__name__ = func.__name__
+    return running_func
 
 
 class DockerNode(_BaseWrapper):
@@ -35,7 +46,7 @@ class DockerNode(_BaseWrapper):
         self.name = name
         self.conf_dir = conf_dir
         self.p2p_sw = p2p_sw
-        self.__running = False
+        self.running = False
         self.__pid = None
         self.__interfaces = []
         self.__lk_factory = NetemLinkFactory.instance()
@@ -45,6 +56,9 @@ class DockerNode(_BaseWrapper):
 
     def get_name(self):
         return self.name
+
+    def get_type(self):
+        return "node.docker"
 
     def get_pid(self):
         return self.__pid
@@ -76,10 +90,7 @@ class DockerNode(_BaseWrapper):
         self.__add_if("switch", sw_instance)
 
     def start(self):
-        if not self.__running:
-            spinner = Spinner("Start node %s ... " % self.name)
-            spinner.start()
-
+        if not self.running:
             self.daemon.docker_start(self.container_name)
             self.__pid = self.daemon.docker_pid(self.container_name)
             for if_conf in self.__interfaces:
@@ -92,21 +103,23 @@ class DockerNode(_BaseWrapper):
                 elif if_conf["peer"] == "node":
                     self.p2p_sw.add_connection(if_conf["ifname"])
                 self.__attach_interface(p_if, if_conf["target_if"])
-            self.__running = True
-            spinner.stop()
+            self.running = True
 
     def __attach_interface(self, if_name, target_name):
         self.daemon.docker_attach_interface(self.container_name, if_name,
                                             target_name)
 
+    @require_running
     def open_shell(self, debug=False):
-        if self.__running:
-            display, xauth = self._get_x11_env()
-            term_cmd = NetemConfig.instance().get("general", "terminal")
-            shell_cmd = debug and self.BASH or self.SHELL
-            self.daemon.docker_shell(self.container_name, self.name,
-                                     shell_cmd, display, xauth, term_cmd)
+        display, xauth = self._get_x11_env()
+        term_cmd = NetemConfig.instance().get("general", "terminal")
+        shell_cmd = debug and self.BASH or self.SHELL
+        self.daemon.docker_shell(
+            self.container_name, self.name,
+            shell_cmd, display, xauth, term_cmd
+        )
 
+    @require_running
     def capture(self, if_number):
         if len(self.__interfaces) > if_number:
             if_name = "eth%s" % if_number
@@ -117,6 +130,7 @@ class DockerNode(_BaseWrapper):
             raise NetemError("%s: interface %d does not "
                              "exist" % (self.name, if_number))
 
+    @require_running
     def set_if_state(self, if_number, state):
         if len(self.__interfaces) > if_number:
             if_entry = self.__interfaces[if_number]
@@ -130,31 +144,31 @@ class DockerNode(_BaseWrapper):
     def save(self):
         raise NotImplementedError
 
-    def stop(self):
-        if self.__running:
-            spinner = Spinner("Stop node %s ... " % self.name)
-            spinner.start()
+    def reset(self):
+        raise NotImplementedError
 
-            for if_c in self.__interfaces:
-                if if_c["peer_instance"] is None:
-                    continue
-                if if_c["peer"] == "switch":
-                    if_c["peer_instance"].detach_interface(if_c["ifname"])
-                elif if_c["peer"] == "node":
-                    self.p2p_sw.delete_connection(if_c["ifname"])
-                self.__lk_factory.delete(if_c["ifname"])
-            self.daemon.docker_stop(self.container_name)
-            self.__pid = None
-            self.__running = False
-            spinner.stop()
+    @require_running
+    def stop(self):
+        for if_c in self.__interfaces:
+            if if_c["peer_instance"] is None:
+                continue
+            if if_c["peer"] == "switch":
+                if_c["peer_instance"].detach_interface(if_c["ifname"])
+            elif if_c["peer"] == "node":
+                self.p2p_sw.delete_connection(if_c["ifname"])
+            self.__lk_factory.delete(if_c["ifname"])
+        self.daemon.docker_stop(self.container_name)
+        self.__pid = None
+        self.running = False
 
     def clean(self):
-        self.stop()
+        if self.running:
+            self.stop()
         self.daemon.docker_rm(self.container_name)
         self.__interfaces = []
 
     def get_status(self):
-        n_status = self.__running and "Started" or "Stopped"
+        n_status = self.running and "Started" or "Stopped"
         if_status = "\n".join(["\t\t%s: %s" % (i["target_if"], i["state"]) 
                                for i in self.__interfaces])
         return "{0}\n{1}".format(n_status, if_status)
@@ -190,6 +204,7 @@ class HostNode(DockerNode):
             self._docker_cp(conf_path, dest)
             self._docker_exec("network-config.py -l %s" % self.CONFIG_FILE)
 
+    @require_running
     def save(self):
         self._docker_exec("network-config.py -s %s" % self.CONFIG_FILE)
         source = "%s:%s" % (self.container_name, self.CONFIG_FILE)
@@ -214,6 +229,7 @@ class XorpRouter(DockerNode):
         # then restart xorp processes
         self._docker_exec("/etc/init.d/xorp restart")
 
+    @require_running
     def save(self):
         self._docker_exec("xorpsh -c 'configure' -c 'save /tmp/xorp.conf'")
         source = "%s:/tmp/xorp.conf" % self.container_name
@@ -238,6 +254,7 @@ class QuaggaRouter(DockerNode):
             self._docker_cp(conf_path, dest)
             self._docker_exec("load-quagga.sh %s" % self.TMP_CONF)
 
+    @require_running
     def save(self):
         self._docker_exec("save-quagga.sh %s" % self.TMP_CONF)
         source = "%s:%s" % (self.container_name, self.TMP_CONF)

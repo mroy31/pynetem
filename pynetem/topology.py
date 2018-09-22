@@ -18,12 +18,13 @@
 import os
 import re
 import logging
-from configobj import ConfigObj
+from configobj import ConfigObj, ConfigObjError
 from pynetem import NetemError
 from pynetem.check import check_network
 from pynetem.wrapper.switch import build_sw_instance
 from pynetem.wrapper.node import build_node_instance
 from pynetem.wrapper.p2p import NetemP2PSwitch
+from pynetem.wrapper.spinner import Spinner
 
 
 class TopologieManager(object):
@@ -40,7 +41,10 @@ class TopologieManager(object):
         self.__load()
 
     def check(self):
-        network = ConfigObj(self.netfile)
+        try:
+            network = ConfigObj(self.netfile)
+        except ConfigObjError as err:
+            raise NetemError("Syntax error in the network file: %s" % err)
         # check network files before start it
         errors = check_network(network)
         if len(errors) > 0:
@@ -91,7 +95,7 @@ class TopologieManager(object):
                 if need_save:
                     self.saved_state.append(n_inst)
 
-            # load nodes connections
+            # load nodes connections and start node
             for n_name in nodes_section:
                 n_inst = self.get_node(n_name)
                 nb_if = nodes_section[n_name].as_int("if_numbers")
@@ -108,7 +112,10 @@ class TopologieManager(object):
                                               peer_name).groups()
                         n_inst.add_node_if(self.get_node(p_id), p_if)
 
-                n_inst.start()
+                self.__start_node(n_inst)
+            # load configuration
+            for n in (n for n in self.nodes if n.get_type() == "node.junos"):
+                self.__load_configuration(n)
 
     def get_switch(self, sw_name):
         for instance in self.switches:
@@ -119,11 +126,8 @@ class TopologieManager(object):
     def get_all_switches(self):
         return self.switches
 
-    def get_node(self, instance_name):
-        for instance in self.nodes:
-            if instance.get_name() == instance_name:
-                return instance
-        return None
+    def get_node(self, name):
+        return next((i for i in self.nodes if i.get_name() == name), None)
 
     def get_all_nodes(self):
         return self.nodes
@@ -136,25 +140,23 @@ class TopologieManager(object):
         node, if_number = self.__get_node_if(if_id)
         node.set_if_state(if_number, state)
 
-    def stop(self, instance_name):
-        for instance in self.nodes:
-            if instance.get_name() == instance_name:
-                if instance.is_started():
-                    instance.stop()
+    def stop(self, name):
+        node = self.get_node(name)
+        if node is not None:
+            self.__stop_node(node)
 
-    def start(self, instance_name):
-        for instance in self.nodes:
-            if instance.get_name() == instance_name:
-                if not instance.is_started():
-                    instance.start()
+    def start(self, name):
+        node = self.get_node(name)
+        if node is not None:
+            self.__start_node(node)
+            if node.get_type() == "node.junos":
+                self.__load_configuration(node)
 
     def stopall(self):
-        for instance in self.nodes + self.switches:
-            instance.stop()
-
-    def startall(self):
-        for instance in self.nodes + self.switches:
-            instance.start()
+        for n in self.nodes:
+            self.__stop_node(n)
+        for s in self.switches:
+            s.stop()
 
     def reload(self):
         self.stopall()
@@ -166,7 +168,9 @@ class TopologieManager(object):
 
     def save(self):
         for n in self.saved_state:
+            spinner = Spinner("Save node %s ... " % n.get_name())
             n.save()
+            spinner.stop()
 
     def status(self):
         return """
@@ -180,6 +184,22 @@ Status of nodes:
         for node in self.nodes:
             node.clean()
         self.p2p_switch.close()
+
+    def __start_node(self, node):
+        spinner = Spinner("Start node %s ... " % node.get_name())
+        node.start()
+        spinner.stop()
+
+    def __stop_node(self, node):
+        spinner = Spinner("Stop node %s ... " % node.get_name())
+        node.stop()
+        spinner.stop()
+
+    def __load_configuration(self, node):
+        spinner = Spinner("Load configuration for "
+                          "node %s ... " % node.get_name())
+        node.load_configuration()
+        spinner.stop()
 
     def __get_node_if(self, if_id):
         if_ids = if_id.split(".")

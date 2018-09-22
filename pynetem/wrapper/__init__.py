@@ -49,20 +49,14 @@ class _BaseWrapper(object):
     def get_name(self):
         raise NotImplementedError
 
+    def get_type(self):
+        raise NotImplementedError
+
     def gen_ifname(self, if_id, peer, p_if=None):
         name = "{}_{}.{}".format(self.get_name(), if_id, peer.get_name())
         if p_if is not None:
             name += "_{}".format(p_if)
         return name
-
-    def is_switch(self):
-        return False
-
-    def is_router(self):
-        return False
-
-    def is_host(self):
-        return False
 
     def clean(self):
         pass
