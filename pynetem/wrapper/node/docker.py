@@ -211,31 +211,6 @@ class HostNode(DockerNode):
         self._docker_cp(source, self.__conf_path())
 
 
-class XorpRouter(DockerNode):
-    IMG = "rca/xorp"
-    CONFIG_FILE = "/etc/xorp/config.boot"
-    SHELL = "/usr/sbin/xorpsh"
-
-    def __conf_path(self):
-        return os.path.join(self.conf_dir, "%s.xorp.conf" % self.name)
-
-    def start(self):
-        super(XorpRouter, self).start()
-        # load xorp config if available and start xorp
-        conf_path = self.__conf_path()
-        if os.path.isfile(conf_path):
-            dest = "%s:%s" % (self.container_name, self.CONFIG_FILE)
-            self._docker_cp(conf_path, dest)
-        # then restart xorp processes
-        self._docker_exec("/etc/init.d/xorp restart")
-
-    @require_running
-    def save(self):
-        self._docker_exec("xorpsh -c 'configure' -c 'save /tmp/xorp.conf'")
-        source = "%s:/tmp/xorp.conf" % self.container_name
-        self._docker_cp(source, self.__conf_path())
-
-
 class QuaggaRouter(DockerNode):
     IMG = "rca/quagga"
     SHELL = "/usr/bin/vtysh"
@@ -261,8 +236,33 @@ class QuaggaRouter(DockerNode):
         self._docker_cp(source, self.__conf_path())
 
 
+class FrrRouter(DockerNode):
+    IMG = "rca/frr"
+    SHELL = "/usr/bin/vtysh"
+    TMP_CONF = "/tmp/frr.conf"
+
+    def __conf_path(self):
+        return os.path.join(self.conf_dir, "%s.frr.conf" % self.name)
+
+    def start(self):
+        super(FrrRouter, self).start()
+        # load quagga config if available and start quagga
+        conf_path = self.__conf_path()
+        if os.path.isfile(conf_path):
+            self._docker_exec("supervisorctl start all:")
+            dest = "%s:%s" % (self.container_name, self.TMP_CONF)
+            self._docker_cp(conf_path, dest)
+            self._docker_exec("load-frr.sh %s" % self.TMP_CONF)
+
+    @require_running
+    def save(self):
+        self._docker_exec("save-frr.sh %s" % self.TMP_CONF)
+        source = "%s:%s" % (self.container_name, self.TMP_CONF)
+        self._docker_cp(source, self.__conf_path())
+
+
 DOCKER_NODES = {
     "host": HostNode,
-    "xorp": XorpRouter,
     "quagga": QuaggaRouter,
+    "frr": FrrRouter
 }
