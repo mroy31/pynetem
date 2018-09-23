@@ -47,7 +47,7 @@ Docker Node
 -----------
 To use docker, you need to build expected images.
  * rca/quagga
- * rca/xorp
+ * rca/frr
  * rca/host
 
 To do that, you need to use the command docker build, for example

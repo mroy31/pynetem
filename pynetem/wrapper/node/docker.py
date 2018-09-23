@@ -246,7 +246,7 @@ class FrrRouter(DockerNode):
 
     def start(self):
         super(FrrRouter, self).start()
-        # load quagga config if available and start quagga
+        # load frr config if available and start frr
         conf_path = self.__conf_path()
         if os.path.isfile(conf_path):
             self._docker_exec("supervisorctl start all:")

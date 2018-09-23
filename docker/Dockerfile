@@ -1,3 +1,0 @@
-FROM cumulusnetworks/frrouting
-
-COPY 
