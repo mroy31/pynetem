@@ -27,18 +27,20 @@ from pynetem.console import NetemConsole
 from pynetem.daemon.client import NetemDaemonClient
 from pynetem import NetemError
 from pynetem.utils import get_exc_desc
-from pynetem import __version__
+from pynetem import __version__, NETEM_ID
 
 
 usage = "usage: %prog [options] <network file>"
 parser = OptionParser(usage=usage)
-parser.set_defaults(debug=False, conffile=None, version=False)
+parser.set_defaults(debug=False, conffile=None, version=False, clean=False)
 parser.add_option("-c", "--conf-file", type="string", dest="conffile",
                   metavar="FILE", help="Specify a custom conf file")
 parser.add_option("-d", "--debug", action="store_true", dest="debug",
                   help="Log more debug informations")
 parser.add_option("-v", "--version", action="store_true", dest="version",
                   help="Log more debug informations")
+parser.add_option("-l", "--clean", action="store_true", dest="clean",
+                  help="Clean the netem env")
 (options, args) = parser.parse_args()
 
 if __name__ == "__main__":
@@ -73,6 +75,12 @@ if __name__ == "__main__":
     if d_version != __version__:
         sys.exit("Version mismatch between the client an the server: "
                  "%s != %s" % (d_version, __version__))
+
+    # if asked clean old project and quit
+    if options.clean:
+        logging.info("Clean old pynetem project, please wait...")
+        daemon.clean(NETEM_ID)
+        sys.exit()
 
     project = None
     if len(args) == 1:

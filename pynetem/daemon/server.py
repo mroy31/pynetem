@@ -312,9 +312,6 @@ class NetemDaemonThread(threading.Thread):
         self.running = False
 
     def run(self):
-        # before starting the server, clean the env
-        NetemDaemonHandler.clean(NETEM_ID)
-
         self.running = True
         self.__server = UnixStreamServer(self.__socket, NetemDaemonHandler)
         os.chmod(self.__socket, 0o666)
@@ -324,6 +321,9 @@ class NetemDaemonThread(threading.Thread):
 
     def stop(self):
         if self.__server is not None:
+            # before stopping the server, clean the env
+            NetemDaemonHandler.clean(NETEM_ID)
+
             logging.info("Stop pynetem daemon")
             self.__server.shutdown()
             self.__server = None
