@@ -95,7 +95,7 @@ if __name__ == "__main__":
 
     def shutdown(s, f):
         server_thread.stop()
-    for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGKILL):
+    for sig in (signal.SIGTERM, signal.SIGINT):
         signal.signal(sig, shutdown)
     server_thread.start()
 
