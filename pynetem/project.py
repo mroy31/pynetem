@@ -71,7 +71,7 @@ config_dir = configs
 
         self.daemon = daemon
         self.prj_path = prj_path
-        self.tmp_folder = tempfile.mkdtemp(prefix="netem")
+        self.tmp_folder = tempfile.mkdtemp(prefix=NETEM_ID)
         with zipfile.ZipFile(prj_path) as prj_zip:
             prj_zip.extractall(path=self.tmp_folder)
 
@@ -116,6 +116,9 @@ config_dir = configs
                     f_path = os.path.join(root, f)
                     arch_path = self.__strip_path(f_path)
                     prj_zip.write(f_path, arcname=arch_path)
+
+    def save_config(self, conf_path):
+        self.topology.save(conf_path=conf_path)
 
     def close(self):
         try:

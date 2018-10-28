@@ -17,6 +17,7 @@
 
 import cmd
 import re
+import os
 from pynetem import NetemError
 from pynetem.project import NetemProject
 from pynetem.utils import get_exc_desc
@@ -113,6 +114,14 @@ class NetemConsole(cmd.Cmd):
     def do_save(self):
         """Save the project"""
         self.current_project.save()
+
+    @netmem_cmd(reg_exp="^(\S+)$", require_project=True)
+    def do_config(self, conf_path):
+        """Save configurations in a specific folder"""
+        if not os.path.isdir(conf_path):
+            print("ERROR: %s is not a valid path")
+            return
+        self.current_project.save_config(conf_path)
 
     @netmem_cmd(require_project=True)
     def do_check(self):

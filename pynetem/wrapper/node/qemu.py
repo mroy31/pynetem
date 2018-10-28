@@ -216,5 +216,5 @@ class QEMUInstance(_BaseInstance):
                     self.p2p_sw.delete_connection(if_c["tap"])
                 self.daemon.tap_delete(if_c["tap"])
 
-    def save(self):
+    def save(self, conf_path=None):
         pass  # nothing to do

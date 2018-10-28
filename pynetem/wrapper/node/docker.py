@@ -145,7 +145,7 @@ class DockerNode(_BaseWrapper):
             raise NetemError("%s: interface %d does not "
                              "exist" % (self.name, if_number))
 
-    def save(self):
+    def save(self, conf_path=None):
         raise NotImplementedError
 
     def reset(self):
@@ -196,23 +196,26 @@ class HostNode(DockerNode):
     IMG = "rca/host"
     CONFIG_FILE = "/tmp/custom.net.conf"
 
-    def __conf_path(self):
-        return os.path.join(self.conf_dir, "%s.net.conf" % self.name)
+    def __fmt_conf_path(self, conf_path):
+        return os.path.join(
+            conf_path or self.conf_dir,
+            "%s.net.conf" % self.name
+        )
 
     def start(self):
         super(HostNode, self).start()
         # set network config if available
-        conf_path = self.__conf_path()
+        conf_path = self.__fmt_conf_path(None)
         if os.path.isfile(conf_path):
             dest = "%s:%s" % (self.container_name, self.CONFIG_FILE)
             self._docker_cp(conf_path, dest)
             self._docker_exec("network-config.py -l %s" % self.CONFIG_FILE)
 
     @require_running
-    def save(self):
+    def save(self, conf_path=None):
         self._docker_exec("network-config.py -s %s" % self.CONFIG_FILE)
         source = "%s:%s" % (self.container_name, self.CONFIG_FILE)
-        self._docker_cp(source, self.__conf_path())
+        self._docker_cp(source, self.__fmt_conf_path(conf_path))
 
 
 class QuaggaRouter(DockerNode):
@@ -220,13 +223,16 @@ class QuaggaRouter(DockerNode):
     SHELL = "/usr/bin/vtysh"
     TMP_CONF = "/tmp/quagga.conf"
 
-    def __conf_path(self):
-        return os.path.join(self.conf_dir, "%s.quagga.conf" % self.name)
+    def __fmt_conf_path(self, conf_path):
+        return os.path.join(
+            conf_path or self.conf_dir,
+            "%s.quagga.conf" % self.name
+        )
 
     def start(self):
         super(QuaggaRouter, self).start()
         # load quagga config if available and start quagga
-        conf_path = self.__conf_path()
+        conf_path = self.__fmt_conf_path(None)
         if os.path.isfile(conf_path):
             self._docker_exec("supervisorctl start all:")
             dest = "%s:%s" % (self.container_name, self.TMP_CONF)
@@ -234,10 +240,10 @@ class QuaggaRouter(DockerNode):
             self._docker_exec("load-quagga.sh %s" % self.TMP_CONF)
 
     @require_running
-    def save(self):
+    def save(self, conf_path=None):
         self._docker_exec("save-quagga.sh %s" % self.TMP_CONF)
         source = "%s:%s" % (self.container_name, self.TMP_CONF)
-        self._docker_cp(source, self.__conf_path())
+        self._docker_cp(source, self.__fmt_conf_path(conf_path))
 
 
 class FrrRouter(DockerNode):
@@ -245,13 +251,16 @@ class FrrRouter(DockerNode):
     SHELL = "/usr/bin/vtysh"
     TMP_CONF = "/tmp/frr.conf"
 
-    def __conf_path(self):
-        return os.path.join(self.conf_dir, "%s.frr.conf" % self.name)
+    def __fmt_conf_path(self, conf_path):
+        return os.path.join(
+            conf_path or self.conf_dir,
+            "%s.frr.conf" % self.name
+        )
 
     def start(self):
         super(FrrRouter, self).start()
         # load frr config if available and start frr
-        conf_path = self.__conf_path()
+        conf_path = self.__fmt_conf_path(None)
         if os.path.isfile(conf_path):
             self._docker_exec("supervisorctl start all:")
             dest = "%s:%s" % (self.container_name, self.TMP_CONF)
@@ -259,10 +268,10 @@ class FrrRouter(DockerNode):
             self._docker_exec("load-frr.sh %s" % self.TMP_CONF)
 
     @require_running
-    def save(self):
+    def save(self, conf_path=None):
         self._docker_exec("save-frr.sh %s" % self.TMP_CONF)
         source = "%s:%s" % (self.container_name, self.TMP_CONF)
-        self._docker_cp(source, self.__conf_path())
+        self._docker_cp(source, self.__fmt_conf_path(conf_path))
 
 
 DOCKER_NODES = {

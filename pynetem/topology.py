@@ -166,10 +166,10 @@ class TopologieManager(object):
         self.saved_state = []
         self.__load()
 
-    def save(self):
+    def save(self, conf_path=None):
         for n in self.saved_state:
             spinner = Spinner("Save node %s ... " % n.get_name())
-            n.save()
+            n.save(conf_path=conf_path)
             spinner.stop()
 
     def status(self):

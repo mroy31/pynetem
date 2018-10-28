@@ -128,8 +128,11 @@ class JunosInstance(QEMUInstance):
         self.interfaces = []
         self.capture_processes = {}
 
-    def __conf_path(self):
-        return os.path.join(self.conf_dir, "%s.net.conf" % self.name)
+    def __fmt_conf_path(self, conf_path):
+        return os.path.join(
+            conf_path or self.conf_dir,
+            "%s.net.conf" % self.name
+        )
 
     def get_type(self):
         return "node.junos"
@@ -147,16 +150,16 @@ class JunosInstance(QEMUInstance):
 
     def load_configuration(self):
         j_client = JunosTelnetClient(self.name, self.telnet_port)
-        j_client.load(self.__conf_path())
+        j_client.load(self.__fmt_conf_path(None))
 
     def stop(self):
         super(JunosInstance, self).stop()
         if os.path.isfile(self.img):
             os.unlink(self.img)
 
-    def save(self):
+    def save(self, conf_path=None):
         if self.shell_process is not None \
                 and self.shell_process.poll() is None:
             self.shell_process.terminate()
         j_client = JunosTelnetClient(self.name, self.telnet_port)
-        j_client.save(self.__conf_path())
+        j_client.save(self.__fmt_conf_path(conf_path))
