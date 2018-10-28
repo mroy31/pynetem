@@ -11,8 +11,10 @@ Requirements
 ------------
  * Python >= 3.4
  * python3-configobj
+ * python3-pyroute2
  * docker-ce
  * openvswitch-switch
+ * uml-utilities
  * qemu (optional)
  * vde2 (optional)
 
