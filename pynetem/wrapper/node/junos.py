@@ -23,7 +23,7 @@ from pynetem.ui.config import NetemConfig
 from pynetem.wrapper.node.qemu import QEMUInstance, QEMU_IMG
 
 
-class JunosTelnetClient(QEMUInstance):
+class JunosTelnetClient(object):
     username = b"root"
     password = b"Juniper"
     hostname = b"generic"
@@ -113,8 +113,8 @@ class JunosTelnetClient(QEMUInstance):
 
 class JunosInstance(QEMUInstance):
 
-    def __init__(self, prj_id, p2p_sw, conf_dir, img_type, name, node_config):
-        super(QEMUInstance, self).__init__(name)
+    def __init__(self, p2p_sw, prj_id, conf_dir, img_type, name, node_config):
+        super(QEMUInstance, self).__init__(prj_id, name)
 
         self.conf_dir = conf_dir
         self.p2p_sw = p2p_sw

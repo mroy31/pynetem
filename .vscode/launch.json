@@ -15,7 +15,7 @@
                 "PYTHONPATH": "${workspaceRoot}"
             },
             "args": [
-                "../test/simple-test.pnet"
+                "../networks/TP_Multicast.pnet"
             ],
             "debugOptions": [
                 "RedirectOutput"

@@ -45,8 +45,8 @@ class QEMUInstance(_BaseInstance):
     instance_type = ""
     qemu_bin = "qemu-system-i386"
 
-    def __init__(self, p2p_sw, image_dir, img_type, name, node_config):
-        super(QEMUInstance, self).__init__(name)
+    def __init__(self, p2p_sw, prj_id, image_dir, img_type, name, node_config):
+        super(QEMUInstance, self).__init__(prj_id, name)
 
         self.p2p_sw = p2p_sw
         self.memory = "memory" in node_config and node_config["memory"] or None
@@ -201,10 +201,13 @@ class QEMUInstance(_BaseInstance):
                 }
 
     def stop(self):
-        super(QEMUInstance, self).stop()
+        if self.shell_process is not None:
+            self.shell_process.terminate()
+            self.shell_process = None
         for k in self.capture_processes:
             self.capture_processes[k].terminate()
             self.capture_processes = {}
+        super(QEMUInstance, self).stop()
         for if_c in self.interfaces:
             if if_c["tap"] is not None:
                 if if_c["peer"] == "switch":

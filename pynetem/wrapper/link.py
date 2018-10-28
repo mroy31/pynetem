@@ -29,7 +29,7 @@ class NetemLinkFactory(_BaseWrapper):
         return cls.__instance
 
     def __init__(self):
-        super(NetemLinkFactory, self).__init__()
+        super(NetemLinkFactory, self).__init__(None)
         self.__links = []
         self.__ns_list = []
 

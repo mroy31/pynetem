@@ -36,10 +36,13 @@ def build_node_instance(prj_id, p2p_sw, img_dir, conf_dir, n_name, n_config):
 
         # create instance based on type field
         if n_type == "qemu":
-            return QEMUInstance(p2p_sw, img_dir, n_image, n_name, n_config)
+            return QEMUInstance(
+                p2p_sw, prj_id, img_dir,
+                n_image, n_name, n_config
+            )
         if n_type == "junos":
             return JunosInstance(
-                prj_id, p2p_sw, conf_dir,
+                p2p_sw, prj_id, conf_dir,
                 n_image, n_name, n_config
             )
         if n_type == "docker":

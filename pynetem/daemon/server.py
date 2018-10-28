@@ -22,6 +22,7 @@ from socketserver import UnixStreamServer, BaseRequestHandler
 import subprocess
 import logging
 import shlex
+from pyroute2 import IPDB
 from pynetem import __version__, NETEM_ID
 from pynetem import NetemError
 from pynetem.utils import get_exc_desc
@@ -99,10 +100,10 @@ class NetemDaemonHandler(BaseRequestHandler):
             # execute command
             ret = getattr(self, cmd_name)(*match_obj.groups())
         except NetemError as err:
-            msg = "ERROR: %s" % err
+            msg = "%s" % err
         except Exception as ex:
             logging.error(get_exc_desc())
-            msg = "ERROR: Unknown exception happen see log for details"
+            msg = "Unknown exception happen see log for details"
         else:
             msg = "OK"
             if ret is not None:
@@ -133,15 +134,20 @@ class NetemDaemonHandler(BaseRequestHandler):
         logging.debug("Start docker container %s" % container_name)
         run_command("docker start %s" % container_name)
 
-    @staticmethod
-    def docker_stop(container_name):
+    @classmethod
+    def docker_stop(cls, container_name):
         logging.debug("Stop docker container %s" % container_name)
-        run_command("docker stop %s" % container_name)
+        container = cls.__get_container_list(container_name)
+        if len(container) == 1:
+            run_command("docker stop %s" % container_name)
 
-    @staticmethod
-    def docker_rm(container_name):
+    @classmethod
+    def docker_rm(cls, container_name):
         logging.debug("Delete docker container %s" % container_name)
-        run_command("docker rm %s" % container_name)
+        container = cls.__get_container_list(container_name)
+        if len(container) == 1:
+            run_command("docker stop %s" % container_name)
+            run_command("docker rm %s" % container_name)
 
     @staticmethod
     def docker_pid(container_name):
@@ -279,13 +285,10 @@ class NetemDaemonHandler(BaseRequestHandler):
     @classmethod
     def clean(cls, prj_id):
         logging.debug("Clean project %s" % prj_id)
-        # remove existing docker containers
-        d_cmd = "docker container list --format '{{.Names}}' --all"
-        containers = run_command(d_cmd, check_output=True).split("\n")
-        for container_name in containers:
-            if container_name.startswith(prj_id):
-                cls.docker_stop(container_name)
-                cls.docker_rm(container_name)
+        # remove existing docker containers for this project
+        for container_name in cls.__get_container_list(prj_id):
+            cls.docker_stop(container_name)
+            cls.docker_rm(container_name)
 
         # remove existing ovs switches
         s_cmd = "ovs-vsctl list-br"
@@ -293,6 +296,16 @@ class NetemDaemonHandler(BaseRequestHandler):
         for s_name in switches:
             if s_name.startswith(prj_id):
                 cls.ovs_delete(s_name)
+        
+        # delete remaining links
+        with IPDB() as ipdb:
+            for if_name in ipdb.interfaces:
+                if isinstance(if_name, int):
+                    continue
+                if if_name.startswith(prj_id):
+                    print(str(if_name))
+                    ipdb.interfaces[if_name].remove()
+            ipdb.commit()
 
     @staticmethod
     def __set_x11_env(display, xauth):
@@ -300,6 +313,12 @@ class NetemDaemonHandler(BaseRequestHandler):
         if xauth != "null":
             env["XAUTHORITY"] = xauth
         return env
+
+    @staticmethod
+    def __get_container_list(prefix):
+        d_cmd = "docker container list --format '{{.Names}}' --all"
+        containers = run_command(d_cmd, check_output=True).split("\n")
+        return [c for c in containers if c.startswith(prefix)]
 
 
 class NetemDaemonThread(threading.Thread):

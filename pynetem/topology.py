@@ -186,13 +186,27 @@ Status of nodes:
         self.p2p_switch.close()
 
     def __start_node(self, node):
+        if node.is_running():
+            return
+
         spinner = Spinner("Start node %s ... " % node.get_name())
-        node.start()
+        try:
+            node.start()
+        except NetemError as ex:
+            spinner.error(str(ex))
+            raise ex
         spinner.stop()
 
     def __stop_node(self, node):
+        if not node.is_running():
+            return
+
         spinner = Spinner("Stop node %s ... " % node.get_name())
-        node.stop()
+        try:
+            node.stop()
+        except NetemError as ex:
+            spinner.error(str(ex))
+            raise ex
         spinner.stop()
 
     def __load_configuration(self, node):

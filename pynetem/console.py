@@ -147,21 +147,24 @@ class NetemConsole(cmd.Cmd):
     @netmem_cmd(reg_exp="^(\S+)$", require_project=True)
     def do_start(self, node_id):
         """Start nodes, you can specify node name or 'all'"""
+        topo = self.current_project.topology
         for node in self.__get_nodes(node_id):
-            node.start()
+            topo.start(node.get_name())
 
     @netmem_cmd(reg_exp="^(\S+)$", require_project=True)
     def do_stop(self, node_id):
         """Stop nodes, you can specify node name or 'all'"""
+        topo = self.current_project.topology
         for node in self.__get_nodes(node_id):
-            node.stop()
+            topo.stop(node.get_name())
 
     @netmem_cmd(reg_exp="^(\S+)$", require_project=True)
     def do_restart(self, node_id):
         """Restart nodes in the network"""
+        topo = self.current_project.topology
         for node in self.__get_nodes(node_id):
-            node.stop()
-            node.start()
+            topo.stop(node.get_name())
+            topo.start(node.get_name())
 
     @netmem_cmd(require_project=True)
     def do_status(self):

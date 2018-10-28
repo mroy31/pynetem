@@ -23,6 +23,7 @@ class NetemP2PSwitch(object):
 
     def __init__(self, prj_id):
         self.daemon = NetemDaemonClient.instance()
+        self.__prj_id = prj_id
         self.__sw_name = "{0}.{1}".format(prj_id, P2P_NAME)
         self.__connections = []
 
@@ -59,4 +60,5 @@ class NetemP2PSwitch(object):
         self.daemon.ovs_delete(self.__sw_name)
 
     def __inverse_ifname(self, ifname):
-        return "{1}.{0}".format(*ifname.split(".", 1))
+        s_ifname = ifname.replace(self.__prj_id, "")
+        return "{0}{2}.{1}".format(self.__prj_id, *s_ifname.split(".", 1))

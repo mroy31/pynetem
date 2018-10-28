@@ -26,7 +26,8 @@ from pynetem.daemon.client import NetemDaemonClient
 
 class _BaseWrapper(object):
 
-    def __init__(self):
+    def __init__(self, prj_id):
+        self.prj_id = prj_id
         self.daemon = NetemDaemonClient.instance()
 
     def _command(self, cmd_line, check_output=True, shell=False):
@@ -52,10 +53,22 @@ class _BaseWrapper(object):
     def get_type(self):
         raise NotImplementedError
 
+    def is_running(self):
+        raise NotImplementedError
+
     def gen_ifname(self, if_id, peer, p_if=None):
-        name = "{}_{}.{}".format(self.get_name(), if_id, peer.get_name())
+        name = "{}{}{}.{}".format(
+            self.prj_id,
+            self.short(self.get_name()),
+            if_id, self.short(peer.get_name())
+        )
         if p_if is not None:
-            name += "_{}".format(p_if)
+            name += "{}".format(p_if)
+        return name
+
+    def short(self, name):
+        if len(name) > 2:
+            return name[:2] + name[-1]
         return name
 
     def clean(self):
@@ -64,7 +77,8 @@ class _BaseWrapper(object):
 
 class _BaseInstance(_BaseWrapper):
 
-    def __init__(self, name):
+    def __init__(self, prj_id, name):
+        super(_BaseInstance, self).__init__(prj_id)
         self.daemon = NetemDaemonClient.instance()
         self.name = name
         self.process = None
@@ -123,3 +137,6 @@ class _BaseInstance(_BaseWrapper):
 
     def get_status(self):
         return self.is_started is not None and "Started" or "Stopped"
+
+    def is_running(self):
+        return self.is_started

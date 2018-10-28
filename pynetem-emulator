@@ -101,8 +101,10 @@ if __name__ == "__main__":
             try:
                 project.load_topology()
             except NetemError as err:
+                logging.error("An error happened during the loading of "
+                              "project %s, close it and exit" % prj_path)
                 project.close()
-                sys.exit("Unable to load project %s: %s" % (prj_path, err))
+                sys.exit(1)
             except Exception as ex:
                 project.close()
                 print(get_exc_desc())

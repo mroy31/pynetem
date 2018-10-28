@@ -22,7 +22,7 @@ from pynetem.wrapper import _BaseWrapper
 class OVSwitchInstance(_BaseWrapper):
 
     def __init__(self, prj_id, sw_name, sw_config):
-        super(OVSwitchInstance, self).__init__()
+        super(OVSwitchInstance, self).__init__(prj_id)
 
         self.name = sw_name
         self.__is_started = False
@@ -34,6 +34,9 @@ class OVSwitchInstance(_BaseWrapper):
 
     def get_name(self):
         return self.name
+
+    def is_running(self):
+        return self.__is_started
 
     def attach_interface(self, if_name):
         if self.__is_started and if_name not in self.__sw_interfaces:

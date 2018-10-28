@@ -41,7 +41,7 @@ class DockerNode(_BaseWrapper):
     IMG = None
 
     def __init__(self, p2p_sw, prj_id, conf_dir, name, image_name):
-        super(DockerNode, self).__init__()
+        super(DockerNode, self).__init__(prj_id)
 
         self.name = name
         self.conf_dir = conf_dir
@@ -62,6 +62,9 @@ class DockerNode(_BaseWrapper):
 
     def get_pid(self):
         return self.__pid
+
+    def is_running(self):
+        return self.running
 
     def __create(self):
         logging.debug("Create docker container %s" % self.container_name)
@@ -93,6 +96,8 @@ class DockerNode(_BaseWrapper):
         if not self.running:
             self.daemon.docker_start(self.container_name)
             self.__pid = self.daemon.docker_pid(self.container_name)
+            self.running = True
+            # attach interfaces
             for if_conf in self.__interfaces:
                 if if_conf["peer"] == "null":
                     continue  # skip this interface
@@ -103,7 +108,6 @@ class DockerNode(_BaseWrapper):
                 elif if_conf["peer"] == "node":
                     self.p2p_sw.add_connection(if_conf["ifname"])
                 self.__attach_interface(p_if, if_conf["target_if"])
-            self.running = True
 
     def __attach_interface(self, if_name, target_name):
         self.daemon.docker_attach_interface(self.container_name, if_name,

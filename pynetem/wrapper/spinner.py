@@ -45,3 +45,8 @@ class Spinner(object):
         self.busy = False
         time.sleep(self.delay)
         sys.stdout.write('OK\n')
+
+    def error(self, err):
+        self.busy = False
+        time.sleep(self.delay)
+        sys.stdout.write('NOK: %s\n' % err)

@@ -16,7 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 __version__ = "0.7.2"
-NETEM_ID = "netem"
+NETEM_ID = "ntm"
 
 
 class NetemError(Exception):
