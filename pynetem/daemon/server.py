@@ -340,10 +340,6 @@ class NetemDaemonThread(threading.Thread):
 
     def stop(self):
         if self.__server is not None:
-            # before stopping the server, clean the env
-            logging.info("Clean older project before leaving...")
-            NetemDaemonHandler.clean(NETEM_ID)
-
             logging.info("Stop pynetem daemon")
             self.__server.shutdown()
             self.__server = None
