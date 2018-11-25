@@ -7,8 +7,8 @@ set -x
 $minimal_apt_get_install gdebi-core supervisor
 
 # install ffr packages
-gdebi --non-interactive /build/debs/frr_5.0.1-1.debian9.1_amd64.deb
-gdebi --non-interactive /build/debs/frr-pythontools_5.0.1-1.debian9.1_all.deb
+gdebi --non-interactive /build/debs/frr_6.0-1.debian9+1_amd64.deb
+gdebi --non-interactive /build/debs/frr-pythontools_6.0-1.debian9+1_all.deb
 
 if [ -d "/etc/frr/" ]; then
     cd /etc/frr/
@@ -17,7 +17,7 @@ if [ -d "/etc/frr/" ]; then
     chown frr:frr zebra.conf ospfd.conf bgpd.conf pimd.conf pbrd.conf ldpd.conf
 fi
 chown frr:frr /var/run/frr
-# add root to quagga group
+# add root to frr group
 gpasswd -a root frr
 
 # copy script to load/save config
