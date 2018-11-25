@@ -49,6 +49,7 @@ class QEMUInstance(_BaseInstance):
         super(QEMUInstance, self).__init__(prj_id, name)
 
         self.p2p_sw = p2p_sw
+        self.kvm = NetemConfig.instance().getboolean("qemu", "enable_kvm")
         self.memory = "memory" in node_config and node_config["memory"] or None
         self.need_acpi = "acpi" not in node_config and True \
                          or node_config.as_bool("acpi")
@@ -187,13 +188,13 @@ class QEMUInstance(_BaseInstance):
             shell=False)
 
     def build_cmd_line(self):
-        noacpi = "-no-acpi"
-        if self.need_acpi:
-            noacpi = ""
-        return "qemu-system-i386 %(noacpi)s -enable-kvm -hda %(img)s "\
+        noacpi = not self.need_acpi and "-no-acpi" or ""
+        enable_kvm = self.kvm and "-enable-kvm"
+        return "qemu-system-i386 %(noacpi)s %(kvm)s -hda %(img)s "\
                "-m %(mem)s -nographic -serial "\
                "telnet::%(telnet_port)d,server,nowait %(interfaces)s" % {
                    "noacpi": noacpi,
+                   "kvm": enable_kvm,
                    "img": self.img,
                    "mem": self.get_memory(),
                    "telnet_port": self.telnet_port,

@@ -16,6 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import os
+import logging
 import time
 import telnetlib
 from shlex import quote
@@ -35,7 +36,12 @@ class JunosTelnetClient(object):
     def load(self, conf_file):
         # wait some seconds before initiate the connection
         time.sleep(3.0)
-        tn = telnetlib.Telnet("localhost", port=self.port)
+        try:
+            tn = telnetlib.Telnet("localhost", port=self.port)
+        except ConnectionRefusedError:
+            logging.error("Unable to connect to %s router" % self.name)
+            return
+
         # wait the router is ready
         tn.write(b"\n")
         tn.read_until(b"login: ")
@@ -65,7 +71,11 @@ class JunosTelnetClient(object):
         tn.close()
 
     def save(self, conf_file):
-        tn = telnetlib.Telnet("localhost", port=self.port)
+        try:
+            tn = telnetlib.Telnet("localhost", port=self.port)
+        except ConnectionRefusedError:
+            logging.error("Unable to connect to %s router" % self.name)
+            return
         self.logout(tn)
         self.login(tn, self.name.encode("ascii"))
         tn.write(b"configure\n")
@@ -118,6 +128,7 @@ class JunosInstance(QEMUInstance):
 
         self.conf_dir = conf_dir
         self.p2p_sw = p2p_sw
+        self.kvm = NetemConfig.instance().getboolean("qemu", "enable_kvm")
         self.img_type = img_type
         self.memory = "memory" in node_config and node_config["memory"] or None
         self.need_acpi = "acpi" not in node_config and True \
