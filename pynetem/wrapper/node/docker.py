@@ -17,6 +17,7 @@
 
 import os
 import logging
+import shutil
 from pynetem import NetemError
 from pynetem.ui.config import NetemConfig
 from pynetem.wrapper import _BaseWrapper
@@ -125,14 +126,19 @@ class DockerNode(_BaseWrapper):
 
     @require_running
     def capture(self, if_number):
-        if len(self.__interfaces) > if_number:
-            if_name = "eth%s" % if_number
-            display, xauth = self._get_x11_env()
-            self.daemon.docker_capture(display, xauth,
-                                       self.container_name, if_name)
-        else:
+        if not shutil.which("wireshark"):
+            raise NetemError(
+                "Unable to start capture -> Wireshark is not installed on"
+                " your computer")
+
+        if len(self.__interfaces) <= if_number:
             raise NetemError("%s: interface %d does not "
                              "exist" % (self.name, if_number))
+
+        if_name = "eth%s" % if_number
+        display, xauth = self._get_x11_env()
+        self.daemon.docker_capture(
+            display, xauth, self.container_name, if_name)
 
     @require_running
     def set_if_state(self, if_number, state):
