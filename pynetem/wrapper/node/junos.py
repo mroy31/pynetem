@@ -76,7 +76,13 @@ class JunosTelnetClient(object):
         except ConnectionRefusedError:
             logging.error("Unable to connect to %s router" % self.name)
             return
-        self.logout(tn)
+
+        if not self.logout(tn):
+            logging.error(
+                "Unable to save %s router, perhaps you forget to "
+                "commit your configuration" % self.name)
+            return
+
         self.login(tn, self.name.encode("ascii"))
         tn.write(b"configure\n")
         with open(conf_file, "bw") as hd:
@@ -86,13 +92,15 @@ class JunosTelnetClient(object):
         tn.close()
 
     def logout(self, tn):
-        while True:
+        attempt = 0
+        while attempt < 15:
             tn.write(b"\n")
             data = tn.read_until(b"login: ", timeout=0.5)
             if data.endswith(b"login: "):
                 break
-            else:
-                tn.write(b"exit\n")
+            attempt += 1
+            tn.write(b"exit\n")
+        return attempt < 15
 
     def login(self, tn, router_name, cli=True):
         tn.write(self.username+b"\n")
