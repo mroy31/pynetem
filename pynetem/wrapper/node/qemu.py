@@ -93,38 +93,38 @@ class QEMUInstance(_BaseInstance):
         self.__add_if("node", node_instance, peer_if=if_number)
 
     def __sw_if_cmdline(self, if_config):
-        cmd_line = "-net nic,macaddr=%s,model=e1000,"\
-                   "vlan=%d" % (if_config['mac'], if_config['vlan_id'])
+        cmd_line = "-device e1000,mac=%s,"\
+                   "netdev=net-%d" % (if_config['mac'], if_config['vlan_id'])
         if if_config['peer_instance'] is not None:
             sw_type = if_config["peer_instance"].get_type()
             if sw_type == "switch.vde":
                 sw_name = if_config["peer_instance"].get_name()
-                cmd_line += " -net vde,sock=%s,"\
-                            "vlan=%d" % ("/tmp/%s.ctl" % sw_name,
-                                         if_config['vlan_id'])
+                cmd_line += " -netdev vde,sock=%s,"\
+                            "id=net-%d" % ("/tmp/%s.ctl" % sw_name,
+                                           if_config['vlan_id'])
             elif sw_type == "switch.ovs":
                 # create tap and attach to ovswitch
                 tap_name = self.gen_ifname(if_config["vlan_id"],
                                            if_config["peer_instance"])
                 self.daemon.tap_create(tap_name, os.environ["LOGNAME"])
                 if_config["peer_instance"].attach_interface(tap_name)
-                cmd_line += " -net tap,ifname=%s,script=no,"\
+                cmd_line += " -netdev tap,ifname=%s,script=no,"\
                             "downscript=no,"\
-                            "vlan=%d" % (tap_name, if_config["vlan_id"])
+                            "id=net-%d" % (tap_name, if_config["vlan_id"])
                 if_config["tap"] = tap_name
         return cmd_line
 
     def __node_if_cmdline(self, if_config):
-        cmd_line = "-net nic,macaddr=%s,model=e1000,"\
-                   "vlan=%d" % (if_config['mac'], if_config['vlan_id'])
+        cmd_line = "-device e1000,mac=%s,"\
+                   "netdev=net-%d" % (if_config['mac'], if_config['vlan_id'])
         # create tap and attach to ovswitch
         tap_name = self.gen_ifname(if_config["vlan_id"],
                                    if_config["peer_instance"],
                                    if_config["peer_if"])
         self.daemon.tap_create(tap_name, os.environ["LOGNAME"])
         self.p2p_sw.add_connection(tap_name)
-        cmd_line += " -net tap,ifname=%s,script=no,"\
-                    "downscript=no,vlan=%d" % (tap_name, if_config["vlan_id"])
+        cmd_line += " -netdev tap,ifname=%s,script=no,"\
+                    "downscript=no,id=net-%d" % (tap_name, if_config["vlan_id"])
         if_config["tap"] = tap_name
         return cmd_line
 
@@ -189,7 +189,7 @@ class QEMUInstance(_BaseInstance):
 
     def build_cmd_line(self):
         noacpi = not self.need_acpi and "-no-acpi" or ""
-        enable_kvm = self.kvm and "-enable-kvm"
+        enable_kvm = self.kvm and "-enable-kvm" or ""
         return "qemu-system-i386 %(noacpi)s %(kvm)s -hda %(img)s "\
                "-m %(mem)s -nographic -serial "\
                "telnet::%(telnet_port)d,server,nowait %(interfaces)s" % {
