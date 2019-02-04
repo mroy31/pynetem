@@ -1,2 +1,2 @@
 
-  * Update qemu launch command to use new netdev syntax
+  * Better handling of errors

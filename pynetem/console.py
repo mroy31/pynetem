@@ -46,8 +46,8 @@ def netmem_cmd(reg_exp=None, require_project=False):
                     return func(self)
                 return func(self, *match_object.groups())
             except NetemError as err:
-                self.error("unable to execute cmd: %s" % err)
-            except Exception as ex:
+                self.error("%s" % err)
+            except Exception:
                 self.error("unhandle exception raises, see traceback below")
                 print(get_exc_desc())
                 return self.close()

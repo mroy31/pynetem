@@ -14,14 +14,17 @@ Package: pynetem
 Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends},
          lsb-base (>= 3.0-6),
-	 docker-ce,
          uml-utilities,
          openvswitch-switch,
          python3-configobj,
-         python3-pyroute2
+         python3-pyroute2,
+         xterm,
+         telnet
 Recommends: qemu-system,
+     	 docker-ce,
          qemu-utils,
          vde2,
+         wireshark
 Description: PyNetem is network emulator working with qemu/docker
  PyNetem is a network emulator based on 
   * qemu or docker for node emulation

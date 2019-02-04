@@ -1,3 +1,15 @@
+pynetem (0.8.4-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Mickaël Royer <mickael.royer@gmail.com>  Mon, 04 Feb 2019 15:08:14 +0100
+
+pynetem (0.8.3-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Mickaël Royer <mickael.royer@gmail.com>  Tue, 27 Nov 2018 12:58:44 +0100
+
 pynetem (0.8.2-1) unstable; urgency=medium
 
   * New upstream release
