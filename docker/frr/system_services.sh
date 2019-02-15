@@ -7,8 +7,9 @@ set -x
 $minimal_apt_get_install gdebi-core supervisor
 
 # install ffr packages
-gdebi --non-interactive /build/debs/frr_6.0-1.debian9+1_amd64.deb
-gdebi --non-interactive /build/debs/frr-pythontools_6.0-1.debian9+1_all.deb
+gdebi --non-interactive /build/debs/frr_6.0.2-0.deb9u1_amd64.deb
+gdebi --non-interactive /build/debs/frr-pythontools_6.0.2-0.deb9u1_all.deb
+gdebi --non-interactive /build/debs/frr-snmp_6.0.2-0.deb9u1_amd64.deb
 
 if [ -d "/etc/frr/" ]; then
     cd /etc/frr/
@@ -16,6 +17,7 @@ if [ -d "/etc/frr/" ]; then
     touch ospfd.conf bgpd.conf pimd.conf pbrd.conf ldpd.conf
     chown frr:frr zebra.conf ospfd.conf bgpd.conf pimd.conf pbrd.conf ldpd.conf
 fi
+mkdir /var/run/frr
 chown frr:frr /var/run/frr
 # add root to frr group
 gpasswd -a root frr
