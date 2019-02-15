@@ -20,6 +20,7 @@ import logging
 import time
 import telnetlib
 from shlex import quote
+from pynetem import NetemError
 from pynetem.ui.config import NetemConfig
 from pynetem.wrapper.node.qemu import QEMUInstance, QEMU_IMG
 
@@ -73,15 +74,13 @@ class JunosTelnetClient(object):
     def save(self, conf_file):
         try:
             tn = telnetlib.Telnet("localhost", port=self.port)
-        except ConnectionRefusedError:
-            logging.error("Unable to connect to %s router" % self.name)
-            return
+        except (ConnectionRefusedError, TimeoutError):
+            raise NetemError("Unable to connect to %s router" % self.name)
 
         if not self.logout(tn):
-            logging.error(
+            raise NetemError(
                 "Unable to save %s router, perhaps you forget to "
                 "commit your configuration" % self.name)
-            return
 
         self.login(tn, self.name.encode("ascii"))
         tn.write(b"configure\n")

@@ -39,7 +39,7 @@ def build_cmd_func(cmd, nb_args):
         ans = sock.recv(1024).decode("utf-8").strip()
         sock.close()
         if not ans.startswith("OK"):
-            raise NetemError("Daemon returns an error: %s" % ans)
+            raise NetemError("Daemon returns an error:\n\t%s" % ans)
         return ans.replace("OK ", "")
 
     return cmd_func

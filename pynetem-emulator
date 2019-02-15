@@ -20,7 +20,7 @@ import sys
 import os
 import logging
 import signal
-from optparse import OptionParser
+import argparse
 from pynetem.ui.config import NetemConfig
 from pynetem.project import NetemProject
 from pynetem.console import NetemConsole
@@ -30,38 +30,38 @@ from pynetem.utils import get_exc_desc
 from pynetem import __version__, NETEM_ID
 
 
-usage = "usage: %prog [options] <network file>"
-parser = OptionParser(usage=usage)
-parser.set_defaults(debug=False, conffile=None, version=False, clean=False)
-parser.add_option("-c", "--conf-file", type="string", dest="conffile",
-                  metavar="FILE", help="Specify a custom conf file")
-parser.add_option("-d", "--debug", action="store_true", dest="debug",
-                  help="Log more debug informations")
-parser.add_option("-v", "--version", action="store_true", dest="version",
-                  help="Log more debug informations")
-parser.add_option("-l", "--clean", action="store_true", dest="clean",
-                  help="Clean the netem env")
-(options, args) = parser.parse_args()
+parser = argparse.ArgumentParser(description='Network emulator')
+parser.add_argument('project', metavar='PRJ', type=str, nargs="?",
+                    default=None, help='Path for the pnet project')
+parser.add_argument("-c", "--conf-file", type=str, dest="conffile",
+                    metavar="FILE", default=None,
+                    help="Specify a custom conf file")
+parser.add_argument("-d", "--debug", action="store_true", 
+                    dest="debug", default=False,
+                    help="Log more debug informations")
+parser.add_argument("-v", "--version", action="store_true",
+                    dest="version", default=False,
+                    help="Log more debug informations")
+parser.add_argument("-l", "--clean", action="store_true", dest="clean",
+                    default=False, help="Clean the netem env")
+args = parser.parse_args()
+
 
 if __name__ == "__main__":
     # if asked, show version and quit
-    if options.version:
+    if args.version:
         print(__version__)
         sys.exit()
 
-    if len(args) > 1:
-        sys.exit("Too many arguments -> %s" % usage)
-
     # add custom config parms
-    if options.conffile:
-        if os.path.isfile(options.conffile):
-            NetemConfig.custom_conf = options.conffile
-        else:
+    if args.conffile:
+        if not os.path.isfile(args.conffile):
             sys.exit("The config file does not exist.")
+        NetemConfig.custom_conf = args.conffile
 
     config = NetemConfig.instance()
     log_format = '%(levelname)s: %(message)s'
-    log_level = options.debug and logging.DEBUG or logging.INFO
+    log_level = args.debug and logging.DEBUG or logging.INFO
     logging.basicConfig(format=log_format, level=log_level)
 
     # test the connection with the daemon and its version
@@ -77,19 +77,18 @@ if __name__ == "__main__":
                  "%s != %s" % (d_version, __version__))
 
     # if asked clean old project and quit
-    if options.clean:
+    if args.clean:
         logging.info("Clean old pynetem project, please wait...")
         daemon.clean(NETEM_ID)
         sys.exit()
 
     project = None
-    if len(args) == 1:
-        prj_path = args[0]
-        if os.path.isfile(prj_path):
-            project = NetemProject.load(daemon, prj_path)
+    if args.project is not None:
+        if os.path.isfile(args.project):
+            project = NetemProject.load(daemon, args.project)
         else:
-            logging.info("Create empty project %s" % prj_path)
-            project = NetemProject.create(daemon, prj_path)
+            logging.info("Create empty project %s" % args.project)
+            project = NetemProject.create(daemon, args.project)
 
         # check before load the topology
         try:
@@ -102,10 +101,11 @@ if __name__ == "__main__":
                 project.load_topology()
             except NetemError as err:
                 logging.error("An error happened during the loading of "
-                              "project %s, close it and exit" % prj_path)
+                              "project %s, close it and exit" % args.project)
+                logging.error(err)
                 project.close()
                 sys.exit(1)
-            except Exception as ex:
+            except Exception:
                 project.close()
                 print(get_exc_desc())
                 sys.exit("Unhandled excetion during the "

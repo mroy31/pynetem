@@ -15,12 +15,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import cmd
+from cmd2 import Cmd
 import re
 import os
 from pynetem import NetemError
 from pynetem.project import NetemProject
-from pynetem.utils import get_exc_desc
+from pynetem.utils import cmd_check_output
 
 
 def netmem_cmd(reg_exp=None, require_project=False):
@@ -29,27 +29,27 @@ def netmem_cmd(reg_exp=None, require_project=False):
             # first, valid arguments
             match_object = None
             if reg_exp is None and arg.strip() != "":
-                self.error("this command does not require any argument.")
+                self.perror("this command does not require any argument.")
                 return
             elif reg_exp is not None:
                 match_object = re.match(reg_exp, arg.strip())
                 if match_object is None:
-                    self.error("argument for this cmd does not respect the "
-                               "following syntax: %s" % reg_exp)
+                    self.perror("argument for this cmd does not respect the "
+                                "following syntax: %s" % reg_exp)
                     return
 
             if require_project and self.current_project is None:
-                self.error("this command requires a loaded project")
+                self.perror("this command requires a loaded project")
                 return
+
             try:
                 if match_object is None:
                     return func(self)
                 return func(self, *match_object.groups())
             except NetemError as err:
-                self.error("%s" % err)
-            except Exception:
-                self.error("unhandle exception raises, see traceback below")
-                print(get_exc_desc())
+                self.perror("%s" % err)
+            except Exception as err:
+                self.perror("unhandle error happens, %s" % err)
                 return self.close()
 
         cmd_func.__name__ = func.__name__
@@ -59,14 +59,31 @@ def netmem_cmd(reg_exp=None, require_project=False):
     return cmd_decorator
 
 
-class NetemConsole(cmd.Cmd):
+class NetemConsole(Cmd):
     intro = 'Welcome to network emulator. Type help or ? to list commands.\n'
     prompt = '[net-emulator] '
 
     def __init__(self, daemon, project=None):
-        super(NetemConsole, self).__init__()
+        self.allow_cli_args = False
         self.daemon = daemon
         self.current_project = project
+
+        super(NetemConsole, self).__init__()
+        if "DISPLAY" not in os.environ:
+            os.environ["DISPLAY"] = ":0.0"
+        self.__open_display()
+
+    def __open_display(self):
+        try:
+            cmd_check_output("xhost si:localuser:root")
+        except Exception as ex:
+            self.perror("Unable to disable X11 access control -> %s" % ex)
+
+    def __close_display(self):
+        try:
+            cmd_check_output("xhost -si:localuser:root")
+        except Exception:
+            pass
 
     def __quit(self):
         if self.current_project is not None:
@@ -77,8 +94,11 @@ class NetemConsole(cmd.Cmd):
                     q = input("Wrong answer, expect Y or N: ")
                 if q == "N":
                     return None
-            print("Close the projet please wait before leaving...")
+            self.poutput(
+                "\x1b[93mClose the projet please wait before leaving...\033[0m"
+            )
             self.current_project.close()
+            self.__close_display()
         return True
 
     def emptyline(self):
@@ -185,7 +205,7 @@ class NetemConsole(cmd.Cmd):
             try:
                 node.open_shell(debug=debug)
             except NetemError as err:
-                print("WARNING: %s" % err)
+                self.perror("%s" % err)
 
     @netmem_cmd(reg_exp="^(\S+)$", require_project=True)
     def do_console(self, node_id):
@@ -207,9 +227,6 @@ class NetemConsole(cmd.Cmd):
         if self.current_project is not None:
             self.current_project.close()
         return True
-
-    def error(self, err):
-        print("ERROR: {}".format(err))
 
     def __get_nodes(self, arg):
         if arg == "all":

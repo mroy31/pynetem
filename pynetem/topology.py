@@ -168,9 +168,11 @@ class TopologieManager(object):
 
     def save(self, conf_path=None):
         for n in self.saved_state:
-            spinner = Spinner("Save node %s ... " % n.get_name())
-            n.save(conf_path=conf_path)
-            spinner.stop()
+            self.__spinner_cmd(
+                n.save,
+                "Save node %s ... " % n.get_name(),
+                conf_path=conf_path
+            )
 
     def status(self):
         return """
@@ -189,31 +191,35 @@ Status of nodes:
         if node.is_running():
             return
 
-        spinner = Spinner("Start node %s ... " % node.get_name())
-        try:
-            node.start()
-        except NetemError as ex:
-            spinner.error(str(ex))
-            raise ex
-        spinner.stop()
+        self.__spinner_cmd(
+            node.start,
+            "Start node %s ... " % node.get_name()
+        )
 
     def __stop_node(self, node):
         if not node.is_running():
             return
 
-        spinner = Spinner("Stop node %s ... " % node.get_name())
-        try:
-            node.stop()
-        except NetemError as ex:
-            spinner.error(str(ex))
-            raise ex
-        spinner.stop()
+        self.__spinner_cmd(
+            node.stop,
+            "Stop node %s ... " % node.get_name()
+        )
 
     def __load_configuration(self, node):
-        spinner = Spinner("Load configuration for "
-                          "node %s ... " % node.get_name())
-        node.load_configuration()
-        spinner.stop()
+        if node.is_running():
+            self.__spinner_cmd(
+                node.load_configuration,
+                "Load configuration for node %s ... " % node.get_name()
+            )
+
+    def __spinner_cmd(self, cmd_func, msg, *args, **kwargs):
+        spinner = Spinner(msg)
+        try:
+            cmd_func(*args, **kwargs)
+        except NetemError as ex:
+            spinner.error(str(ex))
+        else:
+            spinner.stop()
 
     def __get_node_if(self, if_id):
         if_ids = if_id.split(".")

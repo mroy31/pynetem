@@ -35,16 +35,16 @@ class _BaseWrapper(object):
         if check_output:
             try:
                 result = subprocess.check_output(args, shell=shell)
-            except subprocess.CalledProcessError:
-                msg = "Unable to execute command %s" % (cmd_line,)
-                logging.error(msg)
+            except subprocess.CalledProcessError as err:
+                msg = "%s --> %s" % (cmd_line, err)
                 raise NetemError(msg)
+            except FileNotFoundError as err:
+                raise NetemError(str(err))
             return result.decode("utf-8").strip("\n")
         else:
             ret_code = subprocess.call(args, shell=shell)
             if ret_code != 0:
                 msg = "Unable to execute command %s" % (cmd_line,)
-                logging.error(msg)
                 raise NetemError(msg)
 
     def get_name(self):

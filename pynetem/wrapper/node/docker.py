@@ -116,12 +116,12 @@ class DockerNode(_BaseWrapper):
 
     @require_running
     def open_shell(self, debug=False):
-        display, xauth = self._get_x11_env()
+        display = self._get_x11_env()
         term_cmd = NetemConfig.instance().get("general", "terminal")
         shell_cmd = debug and self.BASH or self.SHELL
         self.daemon.docker_shell(
             self.container_name, self.name,
-            shell_cmd, display, xauth, term_cmd
+            shell_cmd, display, term_cmd
         )
 
     @require_running
@@ -136,9 +136,8 @@ class DockerNode(_BaseWrapper):
                              "exist" % (self.name, if_number))
 
         if_name = "eth%s" % if_number
-        display, xauth = self._get_x11_env()
-        self.daemon.docker_capture(
-            display, xauth, self.container_name, if_name)
+        display = self._get_x11_env()
+        self.daemon.docker_capture(display, self.container_name, if_name)
 
     @require_running
     def set_if_state(self, if_number, state):
@@ -190,12 +189,10 @@ class DockerNode(_BaseWrapper):
         self.daemon.docker_cp(source, dest)
 
     def _get_x11_env(self):
-        display, xauth = ":0.0", "null"
+        display = ":0.0"
         if "DISPLAY" in os.environ:
             display = os.environ["DISPLAY"]    
-        if "XAUTHORITY" in os.environ:
-            xauth = os.environ["XAUTHORITY"]    
-        return display, xauth
+        return display
 
 
 class HostNode(DockerNode):

@@ -20,6 +20,10 @@ import time
 import threading
 import itertools
 
+RED = '\033[0;31m'
+GREEN = '\033[0;32m'
+DEFAULT = '\033[0m'
+
 
 class Spinner(object):
     busy = False
@@ -44,9 +48,9 @@ class Spinner(object):
     def stop(self):
         self.busy = False
         time.sleep(self.delay)
-        sys.stdout.write('OK\n')
+        sys.stdout.write(GREEN+'OK\n'+DEFAULT)
 
     def error(self, err):
         self.busy = False
         time.sleep(self.delay)
-        sys.stdout.write('NOK: %s\n' % err)
+        sys.stdout.write(RED+'NOK: \n\t%s\n' % err+DEFAULT)

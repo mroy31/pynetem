@@ -52,8 +52,8 @@ CMD_LIST = {
     "docker_pid": "^docker_pid (\S+)$",
     "docker_cp": "^docker_cp (\S+) (\S+)$",
     "docker_exec": "^docker_exec (\S+) (.+)$",
-    "docker_shell": "^docker_shell (\S+) (\S+) (\S+) (\S+) (\S+) (.+)$",
-    "docker_capture": "^docker_capture (\S+) (\S+) (\S+) (\S+)$",
+    "docker_shell": "^docker_shell (\S+) (\S+) (\S+) (\S+) (.+)$",
+    "docker_capture": "^docker_capture (\S+) (\S+) (\S+)$",
     "clean": "^clean (\S+)$",
 }
 
@@ -67,6 +67,8 @@ def run_command(cmd_line, check_output=False, shell=False):
             msg = "Unable to execute command %s" % (cmd_line,)
             logging.error(msg)
             raise NetemError(msg)
+        except FileNotFoundError as err:
+            raise NetemError(str(err))
         return result.decode("utf-8").strip("\n")
     else:
         ret = subprocess.call(args, shell=shell)
@@ -101,7 +103,7 @@ class NetemDaemonHandler(BaseRequestHandler):
             ret = getattr(self, cmd_name)(*match_obj.groups())
         except NetemError as err:
             msg = "%s" % err
-        except Exception as ex:
+        except Exception:
             logging.error(get_exc_desc())
             msg = "Unknown exception happen see log for details"
         else:
@@ -167,26 +169,30 @@ class NetemDaemonHandler(BaseRequestHandler):
         run_command("docker exec %s %s" % (container_name, cmd_line))
 
     @classmethod
-    def docker_shell(cls, c_name, name, shell, display, xauth, term_cmd):
+    def docker_shell(cls, c_name, name, shell, display, term_cmd):
         logging.debug("Docker open shell for container %s" % c_name)
         term_cmd = term_cmd % {
             "title": name,
             "cmd": "docker exec -it %s %s" % (c_name, shell)
         }
         args = shlex.split(term_cmd)
-        subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, shell=False,
-                         env=cls.__set_x11_env(display, xauth))
+        try:
+            subprocess.Popen(
+                args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE, shell=False,
+                env={"DISPLAY": display}
+            )
+        except FileNotFoundError as err:
+            raise NetemError(str(err))
 
     @classmethod
-    def docker_capture(cls, display, xauth, c_name, if_name):
+    def docker_capture(cls, display, c_name, if_name):
         logging.debug("Docker launch capture on if %s:%s" % (c_name, if_name))
         pretty_name = c_name.split(".", 1)[1]
         cmd = "/bin/bash -c 'docker exec {0} tcpdump -s 0 -U -w - -i {1} "\
               "2>/dev/null | wireshark -o 'gui.window_title:{1}@{2}' "\
               "-k -i - &'".format(c_name, if_name, pretty_name)
-        subprocess.call(shlex.split(cmd),
-                        env=cls.__set_x11_env(display, xauth))
+        subprocess.call(shlex.split(cmd), env={"DISPLAY": display})
 
     @staticmethod
     def tap_create(name, user):
@@ -306,13 +312,6 @@ class NetemDaemonHandler(BaseRequestHandler):
                     print(str(if_name))
                     ipdb.interfaces[if_name].remove()
             ipdb.commit()
-
-    @staticmethod
-    def __set_x11_env(display, xauth):
-        env = {"DISPLAY": display}
-        if xauth != "null":
-            env["XAUTHORITY"] = xauth
-        return env
 
     @staticmethod
     def __get_container_list(prefix):
