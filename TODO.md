@@ -1,2 +1,2 @@
 
-  * Better handling of errors
+  * Propose a graphical UI based on qt5

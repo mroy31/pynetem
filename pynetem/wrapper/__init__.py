@@ -32,20 +32,16 @@ class _BaseWrapper(object):
 
     def _command(self, cmd_line, check_output=True, shell=False):
         args = shlex.split(cmd_line)
-        if check_output:
-            try:
-                result = subprocess.check_output(args, shell=shell)
-            except subprocess.CalledProcessError as err:
-                msg = "%s --> %s" % (cmd_line, err)
-                raise NetemError(msg)
-            except FileNotFoundError as err:
-                raise NetemError(str(err))
-            return result.decode("utf-8").strip("\n")
-        else:
-            ret_code = subprocess.call(args, shell=shell)
-            if ret_code != 0:
-                msg = "Unable to execute command %s" % (cmd_line,)
-                raise NetemError(msg)
+        try:
+            return subprocess.run(
+                args, shell=shell, capture_output=True,
+                check=True
+            )
+        except subprocess.CalledProcessError as err:
+            msg = "%s --> %s" % (err.cmd, err.stderr)
+            raise NetemError(msg)
+        except FileNotFoundError as err:
+            raise NetemError(str(err))
 
     def get_name(self):
         raise NotImplementedError

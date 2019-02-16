@@ -9,7 +9,7 @@ PyNetem is a network emulator written in python based on
 
 Requirements
 ------------
- * Python >= 3.4
+ * Python >= 3.5
  * python3-configobj
  * python3-pyroute2
  * docker-ce
@@ -64,5 +64,5 @@ Junos Router
 ------------
 PyNetem has a special mode to emulate junos router. In the topology file, you 
 need to use junos.<version> as node type. In this case, the configuration is 
-saved as plain text (instead of complete img of the disk), thanks to the
+saved as plain text (instead of complete img of the disk), thanks to a
 telnet connection. 

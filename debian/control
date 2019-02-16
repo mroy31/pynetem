@@ -2,10 +2,10 @@ Source: pynetem
 Section: net
 Priority: extra
 Maintainer: Mickael Royer <mickael.royer@recherche.enac.fr>
-Build-Depends: debhelper (>= 10.0.0), python3-all (>= 3.4.0),
+Build-Depends: debhelper (>= 10.0.0), python3-all (>= 3.5.0),
                dh-python, python3-setuptools, python3-pyroute2
 Standards-Version: 3.9.2.0
-X-Python3-Version: >= 3.4
+X-Python3-Version: >= 3.5
 Homepage: http://mroy31.dyndns.org/~roy/repository/pynetem
 Vcs-Git: http://mroy31.dyndns.org/~roy/repository/pynetem
 Vcs-Browser: http://mroy31.dyndns.org/~roy/repository/pynetem
@@ -19,12 +19,12 @@ Depends: ${misc:Depends}, ${python3:Depends},
          python3-configobj,
          python3-pyroute2,
          xterm,
+         wireshark,
          telnet
 Recommends: qemu-system,
      	 docker-ce,
          qemu-utils,
-         vde2,
-         wireshark
+         vde2
 Description: PyNetem is network emulator working with qemu/docker
  PyNetem is a network emulator based on 
   * qemu or docker for node emulation
