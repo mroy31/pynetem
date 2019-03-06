@@ -18,6 +18,7 @@ Depends: ${misc:Depends}, ${python3:Depends},
          openvswitch-switch,
          python3-configobj,
          python3-pyroute2,
+         python3-cmd2,
          xterm,
          wireshark,
          telnet

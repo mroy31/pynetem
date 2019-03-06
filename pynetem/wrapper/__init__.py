@@ -34,7 +34,9 @@ class _BaseWrapper(object):
         args = shlex.split(cmd_line)
         try:
             return subprocess.run(
-                args, shell=shell, capture_output=True,
+                args, shell=shell,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 check=True
             )
         except subprocess.CalledProcessError as err:

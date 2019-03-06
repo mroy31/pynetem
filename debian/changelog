@@ -1,3 +1,9 @@
+pynetem (0.9.1-1) unstable; urgency=medium
+
+  * Fix to work with python3.5
+
+ -- Mickaël Royer <mickael.royer@gmail.com>  Wed, 06 Mar 2019 18:46:55 +0100
+
 pynetem (0.9.0-1) unstable; urgency=medium
 
   * New upstream release 
