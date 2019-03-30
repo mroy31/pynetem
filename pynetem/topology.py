@@ -222,7 +222,7 @@ Status of nodes:
             spinner.stop()
 
     def __get_node_if(self, if_id):
-        if_ids = if_id.split(".")
+        if_ids = if_id.rsplit(".", 1)
         if len(if_ids) == 2:
             node_id, if_number = if_ids
             node = self.get_node(node_id)
@@ -231,7 +231,12 @@ Status of nodes:
             try:
                 if_number = int(if_number)
             except (TypeError, ValueError):
-                raise NetemError("%s is not a correct identifier" % if_number)
+                raise NetemError(
+                    "%s is not a correct interface identifier" % if_number
+                )
         else:
-            logging.warning("if_name must follow the form <host>.<if_number>")
+            raise NetemError(
+                "if_name must follow the syntax <host>.<if_number>"
+            )
+
         return node, if_number
