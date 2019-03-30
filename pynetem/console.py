@@ -50,7 +50,6 @@ def netmem_cmd(reg_exp=None, require_project=False):
                 self.perror("%s" % err)
             except Exception as err:
                 self.perror("unhandle error happens, %s" % err)
-                return self.close()
 
         cmd_func.__name__ = func.__name__
         cmd_func.__doc__ = func.__doc__
