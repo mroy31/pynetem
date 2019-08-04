@@ -27,6 +27,6 @@ Recommends: qemu-system,
          qemu-utils,
          vde2
 Description: PyNetem is network emulator working with qemu/docker
- PyNetem is a network emulator based on 
+ PyNetem is a network emulator based on
   * qemu or docker for node emulation
   * vde or ovs for swith emulation

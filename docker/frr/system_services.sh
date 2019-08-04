@@ -3,13 +3,8 @@ set -e
 source /build/buildconfig
 set -x
 
-## Install Quagga and supervisor
-$minimal_apt_get_install gdebi-core supervisor
-
-# install ffr packages
-gdebi --non-interactive /build/debs/frr_6.0.2-0.deb9u1_amd64.deb
-gdebi --non-interactive /build/debs/frr-pythontools_6.0.2-0.deb9u1_all.deb
-gdebi --non-interactive /build/debs/frr-snmp_6.0.2-0.deb9u1_amd64.deb
+# install suervisor and ffr packages
+$minimal_apt_get_install supervisor frr frr-pythontools frr-snmp
 
 if [ -d "/etc/frr/" ]; then
     cd /etc/frr/

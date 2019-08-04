@@ -30,6 +30,13 @@ ln -sf /bin/true /sbin/initctl
 dpkg-divert --local --rename --add /usr/bin/ischroot
 ln -sf /bin/true /usr/bin/ischroot
 
+
 ## Upgrade all packages.
 apt-get update
 apt-get dist-upgrade -y --no-install-recommends
+
+## add FRR repository
+$minimal_apt_get_install gnupg apt-transport-https ca-certificates
+apt-key add /build/conf/frr.key
+cp /build/conf/frr.list /etc/apt/sources.list.d/frr.list
+apt-get update

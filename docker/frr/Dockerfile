@@ -1,4 +1,4 @@
-FROM debian:stretch
+FROM debian:buster
 MAINTAINER Mickael Royer <mickael.royer@enac.fr>
 
 ENV HOME=/root VTYSH_PAGER=more TERM=vt100 PAGER=less
