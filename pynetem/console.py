@@ -19,8 +19,8 @@ from cmd2 import Cmd
 import re
 import os
 from pynetem import NetemError
-from pynetem.project import NetemProject
 from pynetem.utils import cmd_check_output
+from pynetem.color import GREEN, ORANGE, DEFAULT
 
 
 def netmem_cmd(reg_exp=None, require_project=False):
@@ -72,6 +72,12 @@ class NetemConsole(Cmd):
             os.environ["DISPLAY"] = ":0.0"
         self.__open_display()
 
+    def pinfo(self, msg):
+        self.poutput(GREEN + msg + DEFAULT)
+
+    def pwarning(self, msg):
+        self.poutput(ORANGE + msg + DEFAULT)
+
     def __open_display(self):
         try:
             cmd_check_output("xhost si:localuser:root")
@@ -93,9 +99,7 @@ class NetemConsole(Cmd):
                     q = input("Wrong answer, expect Y or N: ")
                 if q == "N":
                     return None
-            self.poutput(
-                "\x1b[93mClose the projet please wait before leaving...\033[0m"
-            )
+            self.pwarning("Close the projet please wait before leaving...")
             self.current_project.close()
             self.__close_display()
         return True
@@ -114,20 +118,10 @@ class NetemConsole(Cmd):
         "Quit the network emulator"
         return self.__quit()
 
-    @netmem_cmd(reg_exp="^(\S+)$")
-    def do_load(self, prj_path):
-        """Load a pnet project"""
-        if self.current_project is not None:
-            self.current_project.close()
-        self.current_project = NetemProject.load(self.daemon, prj_path)
+    @netmem_cmd(require_project=True)
+    def do_load(self):
+        """Check the project and start all nodes"""
         self.current_project.load_topology()
-
-    @netmem_cmd(reg_exp="^(\S+)$")
-    def do_create(self, prj_path):
-        """Create a pnet project"""
-        if self.current_project is not None:
-            self.current_project.close()
-        self.current_project = NetemProject.create(self.daemon, prj_path)
 
     @netmem_cmd(require_project=True)
     def do_save(self):
@@ -138,7 +132,7 @@ class NetemConsole(Cmd):
     def do_config(self, conf_path):
         """Save configurations in a specific folder"""
         if not os.path.isdir(conf_path):
-            print("ERROR: %s is not a valid path")
+            self.perror("%s is not a valid path")
             return
         self.current_project.save_config(conf_path)
 
@@ -148,9 +142,9 @@ class NetemConsole(Cmd):
         try:
             self.current_project.topology.check()
         except NetemError as err:
-            print(err)
+            self.perror(err)
         else:
-            print("Network file is OK")
+            self.pinfo("Network file is OK")
 
     @netmem_cmd(reg_exp="^(\S+\.\w+)$", require_project=True)
     def do_capture(self, if_name):
@@ -218,7 +212,7 @@ class NetemConsole(Cmd):
 
     @netmem_cmd(reg_exp="^(\S+\.[0-9]+) (up|down)$", require_project=True)
     def do_ifstate(self, if_name, state):
-        """Enable/disable a node interface. The ifname have to 
+        """Enable/disable a node interface. The ifname have to
         follow this syntax : <node_id>.<if_number>"""
         self.current_project.topology.set_if_state(if_name, state)
 
@@ -236,7 +230,8 @@ class NetemConsole(Cmd):
             for n_id in n_ids:
                 node = self.current_project.topology.get_node(arg)
                 if node is None:
-                    print("Warning: node %s not found in the network" % n_id)
+                    self.pwarning("Warning: node %s not found in the network" %
+                                  n_id)
                 else:
                     nodes.append(node)
             return nodes

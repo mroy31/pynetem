@@ -36,15 +36,18 @@ parser.add_argument('project', metavar='PRJ', type=str, nargs="?",
 parser.add_argument("-c", "--conf-file", type=str, dest="conffile",
                     metavar="FILE", default=None,
                     help="Specify a custom conf file")
-parser.add_argument("-n", "--new", action="store_true", dest="create",
-                    default=False, help="Set to create a new project")
-parser.add_argument("-d", "--debug", action="store_true", 
-                    dest="debug", default=False,
-                    help="Log more debug informations")
 parser.add_argument("-v", "--version", action="store_true",
                     dest="version", default=False,
                     help="Log more debug informations")
-parser.add_argument("-l", "--clean", action="store_true", dest="clean",
+parser.add_argument("-d", "--debug", action="store_true",
+                    dest="debug", default=False,
+                    help="Log more debug informations")
+parser.add_argument("--new", action="store_true", dest="create",
+                    default=False, help="Set to create a new project")
+parser.add_argument("--no-start", action="store_false",
+                    dest="start", default=True,
+                    help="Do not start the project at launch")
+parser.add_argument("--clean", action="store_true", dest="clean",
                     default=False, help="Clean the netem env")
 args = parser.parse_args()
 
@@ -84,17 +87,20 @@ if __name__ == "__main__":
         daemon.clean(NETEM_ID)
         sys.exit()
 
-    project = None
-    if args.project is not None:
-        if os.path.isfile(args.project):
-            project = NetemProject.load(daemon, args.project)
-        elif args.create:
-            logging.info("Create empty project %s" % args.project)
-            project = NetemProject.create(daemon, args.project)
-        else:
-            sys.exit("Error: project %s does not "
-                     "exist" % os.path.abspath(args.project))
+    # load project
+    if args.project is None:
+        sys.exit("You need to provide a project with the extension .pnet")
 
+    if os.path.isfile(args.project):
+        project = NetemProject.load(daemon, args.project)
+    elif args.create:
+        logging.info("Create empty project %s" % args.project)
+        project = NetemProject.create(daemon, args.project)
+    else:
+        sys.exit("Error: project %s does not "
+                 "exist" % os.path.abspath(args.project))
+
+    if args.start:
         # check before load the topology
         try:
             project.topology.check()

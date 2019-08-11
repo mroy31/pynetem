@@ -33,9 +33,9 @@ right. You can use the following command for example:
 
     $sudo pynetmem-daemon -n
 
-Then you can use pynetem-emulator to create/launch project. For example:
+Then you can use pynetem-emulator to create/launch project. For example to create a project:
 
-    $pynetmem-emulator ./myproject.pnet
+    $pynetmem-emulator --new ./myproject.pnet
     $[net-emulator] edit # if you want to edit the topology
     $[net-emulator] reload # to reload the new topology
     $[net-emulator] console all # to open all consoles
@@ -57,12 +57,12 @@ To do that, you need to use the command docker build, for example
     $ cd docker/host
     $ docker build -t rca/host .
 
-Or, if you want to build all the docker image, you can use the script 
+Or, if you want to build all the docker image, you can use the script
 build.sh available in the docker directory.
 
 Junos Router
 ------------
-PyNetem has a special mode to emulate junos router. In the topology file, you 
-need to use junos.<version> as node type. In this case, the configuration is 
+PyNetem has a special mode to emulate junos router. In the topology file, you
+need to use junos.<version> as node type. In this case, the configuration is
 saved as plain text (instead of complete img of the disk), thanks to a
-telnet connection. 
+telnet connection.

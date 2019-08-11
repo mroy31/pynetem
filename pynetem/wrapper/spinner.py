@@ -19,10 +19,7 @@ import sys
 import time
 import threading
 import itertools
-
-RED = '\033[0;31m'
-GREEN = '\033[0;32m'
-DEFAULT = '\033[0m'
+from pynetem.color import GREEN, RED, DEFAULT
 
 
 class Spinner(object):
