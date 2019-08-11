@@ -93,6 +93,9 @@ class DockerNode(_BaseWrapper):
     def add_sw_if(self, sw_instance):
         self.__add_if("switch", sw_instance)
 
+    def add_br_if(self, br_instance):
+        self.__add_if("bridge", br_instance)
+
     def start(self):
         if not self.running:
             self.daemon.docker_start(self.container_name)
@@ -106,6 +109,9 @@ class DockerNode(_BaseWrapper):
                 if if_conf["peer"] == "switch":
                     sw_instance = if_conf["peer_instance"]
                     sw_instance.attach_interface(if_conf["ifname"])
+                elif if_conf["peer"] == "bridge":
+                    br_instance = if_conf["peer_instance"]
+                    br_instance.attach_interface(if_conf["ifname"])
                 elif if_conf["peer"] == "node":
                     self.p2p_sw.add_connection(if_conf["ifname"])
                 self.__attach_interface(p_if, if_conf["target_if"])
@@ -163,6 +169,8 @@ class DockerNode(_BaseWrapper):
                 continue
             if if_c["peer"] == "switch":
                 if_c["peer_instance"].detach_interface(if_c["ifname"])
+            elif if_c["peer"] == "bridge":
+                if_c["peer_instance"].detach_interface(if_c["ifname"])
             elif if_c["peer"] == "node":
                 self.p2p_sw.delete_connection(if_c["ifname"])
             self.__lk_factory.delete(if_c["ifname"])
@@ -178,7 +186,7 @@ class DockerNode(_BaseWrapper):
 
     def get_status(self):
         n_status = self.running and "Started" or "Stopped"
-        if_status = "\n".join(["\t\t%s: %s" % (i["target_if"], i["state"]) 
+        if_status = "\n".join(["\t\t%s: %s" % (i["target_if"], i["state"])
                                for i in self.__interfaces])
         return "{0}\n{1}".format(n_status, if_status)
 
@@ -191,7 +199,7 @@ class DockerNode(_BaseWrapper):
     def _get_x11_env(self):
         display = ":0.0"
         if "DISPLAY" in os.environ:
-            display = os.environ["DISPLAY"]    
+            display = os.environ["DISPLAY"]
         return display
 
 

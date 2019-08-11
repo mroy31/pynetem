@@ -38,6 +38,12 @@ CMD_LIST = {
     "link_delete": "^link_delete (\S+)$",
     "link_netns": "^link_netns (\S+) (\S+)$",
     "link_set_vtap": "^link_set_vtap (\S+) (\S+)$",
+    "br_create": "^br_create (\S+)$",
+    "br_delete": "^br_delete (\S+)$",
+    "br_addif": "^br_addif (\S+) (\S+)$",
+    "br_delif": "^br_delif (\S+) (\S+)$",
+    "ifup": "^ifup (\S+)$",
+    "ifdown": "^ifdown (\S+)$",
     "ovs_create": "^ovs_create (\S+)$",
     "ovs_delete": "^ovs_delete (\S+)$",
     "ovs_add_port": "^ovs_add_port (\S+) (\S+)$",
@@ -255,6 +261,63 @@ class NetemDaemonHandler(BaseRequestHandler):
                     "type macvtap mode vepa" % (netns, if_name))
         run_command("ip netns exec %s ip link set macvtap0 up" % netns)
 
+    @classmethod
+    def ifup(cls, if_name):
+        logging.debug("Ifup %s" % if_name)
+        with IPDB() as ipdb:
+            if if_name not in ipdb.interfaces:
+                raise NetemError("interface %s does not exist" % if_name)
+            # be sure that host if is UP
+            if_obj = ipdb.interfaces[if_name]
+            if if_obj.operstate != 'UP':
+                if_obj.freeze()
+                if_obj.up().commit()
+                if_obj.unfreeze()
+
+    @classmethod
+    def ifdown(cls, if_name):
+        logging.debug("Ifdown %s" % if_name)
+        with IPDB() as ipdb:
+            if if_name not in ipdb.interfaces:
+                raise NetemError("interface %s does not exist" % if_name)
+            # be sure that host if is UP
+            if_obj = ipdb.interfaces[if_name]
+            if if_obj.operstate == 'UP':
+                if_obj.freeze()
+                if_obj.down().commit()
+                if_obj.unfreeze()
+
+    @staticmethod
+    def __is_bridge_exist(br_name):
+        return cmd_call("brctl show %s" % br_name) == 0
+
+    @classmethod
+    def br_create(cls, br_name):
+        logging.debug("Create bridge %s" % br_name)
+        if cls.__is_bridge_exist(br_name):
+            return "EXIST"
+        run_command("brctl addbr %s" % br_name)
+        run_command("ip link set %s up" % br_name)
+
+    @classmethod
+    def br_delete(cls, br_name):
+        logging.debug("Delete bridge %s" % br_name)
+        if cls.__is_bridge_exist(br_name):
+            run_command("ip link set %s down" % br_name)
+            run_command("brctl delbr %s" % br_name)
+
+    @classmethod
+    def br_addif(cls, br_name, if_name):
+        logging.debug("Addif %s to bridge %s" % (if_name, br_name))
+        if cls.__is_bridge_exist(br_name):
+            run_command("brctl addif %s %s" % (br_name, if_name))
+
+    @classmethod
+    def br_delif(cls, br_name, if_name):
+        logging.debug("Delif %s to bridge %s" % (if_name, br_name))
+        if cls.__is_bridge_exist(br_name):
+            run_command("brctl delif %s %s" % (br_name, if_name))
+
     @staticmethod
     def __is_ovsbr_exist(sw_name):
         return cmd_call("ovs-vsctl br-exists %s" % sw_name) != 2
@@ -302,7 +365,7 @@ class NetemDaemonHandler(BaseRequestHandler):
         for s_name in switches:
             if s_name.startswith(prj_id):
                 cls.ovs_delete(s_name)
-        
+
         # delete remaining links
         with IPDB() as ipdb:
             for if_name in ipdb.interfaces:

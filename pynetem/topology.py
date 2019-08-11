@@ -25,6 +25,7 @@ from pynetem.wrapper.switch import build_sw_instance
 from pynetem.wrapper.node import build_node_instance
 from pynetem.wrapper.p2p import NetemP2PSwitch
 from pynetem.wrapper.spinner import Spinner
+from pynetem.wrapper.bridge import BridgeInstance
 
 
 class TopologieManager(object):
@@ -35,7 +36,7 @@ class TopologieManager(object):
         self.p2p_switch = NetemP2PSwitch(prj_id)
 
         self.saved_state = []
-        self.nodes, self.switches = [], []
+        self.nodes, self.switches, self.bridges = [], [], []
 
     def load(self):
         self.__load()
@@ -62,12 +63,24 @@ class TopologieManager(object):
             s_inst.start()
             self.switches.append(s_inst)
 
+    def __load_bridges(self, br_section):
+        for br_name in br_section:
+            br_inst = BridgeInstance(self.prj_id, br_name, br_section[br_name])
+            self.__spinner_cmd(
+                br_inst.start,
+                "Start bridge %s ... " % br_inst.get_name()
+            )
+            self.bridges.append(br_inst)
+
     def __load(self):
         logging.debug("Start to load topology")
         network = self.check()
         # load switches
         if "switches" in network:
             self.__load_switches(network["switches"])
+        # load bridges
+        if "bridges" in network:
+            self.__load_bridges(network["bridges"])
 
         # first, be sure we can record images and configs
         image_dir = os.path.join(os.path.dirname(self.netfile),
@@ -107,6 +120,9 @@ class TopologieManager(object):
                     elif peer_name.startswith("sw."):
                         (s_name,) = re.match("^sw\.(\w+)$", peer_name).groups()
                         n_inst.add_sw_if(self.get_switch(s_name))
+                    elif peer_name.startswith("br."):
+                        (br_name,) = re.match("^br\.(\w+)$", peer_name).groups()
+                        n_inst.add_br_if(self.get_bridge(br_name))
                     else:  # this is a connection to a node
                         p_id, p_if = re.match("^(\w+)\.(\d+)$",
                                               peer_name).groups()
@@ -120,6 +136,12 @@ class TopologieManager(object):
     def get_switch(self, sw_name):
         for instance in self.switches:
             if instance.get_name() == sw_name:
+                return instance
+        return None
+
+    def get_bridge(self, br_name):
+        for instance in self.bridges:
+            if instance.get_name() == br_name:
                 return instance
         return None
 
@@ -157,12 +179,17 @@ class TopologieManager(object):
             self.__stop_node(n)
         for s in self.switches:
             s.stop()
+        for b in self.bridges:
+            self.__spinner_cmd(
+                b.stop,
+                "Stop bridge %s ... " % b.get_name()
+            )
 
     def reload(self):
         self.stopall()
         for n in self.nodes:
             n.clean()
-        self.nodes, self.switches = [], []
+        self.nodes, self.switches, self.bridges = [], [], []
         self.saved_state = []
         self.__load()
 

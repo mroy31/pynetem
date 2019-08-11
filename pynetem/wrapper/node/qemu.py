@@ -89,20 +89,23 @@ class QEMUInstance(_BaseInstance):
     def add_sw_if(self, sw_instance):
         self.__add_if("switch", sw_instance)
 
+    def add_br_if(self, br_instance):
+        self.__add_if("bridge", br_instance)
+
     def add_node_if(self, node_instance, if_number):
         self.__add_if("node", node_instance, peer_if=if_number)
 
-    def __sw_if_cmdline(self, if_config):
+    def __if_cmdline(self, if_config):
         cmd_line = "-device e1000,mac=%s,"\
                    "netdev=net-%d" % (if_config['mac'], if_config['vlan_id'])
         if if_config['peer_instance'] is not None:
-            sw_type = if_config["peer_instance"].get_type()
-            if sw_type == "switch.vde":
+            peer_type = if_config["peer_instance"].get_type()
+            if peer_type == "switch.vde":
                 sw_name = if_config["peer_instance"].get_name()
                 cmd_line += " -netdev vde,sock=%s,"\
                             "id=net-%d" % ("/tmp/%s.ctl" % sw_name,
                                            if_config['vlan_id'])
-            elif sw_type == "switch.ovs":
+            elif peer_type in ("switch.ovs", "bridge"):
                 # create tap and attach to ovswitch
                 tap_name = self.gen_ifname(if_config["vlan_id"],
                                            if_config["peer_instance"])
@@ -131,9 +134,9 @@ class QEMUInstance(_BaseInstance):
     def get_interface_cmdline(self):
         result = []
         for i in self.interfaces:
-            if i["peer"] == "switch":
-                result.append(self.__sw_if_cmdline(i))
-            if i["peer"] == "node":
+            if i["peer"] in ("switch", "bridge"):
+                result.append(self.__if_cmdline(i))
+            elif i["peer"] == "node":
                 result.append(self.__node_if_cmdline(i))
         return " ".join(result)
 
@@ -157,6 +160,12 @@ class QEMUInstance(_BaseInstance):
                                          "if exists on this switch")
                 cmd_ln = shlex.split("wireshark -k -i %s" % if_name)
                 self.capture_processes[if_number] = subprocess.Popen(cmd_ln)
+
+            elif if_obj["peer"] == "bridge":
+                if_name = if_obj["tap"]
+                cmd_ln = shlex.split("wireshark -k -i %s" % if_name)
+                self.capture_processes[if_number] = subprocess.Popen(cmd_ln)
+
             elif if_obj["peer"] == "node":
                 if_name = if_obj["tap"]
                 cmd_ln = shlex.split("wireshark -k -i %s" % if_name)
@@ -211,7 +220,7 @@ class QEMUInstance(_BaseInstance):
         super(QEMUInstance, self).stop()
         for if_c in self.interfaces:
             if if_c["tap"] is not None:
-                if if_c["peer"] == "switch":
+                if if_c["peer"] in ("switch", "bridge"):
                     if_c["peer_instance"].detach_interface(if_c["tap"])
                 elif if_c["peer"] == "node":
                     self.p2p_sw.delete_connection(if_c["tap"])

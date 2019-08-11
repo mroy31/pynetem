@@ -16,12 +16,13 @@ type = qemu.squeeze
 memory = 192
 console = 3001
 if_numbers = 1
-if0 = Switch1
+if0 = sw.Switch1
 
 [[R2]]
-type = docker.xorp
-if_numbers = 1
-if0 = Switch2
+type = docker.frr
+if_numbers = 2
+if0 = sw.Switch2
+if1 = br.Bridge1
 
 [[User2]]
 type = docker.host
@@ -39,3 +40,9 @@ tap = true
 
 [[Switch2]]
 type = ovs
+
+
+[bridges]
+
+[[Bridge1]]
+host_if = eth0

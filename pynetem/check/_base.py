@@ -65,6 +65,12 @@ class _BaseCheck(object):
                                            "connect with ovs "
                                            "switch" % (n_name, if_name))
 
+                elif re.match("^br\.\w+$", peer_id) is not None:
+                    (br_id,) = re.match("^br\.(\w+)$", peer_id).groups()
+                    if br_id not in network["bridges"]:
+                        self.add_error("%s: bridge %s does not "
+                                       "exist" % (n_name, br_id))
+
                 elif re.match("^\w+\.\d+$", peer_id) is not None:
                     n_id, if_num = re.match("^(\w+)\.(\d+)$", peer_id).groups()
                     if n_id not in network["nodes"]:
@@ -86,7 +92,7 @@ class _BaseCheck(object):
                 else:
                     self.add_error("%s: the interface %d is not well "
                                    "configured," " it must be __null__, "
-                                   "sw.<sw_name> or "
+                                   "sw.<sw_name>, br.<br_name> or "
                                    "<node_id>.<if_number>" % (n_name, if_id))
 
     def check_args(self, name, node, args_dict):

@@ -19,14 +19,16 @@ from pynetem.check.common import CommonCheck
 from pynetem.check.qemu import QemuNodeCheck
 from pynetem.check.docker import DockerNodeCheck
 from pynetem.check.junos import JunosNodeCheck
+from pynetem.check.bridge import BridgeCheck
 
 
 def check_network(network):
     errors = {}
 
     for check_module in (
-            CommonCheck, 
-            QemuNodeCheck, 
+            CommonCheck,
+            BridgeCheck,
+            QemuNodeCheck,
             DockerNodeCheck,
             JunosNodeCheck):
         mod = check_module()

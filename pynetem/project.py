@@ -51,6 +51,8 @@ config_dir = configs
 [nodes]
 
 [switches]
+
+[bridges]
 """)
         return cls(daemon, prj_path)
 
