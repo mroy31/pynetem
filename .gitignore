@@ -8,6 +8,8 @@ conf/*
 *.pnet
 build*
 conf/*
+docs/build/*
+docs/source/_build/*
 
 syntax: regexp
 .*\#.*\#$
