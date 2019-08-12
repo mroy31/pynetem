@@ -38,7 +38,7 @@ parser.add_argument("-c", "--conf-file", type=str, dest="conffile",
                     help="Specify a custom conf file")
 parser.add_argument("-v", "--version", action="store_true",
                     dest="version", default=False,
-                    help="Log more debug informations")
+                    help="Display pynetem version and exit")
 parser.add_argument("-d", "--debug", action="store_true",
                     dest="debug", default=False,
                     help="Log more debug informations")

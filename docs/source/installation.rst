@@ -1,3 +1,5 @@
+.. _installation:
+
 Installation
 ============
 
@@ -18,6 +20,8 @@ To run pynetem, you have to install the following programs/modules
 Installation
 ------------
 You can install PyNetem with the following command:
+
+.. code-block:: bash
 
     $ python3 setup.py install
 
