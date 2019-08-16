@@ -26,6 +26,12 @@ You can install PyNetem with the following command:
 
 You can also build a debian package with pdebbuild if you prefer.
 
+Configuration
+-------------
+
+After the installation, the configuration of pynetem is done with the file
+/etc/pynetem.conf.
+
 Usage
 -----
 To use PyNetmem, firstly you have lo launch pynetmem-daemon with the root
@@ -43,7 +49,7 @@ Then you can use pynetem-emulator to create/launch project. For example to creat
 
 Topology
 --------
-An example of topology is available in the file doc/example.net
+An example of topology is available in the file example/topology.net
 
 Docker Node
 -----------
@@ -66,3 +72,8 @@ PyNetem has a special mode to emulate junos router. In the topology file, you
 need to use junos.<version> as node type. In this case, the configuration is
 saved as plain text (instead of complete img of the disk), thanks to a
 telnet connection.
+
+Documentation
+-------------
+For more details about pynetem, see the documentation available here :
+https://pynetem.readthedocs.io/en/latest/
