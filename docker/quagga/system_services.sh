@@ -17,9 +17,6 @@ chown quagga:quagga /var/run/quagga
 # add root to quagga group
 gpasswd -a root quagga
 
-# update quagga to 1.2
-dpkg -i /build/debs/*deb
-
 # copy script to load/save config
 cp /build/conf/load-quagga.sh /usr/local/bin/load-quagga.sh
 chmod 755 /usr/local/bin/load-quagga.sh
