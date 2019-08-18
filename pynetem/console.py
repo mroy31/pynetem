@@ -148,7 +148,7 @@ class NetemConsole(Cmd):
 
     @netmem_cmd(reg_exp="^(\S+\.\w+)$", require_project=True)
     def do_capture(self, if_name):
-        """Capture traffic on an interface"""
+        """Capture trafic on an interface"""
         self.current_project.topology.capture(if_name)
 
     @netmem_cmd(require_project=True)

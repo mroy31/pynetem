@@ -12,7 +12,7 @@ PyNetem is a command line network emulator written in python based on
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
    installation

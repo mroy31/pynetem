@@ -108,13 +108,105 @@ to a tenel connection.
 
 Connections
 ```````````
-TBD
+All links between 2 nodes or between a node and a switch/bridge is declared
+in the node section of the topology. To do that, 2 parameters are used:
 
+  * ``if_numbers``: define the number of interfaces for this node
+  * ``if<num>``: define the connection for the interface *<num>*.
+    The possible values are:
+
+      * ``__null__``: the interface is not connected
+      * ``<node_name>.<if_number>``: the interface is connected to the if
+        *<if_number>* of the node *<node_name>*
+      * ``sw.<sw_name>``: the interface is connected to the switch *<sw_name*
+      * ``br.<br_name>``: the interface is connected to the bridge *<br_name*
 
 Switches
 --------
-TBD
+In the ``[switches]``, you can add some switches to the topology. 2 types of
+switch are available :
+
+  - `VDE <https://github.com/virtualsquare/vde-2>`_ which works only with
+    qemu or junos node
+  - `OpenVSwitch <https://www.openvswitch.org/>`_ which works with all kind of
+    nodes and thus are the prefered solution.
+
+A switch is declared like that:
+
+.. code-block:: ini
+
+    [switches]
+    [[switch_name]]
+    type = vde|ovs
+
+An OpenVSwitch switch take no agument. On the other side, a VDE switch takes
+1 argument:
+
+  * ``tap`` (boolean, required): set to yes if you want add a tap interface
+    named *VDE<sw_name>* connected to the switch. It can be useful
+    if you want to capture trafic on that switch.
+
 
 Bridges
 -------
-TBD
+In the ``[bridges]``, you can add some bridges to the topology.
+A bridge should be declared if you want to commnicate with the host network.
+A bridge takes only 1 argument:
+
+  * ``host_if`` (string, required): the name of the host interface that will
+    be connected to that bridge
+
+Example
+```````
+.. code-block:: ini
+
+    [bridges]
+    [[bridge_name]]
+    host_if = eth0
+
+
+Full example
+------------
+
+.. image:: ./images/topology.png
+    :align: center
+    :alt: Example of network topology
+
+Below, you will find topology file to create the network above, based on docker
+nodes and ovs switches:
+
+
+.. code-block:: ini
+
+    [config]
+    image_dir = images
+    config_dir = configs
+
+    [nodes]
+    [[user1]]
+    type = docker.host
+    if_numbers = 1
+    if0 = sw.SW1
+    [[user2]]
+    type = docker.host
+    if_numbers = 1
+    if0 = sw.SW2
+
+    [[R1]]
+    type = docker.frr
+    if_numbers = 2
+    if0 = sw.SW1
+    if1 = R2.1
+    [[R2]]
+    type = docker.frr
+    if_numbers = 2
+    if0 = sw.SW2
+    if1 = R1.1
+
+    [switches]
+    [[SW1]]
+    type = ovs
+    [[SW2]]
+    type = ovs
+
+    [bridges]

@@ -39,7 +39,7 @@ For example to create a project:
     [net-emulator] edit # if you want to edit the topology
     [net-emulator] reload # to reload the new topology
     [net-emulator] console all # to open all consoles
-    [net-emulator] quit
+    [net-emulator] quit # to quit pynetem
 
 For more details, See
   * :ref:`topology` for more detail to build a network
