@@ -1,5 +1,6 @@
+#!/usr/bin/python3
 # pynetem: network emulator
-# Copyright (C) 2015-2017 Mickael Royer <mickael.royer@recherche.enac.fr>
+# Copyright (C) 2015-2019 Mickael Royer <mickael.royer@recherche.enac.fr>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,6 +48,7 @@ class netem_clean(distutils_clean):
 
         force_unlink('MANIFEST')
         force_rmdir('build')
+        force_rmdir('docs/build')
 
 
 if __name__ == "__main__":
