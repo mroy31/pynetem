@@ -5,7 +5,7 @@ include COPYING
 include pynetem/ui/defaults.conf
 include example/*
 include docs/Makefile
-recursive-include docs/source/*
+recursive-include docs/source *
 include scripts/*.py
 include .vscode/*
 recursive-include docker *
