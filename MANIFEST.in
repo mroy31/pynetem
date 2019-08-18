@@ -3,7 +3,9 @@ include README.md
 include TODO.md
 include COPYING
 include pynetem/ui/defaults.conf
-include doc/*
+include example/*
+include docs/Makefile
+recursive-include docs/source/*
 include scripts/*.py
 include .vscode/*
 recursive-include docker *
