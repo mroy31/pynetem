@@ -147,14 +147,14 @@ class NetemDaemonHandler(BaseRequestHandler):
         logging.debug("Stop docker container %s" % container_name)
         container = cls.__get_container_list(container_name)
         if len(container) == 1:
-            run_command("docker stop %s" % container_name)
+            run_command("docker stop -t 2 %s" % container_name)
 
     @classmethod
     def docker_rm(cls, container_name):
         logging.debug("Delete docker container %s" % container_name)
         container = cls.__get_container_list(container_name)
         if len(container) == 1:
-            run_command("docker stop %s" % container_name)
+            run_command("docker stop -t 2 %s" % container_name)
             run_command("docker rm %s" % container_name)
 
     @staticmethod
