@@ -24,8 +24,6 @@ import errno
 import logging
 import argparse
 import time
-from pynetem.ui.config import NetemConfig
-from pynetem.daemon.server import NetemDaemonThread
 
 parser = argparse.ArgumentParser(description='Network emulator daemon')
 parser.add_argument(
@@ -72,7 +70,6 @@ def daemonize():
 
 
 if __name__ == "__main__":
-    config = NetemConfig()
     # init log
     if args.daemon and args.logfile is None:
         args.logfile = "pynetem.log"
@@ -83,9 +80,14 @@ if __name__ == "__main__":
     else:
         logging.basicConfig(format=log_format, level=log_level,
                             filename=args.logfile)
-
+    # daemonize if necessary
     if args.daemon:
         daemonize()
+
+    from pynetem.ui.config import NetemConfig
+    from pynetem.daemon.server import NetemDaemonThread
+
+    config = NetemConfig()
     socket = config.get('general', 'daemon_socket')
     # Make sure the socket does not already exist
     try:
