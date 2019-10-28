@@ -18,8 +18,10 @@
 
 import sys
 import os
+import signal
 import logging
 import argparse
+import asyncio
 from pynetem import NetemError
 from pynetem.utils import daemonize, test_project
 
@@ -57,12 +59,12 @@ args = parser.parse_args()
 
 if __name__ == "__main__":
     # init log
+    logfile = os.path.join("/tmp", "%s.log" % args.netid)
     if args.debug:
         logging.basicConfig(
             format='%(asctime)s - %(levelname)s: %(message)s',
             level=logging.DEBUG)
     else:
-        logfile = os.path.join("/tmp", "%s.log" % args.netid)
         logging.basicConfig(
             format='%(asctime)s - %(levelname)s: %(message)s',
             level=logging.INFO,
@@ -76,27 +78,33 @@ if __name__ == "__main__":
         sys.exit(str(err))
 
     # initiate the factiry and the server
-    from twisted.internet import reactor
-    from twisted.internet.error import CannotListenError
     from pynetem.server.protocol import NetemFactory
 
     logging.info("Start project %s" % prj_path)
+    loop = asyncio.get_event_loop()
     try:
-        factory = NetemFactory(args.netid, prj_path)
-        try:
-            reactor.listenTCP(args.port, factory, interface="127.0.0.1")
-        except CannotListenError:
-            factory.close()
-            raise NetemError("Unable to launch server on port %s" % args.port)
-    except NetemError as err:
+        factory = NetemFactory(args.netid, prj_path, loop)
+        factory.start(args.port)
+    except (NetemError, OSError) as err:
         clean(logfile)
-        sys.exit("Unable to start pynetem server: %s" % err)
+        sys.exit("Unable to start server: %s" % err)
 
     # daemonize if necessary
     if args.daemon:
         daemonize()
 
-    # start twisted reactor
-    if not args.debug:
-        reactor.addSystemEventTrigger('after', 'shutdown', clean, logfile)
-    reactor.run()
+    # install signals
+    async def shutdown(s):
+        factory.stop()
+        factory.close()
+        clean(logfile)
+
+    for s in (signal.SIGTERM, signal.SIGINT):
+        loop.add_signal_handler(
+            s, lambda s=s: asyncio.ensure_future(shutdown(s)))
+
+    # run the asyncio loop
+    try:
+        loop.run_forever()
+    finally:
+        loop.close()

@@ -18,9 +18,7 @@
 
 import os
 import logging
-from twisted.internet import protocol, reactor
-from twisted.internet.error import ConnectionDone
-from twisted.protocols.basic import LineReceiver
+import asyncio
 from pynetem import NetemError
 from pynetem.server.rpc import loads_request, RPCResponse, RPCSignal
 from pynetem.ui.config import NetemConfig
@@ -47,25 +45,24 @@ def cmd(cmd_args=[]):
     return cmd_decorator
 
 
-class NetemProtocol(LineReceiver):
-    delimiter = DELIMITER
+class NetemProtocol(asyncio.Protocol):
 
     def __init__(self, project):
         super(NetemProtocol, self).__init__()
-        self.MAX_LENGTH = 40960
         self.project = project
         self.__need_to_quit = False
 
-    def connectionMade(self):
+    def connection_made(self, transport):
+        self.transport = transport
         self.factory.set_signals(self)
 
-    def connectionLost(self, reason=ConnectionDone):
+    def connection_lost(self, exc):
         self.factory.close_signals(self)
 
-    def lineReceived(self, line):
+    def data_received(self, line):
         # use str instead of bytes to decode json commands
         # and return answer
-        line = line.strip(b"\r").decode("utf-8")
+        line = line.strip(DELIMITER).decode("utf-8")
         delimiter = DELIMITER.decode("utf-8")
 
         logging.debug("Receive command '%s'" % line)
@@ -98,11 +95,10 @@ class NetemProtocol(LineReceiver):
         logging.debug("send back answer '%s'" % ans.to_json())
         self.send_buffer(ans.to_json()+delimiter)
         if self.__need_to_quit:
-            reactor.callLater(1.0, reactor.stop)
+            self.factory.stop()
 
     def send_buffer(self, buf):
         if isinstance(buf, str):
-            # twisted expects bytes for the method write
             buf = buf.encode("utf-8")
         self.transport.write(buf)
 
@@ -209,41 +205,44 @@ class NetemProtocol(LineReceiver):
             return nodes
 
 
-class NetemFactory(protocol.ServerFactory):
-    protocol = NetemProtocol
-    obj_supplied = False
+class NetemFactory(object):
 
-    def __init__(self, netid, project):
+    def __init__(self, netid, project, loop):
         # init daemon client
         daemon = NetemDaemonClient.instance()
         s_name = NetemConfig.instance().get("general", "daemon_socket")
         daemon.set_socket_path(s_name)
+
+        self.server = None
         self.project = NetemProject(daemon, netid, project)
+        self.loop = loop
         self.clients = []
 
-    def buildProtocol(self, addr):
-        p = self.protocol(self.project)
+    def build_protocol(self):
+        p = NetemProtocol(self.project)
         p.factory = self
 
         return p
 
-    def stopFactory(self):
+    def stop(self):
         self.clients = []
-        self.project.close()
+        self.loop.stop()
+        if self.server is not None:
+            self.server.close()
 
-    def startFactory(self):
+    def start(self, port_number):
         for s_name in ALL_SIGNALS:
             ALL_SIGNALS[s_name].connect(self.receiver)
-
-    def clientConnectionLost(self, connector, reason):
-        self.close_signals(connector)
+        coro = self.loop.create_server(
+            self.build_protocol, '127.0.0.1', port_number)
+        self.server = self.loop.run_until_complete(coro)
 
     def receiver(self, signal=None, sender=None, **kwargs):
         if len(self.clients) > 0:
             j_sig = RPCSignal(kwargs["name"], kwargs["attrs"])
             buf = j_sig.to_json().encode('utf-8') + DELIMITER
             for client in self.clients:
-                reactor.callFromThread(client.send_buffer, buf)
+                client.send_buffer(buf)
 
     def set_signals(self, connector):
         self.clients.append(connector)
@@ -253,4 +252,4 @@ class NetemFactory(protocol.ServerFactory):
             self.clients.remove(connector)
 
     def close(self):
-        pass
+        self.project.close()
