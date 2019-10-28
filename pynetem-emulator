@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # pynetem: network emulator
-# Copyright (C) 2015-2017 Mickael Royer <mickael.royer@recherche.enac.fr>
+# Copyright (C) 2015-2019 Mickael Royer <mickael.royer@recherche.enac.fr>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,38 +21,66 @@ import os
 import logging
 import signal
 import argparse
-from pynetem.ui.config import NetemConfig
-from pynetem.project import NetemProject
-from pynetem.console import NetemConsole
-from pynetem.daemon.client import NetemDaemonClient
-from pynetem import NetemError
-from pynetem.utils import get_exc_desc
-from pynetem import __version__, NETEM_ID
+import string
+import random
 
+INSTALL_BIN_DIR = os.path.dirname(__file__)
+binsuffix = os.path.basename(INSTALL_BIN_DIR)
+INSTALL_MODE = 'source'
+if binsuffix == 'bin':
+    # Deejayd is installed, and not in source tree
+    INSTALL_MODE = 'installed'
+    INSTALL_PREFIX = INSTALL_BIN_DIR[:-len(binsuffix)]
 
-parser = argparse.ArgumentParser(description='Network emulator')
-parser.add_argument('project', metavar='PRJ', type=str, nargs="?",
-                    default=None, help='Path for the pnet project')
-parser.add_argument("-c", "--conf-file", type=str, dest="conffile",
-                    metavar="FILE", default=None,
-                    help="Specify a custom conf file")
-parser.add_argument("-v", "--version", action="store_true",
-                    dest="version", default=False,
-                    help="Display pynetem version and exit")
-parser.add_argument("-d", "--debug", action="store_true",
-                    dest="debug", default=False,
-                    help="Log more debug informations")
-parser.add_argument("--new", action="store_true", dest="create",
-                    default=False, help="Set to create a new project")
-parser.add_argument("--no-start", action="store_false",
-                    dest="start", default=True,
-                    help="Do not start the project at launch")
-parser.add_argument("--clean", action="store_true", dest="clean",
-                    default=False, help="Clean the netem env")
+random.seed()
+parser = argparse.ArgumentParser(description='Network emulator console')
+parser.add_argument(
+    'project', metavar='PRJ', type=str, nargs="?",
+    default=None, help='Path for the pnet project')
+parser.add_argument(
+    "-c", "--conf-file", type=str, dest="conffile",
+    metavar="FILE", default=None,
+    help="Specify a custom conf file")
+parser.add_argument(
+    "-v", "--version", action="store_true",
+    dest="version", default=False,
+    help="Display pynetem version and exit")
+parser.add_argument(
+    "-d", "--debug", action="store_true",
+    dest="debug", default=False,
+    help="Log more debug informations")
+parser.add_argument(
+    "--new", action="store_true", dest="create",
+    default=False, help="Set to create a new project")
+parser.add_argument(
+    "--no-start", action="store_false",
+    dest="start", default=True,
+    help="Do not start the project at launch")
+parser.add_argument(
+    "--clean", action="store_true", dest="clean",
+    default=False, help="Clean the netem env")
+parser.add_argument(
+    "--client-only", action="store_true", dest="client_mode",
+    default=False, help="Connect to an launched pynetem-server")
+parser.add_argument(
+    "-p", "--port", type=int, dest="port",
+    metavar="P_NUMBER", default=10100, help="Port number")
 args = parser.parse_args()
 
 
 if __name__ == "__main__":
+    log_format = '%(levelname)s: %(message)s'
+    log_level = args.debug and logging.DEBUG or logging.INFO
+    logging.basicConfig(format=log_format, level=log_level)
+
+    from pynetem.ui.config import NetemConfig
+    from pynetem.project import create_project
+    from pynetem.console.cmd import NetemConsole
+    from pynetem.daemon.client import NetemDaemonClient
+    from pynetem import NetemError
+    from pynetem.utils import cmd_check_output
+    from pynetem import __version__, NETEM_ID
+
     # if asked, show version and quit
     if args.version:
         print(__version__)
@@ -65,9 +93,6 @@ if __name__ == "__main__":
         NetemConfig.custom_conf = args.conffile
 
     config = NetemConfig.instance()
-    log_format = '%(levelname)s: %(message)s'
-    log_level = args.debug and logging.DEBUG or logging.INFO
-    logging.basicConfig(format=log_format, level=log_level)
 
     # test the connection with the daemon and its version
     s_name = config.get("general", "daemon_socket")
@@ -87,48 +112,34 @@ if __name__ == "__main__":
         daemon.clean(NETEM_ID)
         sys.exit()
 
-    # load project
-    if args.project is None:
-        sys.exit("You need to provide a project with the extension .pnet")
+    if not args.client_mode:
+        # load project
+        if args.project is None:
+            sys.exit("You need to provide a project with the extension .pnet")
 
-    if os.path.isfile(args.project):
-        project = NetemProject.load(daemon, args.project)
-    elif args.create:
-        logging.info("Create empty project %s" % args.project)
-        project = NetemProject.create(daemon, args.project)
-    else:
-        sys.exit("Error: project %s does not "
-                 "exist" % os.path.abspath(args.project))
+        _, ext = os.path.splitext(args.project)
+        if ext.lower() != ".pnet":
+            sys.exit("Project %s has wrong ext" % args.project)
+        if args.create:
+            if os.path.isfile(args.project):
+                sys.exit("Project %s already exist" % args.project)
+            create_project(args.project)
 
-    if args.start:
-        # check before load the topology
-        try:
-            project.topology.check()
-        except NetemError as err:
-            print(err)
-            print("You must edit the topology before loading the project")
-        else:
-            try:
-                project.load_topology()
-            except NetemError as err:
-                logging.error("An error happened during the loading of "
-                              "project %s, close it and exit" % args.project)
-                logging.error(err)
-                project.close()
-                sys.exit(1)
-            except Exception:
-                project.close()
-                print(get_exc_desc())
-                sys.exit("Unhandled excetion during the "
-                         "load/create of project")
-
-    console = NetemConsole(daemon, project=project)
+        # launch the project in background with pynetem-server
+        rnd_str = "".join(random.sample(string.ascii_lowercase, 2))
+        netid = "%s%s" % (NETEM_ID, rnd_str)
+        bin_path = INSTALL_MODE == "source" and "./" or ""
+        ret = cmd_check_output(
+            "%spynetem-server --id %s --port %d %s" \
+                % (bin_path, netid, args.port, args.project))
+        if ret:
+            sys.exit("Unable to launch server: %s" % ret)
 
     # install signal handlers
     def interrupt(s, f):
         print("\n To quit pynetem, simply enter quit in the console !")
 
     signal.signal(signal.SIGINT, interrupt)
-
     # start console
+    console = NetemConsole(args.port)
     console.cmdloop()

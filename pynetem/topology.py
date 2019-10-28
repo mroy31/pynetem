@@ -24,7 +24,6 @@ from pynetem.check import check_network
 from pynetem.wrapper.switch import build_sw_instance
 from pynetem.wrapper.node import build_node_instance
 from pynetem.wrapper.p2p import NetemP2PSwitch
-from pynetem.wrapper.spinner import Spinner
 from pynetem.wrapper.bridge import BridgeInstance
 
 
@@ -36,16 +35,29 @@ class TopologieManager(object):
         self.p2p_switch = NetemP2PSwitch(prj_id)
 
         self.saved_state = []
+        self.is_loaded = False
         self.nodes, self.switches, self.bridges = [], [], []
 
     def load(self):
-        self.__load()
+        if not self.is_loaded:
+            self.__load()
+            self.is_loaded = True
 
     def check(self):
         try:
             network = ConfigObj(self.netfile)
         except ConfigObjError as err:
             raise NetemError("Syntax error in the network file: %s" % err)
+
+        # first, be sure we can record images and configs
+        image_dir = os.path.join(os.path.dirname(self.netfile),
+                                 network["config"]["image_dir"])
+        config_dir = os.path.join(os.path.dirname(self.netfile),
+                                  network["config"]["config_dir"])
+        for path in (image_dir, config_dir):
+            if not os.path.isdir(path):
+                os.mkdir(path)
+
         # check network files before start it
         errors = check_network(network)
         if len(errors) > 0:
@@ -65,12 +77,12 @@ class TopologieManager(object):
 
     def __load_bridges(self, br_section):
         for br_name in br_section:
-            br_inst = BridgeInstance(self.prj_id, br_name, br_section[br_name])
-            self.__spinner_cmd(
-                br_inst.start,
-                "Start bridge %s ... " % br_inst.get_name()
+            br = BridgeInstance(self.prj_id, br_name, br_section[br_name])
+            self.__signaling_cmd(
+                br.start,
+                {"name": br.get_name(), "type": "bridge", "action": "start"},
             )
-            self.bridges.append(br_inst)
+            self.bridges.append(br)
 
     def __load(self):
         logging.debug("Start to load topology")
@@ -82,17 +94,12 @@ class TopologieManager(object):
         if "bridges" in network:
             self.__load_bridges(network["bridges"])
 
-        # first, be sure we can record images and configs
-        image_dir = os.path.join(os.path.dirname(self.netfile),
-                                 network["config"]["image_dir"])
-        config_dir = os.path.join(os.path.dirname(self.netfile),
-                                  network["config"]["config_dir"])
-        for path in (image_dir, config_dir):
-            if not os.path.isdir(path):
-                os.mkdir(path)
-
         if "nodes" in network:
             # load nodes
+            image_dir = os.path.join(os.path.dirname(self.netfile),
+                                    network["config"]["image_dir"])
+            config_dir = os.path.join(os.path.dirname(self.netfile),
+                                    network["config"]["config_dir"])
             nodes_section = network["nodes"]
             for n_name in nodes_section:
                 n_inst = build_node_instance(self.prj_id, self.p2p_switch,
@@ -180,10 +187,7 @@ class TopologieManager(object):
         for s in self.switches:
             s.stop()
         for b in self.bridges:
-            self.__spinner_cmd(
-                b.stop,
-                "Stop bridge %s ... " % b.get_name()
-            )
+            b.stop()
 
     def reload(self):
         self.stopall()
@@ -195,11 +199,7 @@ class TopologieManager(object):
 
     def save(self, conf_path=None):
         for n in self.saved_state:
-            self.__spinner_cmd(
-                n.save,
-                "Save node %s ... " % n.get_name(),
-                conf_path=conf_path
-            )
+            n.save(conf_path=conf_path)
 
     def status(self):
         return """
@@ -217,36 +217,16 @@ Status of nodes:
     def __start_node(self, node):
         if node.is_running():
             return
-
-        self.__spinner_cmd(
-            node.start,
-            "Start node %s ... " % node.get_name()
-        )
+        node.start()
 
     def __stop_node(self, node):
         if not node.is_running():
             return
-
-        self.__spinner_cmd(
-            node.stop,
-            "Stop node %s ... " % node.get_name()
-        )
+        node.stop()
 
     def __load_configuration(self, node):
         if node.is_running():
-            self.__spinner_cmd(
-                node.load_configuration,
-                "Load configuration for node %s ... " % node.get_name()
-            )
-
-    def __spinner_cmd(self, cmd_func, msg, *args, **kwargs):
-        spinner = Spinner(msg)
-        try:
-            cmd_func(*args, **kwargs)
-        except NetemError as ex:
-            spinner.error(str(ex))
-        else:
-            spinner.stop()
+            node.load_configuration()
 
     def __get_node_if(self, if_id):
         if_ids = if_id.rsplit(".", 1)

@@ -1,0 +1,102 @@
+#!/usr/bin/python3
+# pynetem: network emulator
+# Copyright (C) 2015-2019 Mickael Royer <mickael.royer@recherche.enac.fr>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+import sys
+import os
+import logging
+import argparse
+from pynetem import NetemError
+from pynetem.utils import daemonize, test_project
+
+
+def clean(logfile):
+    try:
+        os.unlink(logfile)
+    except OSError:
+        pass
+
+
+parser = argparse.ArgumentParser(description='Network emulator server')
+parser.add_argument(
+    'project', metavar='PRJ', type=str, nargs=1,
+    default=None, help='Path for the pnet project'
+)
+parser.add_argument(
+    "-d", "--debug", action="store_true",
+    dest="debug", default=False,
+    help="Log more debug informations")
+parser.add_argument(
+    "-n", "--no-daemon", action="store_false", dest="daemon", default=True,
+    help="No daemonize pynetem server"
+)
+parser.add_argument(
+    "-i", "--id", type=str, dest="netid",
+    metavar="ID", default=None, help="Net ID for this instance"
+)
+parser.add_argument(
+    "-p", "--port", type=int, dest="port",
+    metavar="P_NUMBER", default=10100, help="Port number"
+)
+args = parser.parse_args()
+
+
+if __name__ == "__main__":
+    # init log
+    if args.debug:
+        logging.basicConfig(
+            format='%(asctime)s - %(levelname)s: %(message)s',
+            level=logging.DEBUG)
+    else:
+        logfile = os.path.join("/tmp", "%s.log" % args.netid)
+        logging.basicConfig(
+            format='%(asctime)s - %(levelname)s: %(message)s',
+            level=logging.INFO,
+            filename=logfile)
+
+    # quit if project is not valid
+    prj_path = args.project[0]
+    try:
+        test_project(prj_path)
+    except NetemError as err:
+        sys.exit(str(err))
+
+    # initiate the factiry and the server
+    from twisted.internet import reactor
+    from twisted.internet.error import CannotListenError
+    from pynetem.server.protocol import NetemFactory
+
+    logging.info("Start project %s" % prj_path)
+    try:
+        factory = NetemFactory(args.netid, prj_path)
+        try:
+            reactor.listenTCP(args.port, factory, interface="127.0.0.1")
+        except CannotListenError:
+            factory.close()
+            raise NetemError("Unable to launch server on port %s" % args.port)
+    except NetemError as err:
+        clean(logfile)
+        sys.exit("Unable to start pynetem server: %s" % err)
+
+    # daemonize if necessary
+    if args.daemon:
+        daemonize()
+
+    # start twisted reactor
+    if not args.debug:
+        reactor.addSystemEventTrigger('after', 'shutdown', clean, logfile)
+    reactor.run()

@@ -1,0 +1,14 @@
+/var/log/pynetem.log /var/log/pynetem.*.log {
+    rotate 4
+    weekly
+    compress
+    copytruncate
+    missingok
+    notifempty
+    sharedscripts
+    postrotate
+        if invoke-rc.d --quiet pynetem status > /dev/null; then
+            invoke-rc.d --quiet pynetem restart > /dev/null
+        fi
+    endscript
+}

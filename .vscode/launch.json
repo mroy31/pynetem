@@ -5,6 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "pynetem-daemon",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "program": "${workspaceRoot}/pynetem-daemon",
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "PYTHONPATH": "${workspaceRoot}"
+            },
+            "args": [
+                "-n",
+                "--debug"
+            ]
+        },
+        {
             "name": "pynetem-emulator",
             "type": "python",
             "request": "launch",
@@ -16,10 +31,38 @@
             },
             "args": [
                 "../networks/test/bridge_test.pnet"
-            ],
-            "debugOptions": [
-                "RedirectOutput"
             ]
-        }
+        },
+        {
+            "name": "pynetem-client-mode",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "program": "${workspaceRoot}/pynetem-emulator",
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "PYTHONPATH": "${workspaceRoot}"
+            },
+            "args": [
+                "--client-only"
+            ]
+        },
+        {
+            "name": "pynetem-server",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "program": "${workspaceRoot}/pynetem-server",
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "PYTHONPATH": "${workspaceRoot}"
+            },
+            "args": [
+                "-n",
+                "--debug",
+                "--id", "ntmtt",
+                "./simple.pnet"
+            ]
+        },
     ]
 }

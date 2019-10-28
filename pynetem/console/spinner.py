@@ -19,7 +19,7 @@ import sys
 import time
 import threading
 import itertools
-from pynetem.color import GREEN, RED, DEFAULT
+from pynetem.console.color import GREEN, RED, DEFAULT
 
 
 class Spinner(object):

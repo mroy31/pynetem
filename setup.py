@@ -59,10 +59,11 @@ if __name__ == "__main__":
         author="Mikael Royer",
         author_email="mickael.royer@recherche.enac.fr",
         license="GNU GPL v2",
-        scripts=["pynetem-emulator", "pynetem-daemon"],
+        scripts=["pynetem-emulator", "pynetem-daemon", "pynetem-server"],
         packages=["pynetem", "pynetem.check", "pynetem.daemon",
                   "pynetem.wrapper", "pynetem.wrapper.node",
-                  "pynetem.wrapper.switch", "pynetem.ui"],
+                  "pynetem.wrapper.switch", "pynetem.ui", "pynetem.console",
+                  "pynetem.dispatch"],
         package_data={
             'pynetem.ui': ['defaults.conf']
         },

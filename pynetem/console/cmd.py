@@ -1,5 +1,5 @@
 # pynetem: network emulator
-# Copyright (C) 2015-2018 Mickael Royer <mickael.royer@recherche.enac.fr>
+# Copyright (C) 2015-2019 Mickael Royer <mickael.royer@recherche.enac.fr>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,12 +18,19 @@
 from cmd2 import Cmd
 import re
 import os
+import asyncio
+import subprocess
+import shlex
 from pynetem import NetemError
+from pynetem.ui.config import NetemConfig
+from pynetem.console.client import NetemClientProtocol
+from pynetem.server.rpc import RPCRequest
 from pynetem.utils import cmd_check_output
-from pynetem.color import GREEN, ORANGE, DEFAULT
+from pynetem.console.color import GREEN, ORANGE, DEFAULT
+from pynetem.console.spinner import Spinner
 
 
-def netmem_cmd(reg_exp=None, require_project=False):
+def netmem_cmd(reg_exp=None, catch_error=True):
     def cmd_decorator(func):
         def cmd_func(self, arg):
             # first, valid arguments
@@ -38,17 +45,17 @@ def netmem_cmd(reg_exp=None, require_project=False):
                                 "following syntax: %s" % reg_exp)
                     return
 
-            if require_project and self.current_project is None:
-                self.perror("this command requires a loaded project")
-                return
-
             try:
                 if match_object is None:
                     return func(self)
                 return func(self, *match_object.groups())
             except NetemError as err:
+                if not catch_error:
+                    raise err
                 self.perror("%s" % err)
             except Exception as err:
+                if not catch_error:
+                    raise err
                 self.perror("unhandle error happens, %s" % err)
 
         cmd_func.__name__ = func.__name__
@@ -62,10 +69,12 @@ class NetemConsole(Cmd):
     intro = 'Welcome to network emulator. Type help or ? to list commands.\n'
     prompt = '[net-emulator] '
 
-    def __init__(self, daemon, project=None):
+    def __init__(self, s_port):
         self.allow_cli_args = False
-        self.daemon = daemon
-        self.current_project = project
+        self.s_port = s_port
+        self.current_response = None
+        self.loop = asyncio.get_event_loop()
+        self.spinner = None
 
         super(NetemConsole, self).__init__()
         if "DISPLAY" not in os.environ:
@@ -90,148 +99,166 @@ class NetemConsole(Cmd):
         except Exception:
             pass
 
+    def __on_answer(self, ans):
+        self.current_response = ans
+
+    def __on_signal(self, sig):
+        # do nothing for the moment
+        pass
+
+    def __send_cmd(self, cmd_name, args=[]):
+        request = RPCRequest(cmd_name, args)
+        self.current_response = None
+
+        coro = self.loop.create_connection(
+            lambda: NetemClientProtocol(request, self.__on_signal,
+                                        self.__on_answer, self.loop),
+            '127.0.0.1',
+            self.s_port
+        )
+        self.loop.run_until_complete(self.loop.create_task(coro))
+        self.loop.run_forever()
+
+        if self.current_response is None:
+            raise NetemError("No valid answer has been received from server")
+        if self.current_response["state"] == "error":
+            raise NetemError(
+                "Error from server: '%s'" % self.current_response["content"]
+            )
+
+        return self.current_response["content"]
+
+    def __command(self, cmd_line):
+        args = shlex.split(cmd_line)
+        ret = subprocess.call(args)
+        if ret != 0:
+            msg = "Unable to execute command %s" % (cmd_line,)
+            raise NetemError(msg)
+
+    def __spinner_cmd(self, text, cmd, args=[]):
+        spinner = Spinner(text)
+        try:
+            self.__send_cmd(cmd, args=args)
+        except Exception as ex:
+            spinner.error(str(ex))
+        else:
+            spinner.stop()
+
     def __quit(self):
-        if self.current_project is not None:
-            if self.current_project.is_topology_modified():
-                q = input("The topology has been modified, "
-                          "are you you want to quit netem (Y/N): ")
-                while q not in ("Y", "N"):
-                    q = input("Wrong answer, expect Y or N: ")
-                if q == "N":
-                    return None
-            self.pwarning("Close the projet please wait before leaving...")
-            self.current_project.close()
-            self.__close_display()
+        if self.__send_cmd("isTopologyModified"):
+            q = input("The topology has been modified, "
+                        "are you you want to quit netem (Y/N): ")
+            while q not in ("Y", "N"):
+                q = input("Wrong answer, expect Y or N: ")
+            if q == "N":
+                return None
+        self.__spinner_cmd("Close the project, please wait ... ", "quit")
+        self.__close_display()
+        self.loop.close()
         return True
 
     def emptyline(self):
         # do nothing when an empty line is entered
         pass
 
-    @netmem_cmd()
+    @netmem_cmd(catch_error=False)
     def do_quit(self):
         "Quit the network emulator"
         return self.__quit()
 
-    @netmem_cmd()
+    @netmem_cmd(catch_error=False)
     def do_exit(self):
         "Quit the network emulator"
         return self.__quit()
 
-    @netmem_cmd(require_project=True)
+    @netmem_cmd()
+    def do_projectPath(self):
+        "Display the path of the openning project"
+        self.poutput(self.__send_cmd("projectPath"))
+
+    @netmem_cmd(catch_error=False)
     def do_load(self):
         """Check the project and start all nodes"""
-        self.current_project.load_topology()
+        self.__spinner_cmd("Load the project, please wait ... ", "load")
 
-    @netmem_cmd(require_project=True)
+    @netmem_cmd(catch_error=False)
     def do_save(self):
         """Save the project"""
-        self.current_project.save()
+        self.__spinner_cmd("Save the project, please wait ... ", "save")
 
-    @netmem_cmd(reg_exp="^(\S+)$", require_project=True)
+    @netmem_cmd(reg_exp="^(\S+)$", catch_error=False)
     def do_config(self, conf_path):
         """Save configurations in a specific folder"""
         if not os.path.isdir(conf_path):
             self.perror("%s is not a valid path")
             return
-        self.current_project.save_config(conf_path)
+        self.__spinner_cmd(
+            "Save the config, please wait ... ",
+            "config", args=[conf_path])
 
-    @netmem_cmd(require_project=True)
+    @netmem_cmd()
     def do_check(self):
         """Check the network file"""
-        try:
-            self.current_project.topology.check()
-        except NetemError as err:
-            self.perror(err)
-        else:
+        if self.__send_cmd("check"):
             self.pinfo("Network file is OK")
 
-    @netmem_cmd(reg_exp="^(\S+\.\w+)$", require_project=True)
+    @netmem_cmd(reg_exp="^(\S+\.\w+)$")
     def do_capture(self, if_name):
         """Capture trafic on an interface"""
-        self.current_project.topology.capture(if_name)
+        self.__send_cmd("capture", args=[if_name])
 
-    @netmem_cmd(require_project=True)
+    @netmem_cmd(catch_error=False)
     def do_reload(self):
         """Reload the project"""
-        self.current_project.topology.reload()
+        self.__spinner_cmd("Reload the project, please wait ... ", "reload")
 
-    @netmem_cmd(require_project=True)
+    @netmem_cmd()
     def do_edit(self):
         """Edit the topology"""
-        self.current_project.edit_topology()
+        f_path = self.__send_cmd("topologyFile")
+        cmd_line = "%s %s" % \
+            (NetemConfig.instance().get("general", "editor"), f_path)
+        self.__command(cmd_line)
 
-    @netmem_cmd(require_project=True)
+    @netmem_cmd()
     def do_view(self):
         """View the topology"""
-        self.current_project.view_topology()
+        f_path = self.__send_cmd("topologyFile")
+        with open(f_path) as t_hd:
+            self.poutput(t_hd.read())
 
-    @netmem_cmd(reg_exp="^(\S+)$", require_project=True)
+    @netmem_cmd(reg_exp="^(\S+)$")
     def do_start(self, node_id):
         """Start nodes, you can specify node name or 'all'"""
-        topo = self.current_project.topology
-        for node in self.__get_nodes(node_id):
-            topo.start(node.get_name())
+        self.__send_cmd("start", args=[node_id])
 
-    @netmem_cmd(reg_exp="^(\S+)$", require_project=True)
+    @netmem_cmd(reg_exp="^(\S+)$")
     def do_stop(self, node_id):
         """Stop nodes, you can specify node name or 'all'"""
-        topo = self.current_project.topology
-        for node in self.__get_nodes(node_id):
-            topo.stop(node.get_name())
+        self.__send_cmd("stop", args=[node_id])
 
-    @netmem_cmd(reg_exp="^(\S+)$", require_project=True)
+    @netmem_cmd(reg_exp="^(\S+)$")
     def do_restart(self, node_id):
         """Restart nodes in the network"""
-        topo = self.current_project.topology
-        for node in self.__get_nodes(node_id):
-            topo.stop(node.get_name())
-            topo.start(node.get_name())
+        self.__send_cmd("restart", args=[node_id])
 
-    @netmem_cmd(require_project=True)
+    @netmem_cmd()
     def do_status(self):
         """Display routeur/host status"""
-        print(self.current_project.topology.status())
+        self.poutput(self.__send_cmd("status"))
 
-    def __open_shell(self, node_id, debug):
-        for node in self.__get_nodes(node_id):
-            try:
-                node.open_shell(debug=debug)
-            except NetemError as err:
-                self.perror("%s" % err)
-
-    @netmem_cmd(reg_exp="^(\S+)$", require_project=True)
+    @netmem_cmd(reg_exp="^(\S+)$")
     def do_console(self, node_id):
         """Open a console for the given router/host"""
-        self.__open_shell(node_id, False)
+        self.__send_cmd("console", args=[node_id])
 
-    @netmem_cmd(reg_exp="^(\S+)$", require_project=True)
+    @netmem_cmd(reg_exp="^(\S+)$")
     def do_debug(self, node_id):
         """Open a debug console (meaning bash) for the given router/host"""
-        self.__open_shell(node_id, True)
+        self.__send_cmd("debug", args=[node_id])
 
-    @netmem_cmd(reg_exp="^(\S+\.[0-9]+) (up|down)$", require_project=True)
+    @netmem_cmd(reg_exp="^(\S+\.[0-9]+) (up|down)$")
     def do_ifstate(self, if_name, state):
         """Enable/disable a node interface. The ifname have to
         follow this syntax : <node_id>.<if_number>"""
-        self.current_project.topology.set_if_state(if_name, state)
-
-    def close(self):
-        if self.current_project is not None:
-            self.current_project.close()
-        return True
-
-    def __get_nodes(self, arg):
-        if arg == "all":
-            return self.current_project.topology.get_all_nodes()
-        else:
-            nodes = []
-            n_ids = arg.split()
-            for n_id in n_ids:
-                node = self.current_project.topology.get_node(arg)
-                if node is None:
-                    self.pwarning("Warning: node %s not found in the network" %
-                                  n_id)
-                else:
-                    nodes.append(node)
-            return nodes
+        self.__send_cmd("ifstate", args=[if_name, state])

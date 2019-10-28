@@ -15,9 +15,40 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import os
+import errno
 import subprocess
 import shlex
 import traceback
+import zipfile
+from pynetem import NetemError
+
+
+def daemonize():
+    if os.fork():    # launch child and...
+        os._exit(0)  # kill off parent
+    os.setsid()
+    if os.fork():    # launch child and...
+        os._exit(0)  # kill off parent again.
+    os.umask(0o77)
+    null = os.open('/dev/null', os.O_RDWR)
+    for i in range(3):
+        try:
+            os.dup2(null, i)
+        except OSError as e:
+            if e.errno != errno.EBADF:
+                raise
+    os.close(null)
+
+
+def test_project(prj_path):
+    _, ext = os.path.splitext(prj_path)
+    if ext.lower() != ".pnet":
+        raise NetemError("Project %s has wrong ext" % prj_path)
+    if not os.path.isfile(prj_path):
+        raise NetemError("Project %s does not exist" % prj_path)
+    if not zipfile.is_zipfile(prj_path):
+        raise NetemError("Project %s is not a zip file" % prj_path)
 
 
 def cmd_call(cmd_line):
@@ -27,7 +58,7 @@ def cmd_call(cmd_line):
 
 def cmd_check_output(cmd_line):
     args = shlex.split(cmd_line)
-    return subprocess.check_output(args)
+    return subprocess.check_output(args, stderr=subprocess.STDOUT)
 
 
 def cmd_run_background(cmd_line):

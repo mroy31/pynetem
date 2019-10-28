@@ -20,10 +20,10 @@
 import os
 import sys
 import signal
-import errno
 import logging
 import argparse
 import time
+from pynetem.utils import daemonize
 
 parser = argparse.ArgumentParser(description='Network emulator daemon')
 parser.add_argument(
@@ -50,23 +50,6 @@ if args.conffile:
         NetemConfig.custom_conf = args.conffile
     else:
         sys.exit("The config file does not exist.")
-
-
-def daemonize():
-    if os.fork():    # launch child and...
-        os._exit(0)  # kill off parent
-    os.setsid()
-    if os.fork():    # launch child and...
-        os._exit(0)  # kill off parent again.
-    os.umask(0o77)
-    null = os.open('/dev/null', os.O_RDWR)
-    for i in range(3):
-        try:
-            os.dup2(null, i)
-        except OSError as e:
-            if e.errno != errno.EBADF:
-                raise
-    os.close(null)
 
 
 if __name__ == "__main__":

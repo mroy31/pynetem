@@ -22,28 +22,16 @@ import subprocess
 import zipfile
 import tempfile
 import shutil
-import random
-import string
-from pynetem import NetemError, NETEM_ID
-from pynetem.ui.config import NetemConfig
+from pynetem import NetemError
 from pynetem.topology import TopologieManager
 
-random.seed()
 TOPOLOGY_FILE = "network.ini"
 
 
-class NetemProject(object):
-
-    @classmethod
-    def create(cls, daemon, prj_path):
-        if os.path.isfile(prj_path):
-            raise NetemError("Project %s already exist" % prj_path)
-        _, ext = os.path.splitext(prj_path)
-        if ext.lower() != ".pnet":
-            raise NetemError("Project %s has wrong ext" % prj_path)
-        # create an empty project
-        with zipfile.ZipFile(prj_path, mode="w") as net_zip:
-            net_zip.writestr(TOPOLOGY_FILE, """
+def create_project(prj_path):
+    # create an empty project
+    with zipfile.ZipFile(prj_path, mode="w") as net_zip:
+        net_zip.writestr(TOPOLOGY_FILE, """
 [config]
 image_dir = images
 config_dir = configs
@@ -54,26 +42,15 @@ config_dir = configs
 
 [bridges]
 """)
-        return cls(daemon, prj_path)
 
-    @classmethod
-    def load(cls, daemon, prj_path):
-        if not os.path.isfile(prj_path):
-            raise NetemError("Project %s does not exist" % prj_path)
-        _, ext = os.path.splitext(prj_path)
-        if ext.lower() != ".pnet" or not zipfile.is_zipfile(prj_path):
-            raise NetemError("Project %s has wrong ext "
-                             "or is not a zip file" % prj_path)
-        return cls(daemon, prj_path)
 
-    def __init__(self, daemon, prj_path):
-        # set a random projet id
-        rnd_str = "".join(random.sample(string.ascii_lowercase, 2))
-        self.__id = "%s%s" % (NETEM_ID, rnd_str,)
+class NetemProject(object):
 
+    def __init__(self, daemon, netid, prj_path):
+        self.__id = netid
         self.daemon = daemon
         self.prj_path = prj_path
-        self.tmp_folder = tempfile.mkdtemp(prefix=NETEM_ID)
+        self.tmp_folder = tempfile.mkdtemp(prefix=netid)
         with zipfile.ZipFile(prj_path) as prj_zip:
             prj_zip.extractall(path=self.tmp_folder)
 
@@ -87,19 +64,14 @@ config_dir = configs
     def get_id(self):
         return self.__id
 
+    def get_path(self):
+        return self.prj_path
+
     def load_topology(self):
         self.topology.load()
 
-    def edit_topology(self):
-        topology_file = os.path.join(self.tmp_folder, TOPOLOGY_FILE)
-        cmd_line = "%s %s" % (NetemConfig.instance().get("general", "editor"),
-                              topology_file)
-        self.__command(cmd_line)
-
-    def view_topology(self):
-        topology_file = os.path.join(self.tmp_folder, TOPOLOGY_FILE)
-        with open(topology_file) as t_hd:
-            print(t_hd.read())
+    def get_topology_file(self):
+        return os.path.join(self.tmp_folder, TOPOLOGY_FILE)
 
     def is_topology_modified(self):
         tmp_file = os.path.join(self.tmp_folder, TOPOLOGY_FILE)
@@ -136,7 +108,6 @@ config_dir = configs
         ret = subprocess.call(args)
         if ret != 0:
             msg = "Unable to execute command %s" % (cmd_line,)
-            logging.error(msg)
             raise NetemError(msg)
 
     def __strip_path(self, path):
