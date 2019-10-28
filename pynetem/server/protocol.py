@@ -178,7 +178,10 @@ class NetemProtocol(LineReceiver):
         return self.project.topology.status()
 
     def __open_shell(self, node_id, debug):
-        for node in self.__get_nodes(node_id):
+        nodes = self.__get_nodes(node_id)
+        if len(nodes) == 0:
+            raise NetemError("Node '%s' does not exist" % node_id)
+        for node in nodes:
             node.open_shell(debug=debug)
 
     @cmd(cmd_args=["^\S+$"])

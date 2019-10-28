@@ -74,7 +74,6 @@ class NetemConsole(Cmd):
         self.s_port = s_port
         self.current_response = None
         self.loop = asyncio.get_event_loop()
-        self.spinner = None
 
         super(NetemConsole, self).__init__()
         if "DISPLAY" not in os.environ:
@@ -122,9 +121,7 @@ class NetemConsole(Cmd):
         if self.current_response is None:
             raise NetemError("No valid answer has been received from server")
         if self.current_response["state"] == "error":
-            raise NetemError(
-                "Error from server: '%s'" % self.current_response["content"]
-            )
+            raise NetemError(self.current_response["content"])
 
         return self.current_response["content"]
 
