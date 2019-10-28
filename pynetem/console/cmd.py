@@ -116,7 +116,7 @@ class NetemConsole(Cmd):
             '127.0.0.1',
             self.s_port
         )
-        self.loop.run_until_complete(self.loop.create_task(coro))
+        self.loop.run_until_complete(asyncio.ensure_future(coro))
         self.loop.run_forever()
 
         if self.current_response is None:
