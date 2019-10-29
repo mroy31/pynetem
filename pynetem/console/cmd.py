@@ -73,6 +73,7 @@ class NetemConsole(Cmd):
         self.allow_cli_args = False
         self.s_port = s_port
         self.current_response = None
+        self.spinner = None
         self.loop = asyncio.get_event_loop()
 
         super(NetemConsole, self).__init__()
@@ -102,8 +103,29 @@ class NetemConsole(Cmd):
         self.current_response = ans
 
     def __on_signal(self, sig):
-        # do nothing for the moment
-        pass
+        if sig["name"] == "node":
+            attrs = sig["attrs"]
+            if attrs["state"] == "loading":
+                if self.spinner is not None:
+                    self.spinner.error()
+                text = {
+                    "node": "Start all nodes of the topology ... ",
+                    "switch_bridge": "Start all switches/bridges ... ",
+                    "config": "Load configuration of junos routers ... ",
+                }[attrs["type"]]
+                self.spinner = Spinner(text)
+            elif attrs["state"] == "error" and self.spinner is not None:
+                self.spinner.error(attrs["msg"])
+                self.spinner = None
+            elif attrs["state"] == "loaded" and self.spinner is not None:
+                self.spinner.stop()
+                self.spinner = None
+        elif sig["name"] == "watch":
+            attrs = sig["attrs"]
+            if attrs["state"] == "error":
+                if self.spinner is not None and self.spinner.is_running():
+                    self.spinner.error()
+                self.perror(attrs["msg"])
 
     def __send_cmd(self, cmd_name, args=[]):
         request = RPCRequest(cmd_name, args)
@@ -132,8 +154,8 @@ class NetemConsole(Cmd):
             msg = "Unable to execute command %s" % (cmd_line,)
             raise NetemError(msg)
 
-    def __spinner_cmd(self, text, cmd, args=[]):
-        spinner = Spinner(text)
+    def __spinner_cmd(self, text, cmd, args=[], color=DEFAULT):
+        spinner = Spinner(text, color=color)
         try:
             self.__send_cmd(cmd, args=args)
         except Exception as ex:
@@ -149,7 +171,9 @@ class NetemConsole(Cmd):
                 q = input("Wrong answer, expect Y or N: ")
             if q == "N":
                 return None
-        self.__spinner_cmd("Close the project, please wait ... ", "quit")
+        self.__spinner_cmd(
+            "Close the project, please wait ... ", "quit",
+            color=ORANGE)
         self.__close_display()
         self.loop.close()
         return True
@@ -174,9 +198,10 @@ class NetemConsole(Cmd):
         self.poutput(self.__send_cmd("projectPath"))
 
     @netmem_cmd(catch_error=False)
-    def do_load(self):
+    def do_run(self):
         """Check the project and start all nodes"""
-        self.__spinner_cmd("Load the project, please wait ... ", "load")
+        self.pinfo("Run the project, please wait ... ")
+        self.__send_cmd("load")
 
     @netmem_cmd(catch_error=False)
     def do_save(self):

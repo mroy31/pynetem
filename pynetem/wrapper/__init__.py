@@ -21,6 +21,7 @@ import shlex
 import logging
 import time
 from pynetem import NetemError
+from pynetem.signals import ALL_SIGNALS
 from pynetem.daemon.client import NetemDaemonClient
 
 
@@ -94,10 +95,15 @@ class _BaseInstance(_BaseWrapper):
             r_code = self.process.poll()
             if r_code is not None:
                 out, err = self.process.communicate()
-                logging.error("ERROR: process %s dies "
-                              "unexpectedly" % self.name)
-                logging.error(err.decode("utf-8"))
+                msg = "node %s dies unexpectedly" % self.name
+                logging.error("%s \n %s" (msg, err.decode("utf-8")))
                 self.is_started = False
+                # send signal to connected clients
+                sig = ALL_SIGNALS["node"]
+                sig.send(self, name="watch", args={
+                    "state": "error",
+                    "msg": msg
+                })
         logging.debug("Stop watching process for %s" % self.name)
 
     def build_cmd_line(self):

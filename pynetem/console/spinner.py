@@ -25,16 +25,20 @@ from pynetem.console.color import GREEN, RED, DEFAULT
 class Spinner(object):
     busy = False
 
-    def __init__(self, text, delay=0.1):
+    def __init__(self, text, delay=0.1, color=DEFAULT):
         self.spinner_generator = itertools.cycle(['-', '/', '|', '\\'])
         self.delay = delay
         self.text = text
+        self.color = color
         # start the thread
         self.busy = True
         threading.Thread(target=self.spinner_task).start()
 
+    def is_running(self):
+        return self.busy
+
     def spinner_task(self):
-        sys.stdout.write(self.text)
+        sys.stdout.write(self.color+self.text+DEFAULT)
         while self.busy:
             sys.stdout.write(next(self.spinner_generator))
             sys.stdout.flush()
@@ -43,11 +47,16 @@ class Spinner(object):
             sys.stdout.flush()
 
     def stop(self):
-        self.busy = False
-        time.sleep(self.delay)
-        sys.stdout.write(GREEN+'OK\n'+DEFAULT)
+        if self.busy:
+            self.busy = False
+            time.sleep(self.delay)
+            sys.stdout.write(GREEN+'OK\n'+DEFAULT)
 
-    def error(self, err):
-        self.busy = False
-        time.sleep(self.delay)
-        sys.stdout.write(RED+'NOK: \n\t%s\n' % err+DEFAULT)
+    def error(self, err=None):
+        if self.busy:
+            self.busy = False
+            time.sleep(self.delay)
+            msg = "NOK"
+            if err is not None:
+                msg = msg + "\n\t{}".format(err) 
+            sys.stdout.write(RED+'{}\n'.format(msg)+DEFAULT)
