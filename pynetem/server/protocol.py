@@ -171,7 +171,7 @@ class NetemProtocol(asyncio.Protocol):
 
     @cmd()
     def do_status(self):
-        return self.project.topology.status()
+        return self.project.get_status()
 
     def __open_shell(self, node_id, debug):
         nodes = self.__get_nodes(node_id)

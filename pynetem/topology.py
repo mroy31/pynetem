@@ -213,12 +213,8 @@ class TopologieManager(object):
         for n in self.saved_state:
             n.save(conf_path=conf_path)
 
-    def status(self):
-        return """
-Status of nodes:
-\t%s
-""" % ("\n\t".join(["Node %s is %s" % (n.get_name(), n.get_status())
-                    for n in self.nodes]))
+    def get_nodes_status(self):
+        return [n.get_status() for n in self.nodes]
 
     def close(self):
         self.stopall()

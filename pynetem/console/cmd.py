@@ -267,7 +267,28 @@ class NetemConsole(Cmd):
     @netmem_cmd()
     def do_status(self):
         """Display routeur/host status"""
-        self.poutput(self.__send_cmd("status"))
+        status = self.__send_cmd("status")
+        p_state = status["project"]["running"] \
+            and GREEN+"running"+DEFAULT or ORANGE+"stopped"+DEFAULT
+        self.poutput("Project:\n\tpath: {}\n\tstate: {}\n".format(
+            status["project"]["path"], p_state))
+
+        if status["project"]["running"]:
+            self.poutput("Nodes:\n")
+
+            def format_node(n):
+                n_state = n["isRunning"] \
+                    and GREEN+"running"+DEFAULT or ORANGE+"stopped"+DEFAULT
+                self.poutput("\t{}: {}\n".format(n["name"], n_state))
+                if "interfaces" in n:
+                    for if_obj in n["interfaces"]:
+                        i_state = if_obj["isUp"] \
+                            and GREEN+"up"+DEFAULT or ORANGE+"down"+DEFAULT
+                        self.poutput("\t\t{}: {}\n".format(
+                            if_obj["name"], i_state))
+            
+            for n in status["nodes"]:
+                format_node(n)
 
     @netmem_cmd(reg_exp="^(\S+)$")
     def do_console(self, node_id):

@@ -185,10 +185,17 @@ class DockerNode(_BaseWrapper):
         self.__interfaces = []
 
     def get_status(self):
-        n_status = self.running and "Started" or "Stopped"
-        if_status = "\n".join(["\t\t%s: %s" % (i["target_if"], i["state"])
-                               for i in self.__interfaces])
-        return "{0}\n{1}".format(n_status, if_status)
+        return {
+            "name": self.name,
+            "isRunning": self.running,
+            "interfaces": [
+                {
+                    "name": i["target_if"],
+                    "isUp": i["state"] == "up"
+                } for i in self.__interfaces
+            ]
+
+        }
 
     def _docker_exec(self, cmd):
         self.daemon.docker_exec(self.container_name, cmd)

@@ -67,6 +67,15 @@ class NetemProject(object):
     def get_path(self):
         return self.prj_path
 
+    def get_status(self):
+        return {
+            "project": {
+                "path": self.prj_path,
+                "running": self.topology.is_loaded
+            },
+            "nodes": self.topology.get_nodes_status()
+        }
+
     def load_topology(self):
         self.topology.load()
 

@@ -140,7 +140,10 @@ class _BaseInstance(_BaseWrapper):
                 self.watch_thread = None
 
     def get_status(self):
-        return self.is_started is not None and "Started" or "Stopped"
+        return {
+            "name": self.name,
+            "isRunning": self.is_started
+        }
 
     def is_running(self):
         return self.is_started
