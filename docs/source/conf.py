@@ -20,8 +20,8 @@
 # -- Project information -----------------------------------------------------
 
 project = 'pynetem'
-copyright = '2019, Mickaël Royer'
-author = 'Mickaël Royer'
+copyright = "2019, Mickael Royer"
+author = "Mickael Royer"
 
 # The short X.Y version
 version = ''
@@ -132,7 +132,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'PyNetEm.tex', 'PyNetEm Documentation',
-     'Mickaël Royer', 'manual'),
+     'Mickael Royer', 'manual'),
 ]
 
 

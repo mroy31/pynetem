@@ -10,21 +10,26 @@ PyNetem is a network emulator written in python based on
 Requirements
 ------------
  * Python >= 3.5
+ * python3-cmd2 >= 0.7.0
  * python3-configobj
  * python3-pyroute2
  * docker-ce
  * openvswitch-switch
  * uml-utilities
+ * wireshark
+ * xterm
+ * bridge-utils
  * qemu (optional)
+ * telnet (optional)
  * vde2 (optional)
 
 Installation
 ------------
-You can install PyNetem with the following command:
+You can install PyNetem with the following command (with superuser privileges):
 
     $python3 setup.py install
 
-You can also build a debian package with pdebbuild if you prefer.
+You can also build a debian package with pbuilder/sbuild if you prefer.
 
 Configuration
 -------------
@@ -53,10 +58,10 @@ An example of topology is available in the file example/topology.net
 
 Docker Node
 -----------
-To use docker, you need to build expected images.
- * rca/quagga
- * rca/frr
- * rca/host
+To use docker node, you need to build the images used by pynetem.
+ * rca/quagga -> for emulate router based on quagga software
+ * rca/frr -> for emulate router based on frr software
+ * rca/host -> for emulate host
 
 To do that, you need to use the command docker build, for example
 
@@ -72,6 +77,10 @@ PyNetem has a special mode to emulate junos router. In the topology file, you
 need to use junos.<version> as node type. In this case, the configuration is
 saved as plain text (instead of complete img of the disk), thanks to a
 telnet connection.
+However, to use this kind of node, you need to put in the folder defined by 
+the config parameter *image_dir*, a junos image working with qemu with 
+a specific configuration: 
+  * A super user named *juniper* with the password *Juniper*
 
 Documentation
 -------------

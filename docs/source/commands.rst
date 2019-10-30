@@ -9,9 +9,9 @@ quit
 ----
 Quit the pynetem console.
 
-load
+run
 ----
-If not start the project at the launch of pynetem, run this command to
+If the project has not been launch during pynetem starting, run this command to
 load the topology and start all the nodes.
 
 
@@ -62,6 +62,14 @@ edit
 Edit the topology. The editor used to open the topology file is configured
 by the parameter ``editor`` in the configuration file (by default,
 it is vim).
+
+view
+----
+View the content of the topology file.
+
+status
+------
+Display the status of the project/topology
 
 start
 -----

@@ -6,18 +6,23 @@ Installation/Configuration
 Requirements
 ------------
 To run pynetem, you have to install the following programs/modules
- * python3 (version >= 3.5.0)
+ * python >= 3.5
+ * python3-cmd2 >= 0.7.0
  * python3-configobj
  * python3-pyroute2
- * `Docker CE <https://docs.docker.com/install/>`_
+ * docker-ce
  * openvswitch-switch
  * uml-utilities
+ * wireshark
+ * xterm
+ * bridge-utils
  * qemu (optional)
+ * telnet (optional)
  * vde2 (optional)
 
 Installation
 ------------
-You can install PyNetem with the following command:
+You can install PyNetem with the following command (with superuser privileges):
 
 .. code-block:: bash
 

@@ -24,14 +24,14 @@ The content of each section is explained below.
 Nodes
 -----
 
-In the section ``[nodes]``, you can add host/routeur in the topology.
+In the section ``[nodes]``, you can add host/router in the topology.
 At minimum, each node is identified by :
 
   1. a name
   2. a type
   3. a number of interface and for each interface,
 
-These 3 informations are declared like that :
+These 3 information are declared like that :
 
 .. code-block:: ini
 
@@ -52,12 +52,12 @@ Docker node
 A docker node is a docker container launch by pynetem based on 3 images :
   - rca/host identified by the type *docker.host*,
     which emulates a terminal node
-  - rca/frr identified by the type *docker.frr*, which eumlates router
+  - rca/frr identified by the type *docker.frr*, which emulates router
     based on the software `FRR <https://frrouting.org/>`_
   - rca/quagga identified by the type *docker.quagga*, which emulates router
     based on the software `Quagga <https://www.quagga.net/>`_
 
-When possible, this is the prefered way to emulate node/router.
+When possible, this is the preferred way to emulate node/router.
 
 Qemu node
 ```````````
@@ -70,7 +70,7 @@ the topology, the *type* parameter has to respect this form:
 Moreover, qemu node requires more argument than docker one:
 
   * ``console`` (required): the port number used to access to this instance
-    throught telnet. It must be unique
+    through telnet. It must be unique
   * ``memory`` (optional): specify this parameter (as a number, the unit is M)
     if you want to override the default value of memory allocated
     for a qemu instance.
@@ -95,15 +95,18 @@ Junos node
 ```````````
 Junos node is a specific qemu node used to launch Juniper JunOS olive image.
 To use it, you have to get a JunOS olive image located in the *image_dir*
-folder and naming ``junos-<version>.img``. Then you can declare a JunOS if you
+folder and naming ``junos-<version>.img``, with a specific configuration:
+  * A super user named ``juniper`` with the password ``Juniper``
+
+Then you can declare a JunOS if you
 specify the type ``junos.<version>``. The other argument is identical to
 a qemu node.
 
-The main differnce between an qemu and junos node concern the way
+The main difference between an qemu and junos node concern the way
 the state of the node is saved/loaded. For a junos node, only the
 juniper configuration is saved as plain text in the project archive
 (instead of complete img of the disk, like other qemu nodes), thanks
-to a tenel connection.
+to a telnet connection.
 
 
 Connections
@@ -129,7 +132,7 @@ switch are available :
   - `VDE <https://github.com/virtualsquare/vde-2>`_ which works only with
     qemu or junos node
   - `OpenVSwitch <https://www.openvswitch.org/>`_ which works with all kind of
-    nodes and thus are the prefered solution.
+    nodes and thus are the preferred solution.
 
 A switch is declared like that:
 
@@ -139,18 +142,18 @@ A switch is declared like that:
     [[switch_name]]
     type = vde|ovs
 
-An OpenVSwitch switch take no agument. On the other side, a VDE switch takes
+An OpenVSwitch switch take no argument. On the other side, a VDE switch takes
 1 argument:
 
   * ``tap`` (boolean, required): set to yes if you want add a tap interface
     named *VDE<sw_name>* connected to the switch. It can be useful
-    if you want to capture trafic on that switch.
+    if you want to capture traffic on that switch.
 
 
 Bridges
 -------
 In the ``[bridges]``, you can add some bridges to the topology.
-A bridge should be declared if you want to commnicate with the host network.
+A bridge should be declared if you want to communicate with the host network.
 A bridge takes only 1 argument:
 
   * ``host_if`` (string, required): the name of the host interface that will
