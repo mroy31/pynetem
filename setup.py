@@ -63,7 +63,7 @@ if __name__ == "__main__":
         packages=["pynetem", "pynetem.check", "pynetem.daemon",
                   "pynetem.wrapper", "pynetem.wrapper.node",
                   "pynetem.wrapper.switch", "pynetem.ui", "pynetem.console",
-                  "pynetem.dispatch"],
+                  "pynetem.dispatch", "pynetem.server"],
         package_data={
             'pynetem.ui': ['defaults.conf']
         },
