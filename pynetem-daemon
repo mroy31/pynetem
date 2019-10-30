@@ -44,14 +44,6 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-# add custom config parms
-if args.conffile:
-    if os.path.isfile(args.conffile):
-        NetemConfig.custom_conf = args.conffile
-    else:
-        sys.exit("The config file does not exist.")
-
-
 if __name__ == "__main__":
     # init log
     if args.daemon and args.logfile is None:
@@ -69,6 +61,13 @@ if __name__ == "__main__":
 
     from pynetem.ui.config import NetemConfig
     from pynetem.daemon.server import NetemDaemonThread
+
+    # add custom config parms
+    if args.conffile:
+        if os.path.isfile(args.conffile):
+            NetemConfig.custom_conf = args.conffile
+        else:
+            sys.exit("The config file does not exist.")
 
     config = NetemConfig()
     socket = config.get('general', 'daemon_socket')
