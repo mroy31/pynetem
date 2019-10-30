@@ -134,7 +134,7 @@ if __name__ == "__main__":
                 % (bin_path, netid, args.port, args.project))
         if ret:
             sys.exit("Unable to launch server: %s" % ret)
-
+        
     # install signal handlers
     def interrupt(s, f):
         print("\n To quit pynetem, simply enter quit in the console !")
@@ -142,4 +142,8 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, interrupt)
     # start console
     console = NetemConsole(args.port)
+    if args.start and not args.client_mode:
+        # run the project
+        console.do_run("")
+
     console.cmdloop()

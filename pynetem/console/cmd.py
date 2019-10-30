@@ -66,7 +66,7 @@ def netmem_cmd(reg_exp=None, catch_error=True):
 
 
 class NetemConsole(Cmd):
-    intro = 'Welcome to network emulator. Type help or ? to list commands.\n'
+    intro = '\nWelcome to network emulator. Type help or ? to list commands.\n'
     prompt = '[net-emulator] '
 
     def __init__(self, s_port):
