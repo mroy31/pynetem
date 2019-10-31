@@ -23,6 +23,8 @@ import signal
 import argparse
 import string
 import random
+import subprocess
+import shlex
 
 INSTALL_BIN_DIR = os.path.dirname(__file__)
 binsuffix = os.path.basename(INSTALL_BIN_DIR)
@@ -78,7 +80,6 @@ if __name__ == "__main__":
     from pynetem.console.cmd import NetemConsole
     from pynetem.daemon.client import NetemDaemonClient
     from pynetem import NetemError
-    from pynetem.utils import cmd_check_output
     from pynetem import __version__, NETEM_ID
 
     # if asked, show version and quit
@@ -129,12 +130,12 @@ if __name__ == "__main__":
         rnd_str = "".join(random.sample(string.ascii_lowercase, 2))
         netid = "%s%s" % (NETEM_ID, rnd_str)
         bin_path = INSTALL_MODE == "source" and "./" or ""
-        ret = cmd_check_output(
-            "%spynetem-server --id %s --port %d %s" \
-                % (bin_path, netid, args.port, args.project))
-        if ret:
-            sys.exit("Unable to launch server: %s" % ret)
-        
+        cmd = "%spynetem-server --id %s --port %d %s" \
+            % (bin_path, netid, args.port, args.project)
+        result = subprocess.run(shlex.split(cmd), stderr=subprocess.PIPE)
+        if result.returncode != 0:
+            sys.exit("Unable to launch server: %s" % result.stderr)
+
     # install signal handlers
     def interrupt(s, f):
         print("\n To quit pynetem, simply enter quit in the console !")

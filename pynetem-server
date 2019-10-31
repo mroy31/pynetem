@@ -87,7 +87,7 @@ if __name__ == "__main__":
         factory.start(args.port)
     except (NetemError, OSError) as err:
         clean(logfile)
-        sys.exit("Unable to start server: %s" % err)
+        sys.exit("%s" % err)
 
     # daemonize if necessary
     if args.daemon:
