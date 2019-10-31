@@ -137,8 +137,9 @@ class NetemConsole(Cmd):
             '127.0.0.1',
             self.s_port
         )
-        self.loop.run_until_complete(asyncio.ensure_future(coro))
-        self.loop.run_forever()
+        t = self.loop.create_task(coro)
+        if not t.done():
+            self.loop.run_forever()
 
         if self.current_response is None:
             raise NetemError("No valid answer has been received from server")
