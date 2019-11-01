@@ -48,6 +48,14 @@ Usage:
   # example
   capture R1.0
 
+**Warning:**
+
+When you want to capture on an interface of qemu/junos node, the user
+that launches pynetem-emulator must have the right to capture trafic
+with wireshark (on debian like system, this user has to be a member
+of *wireshark* group)
+
+
 reload
 ------
 Reload the project. You have to run this command after modifing the
