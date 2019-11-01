@@ -97,7 +97,6 @@ if __name__ == "__main__":
     async def shutdown(s):
         factory.stop()
         factory.close()
-        clean(logfile)
 
     for s in (signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(
@@ -108,3 +107,4 @@ if __name__ == "__main__":
         loop.run_forever()
     finally:
         loop.close()
+        clean(logfile)
