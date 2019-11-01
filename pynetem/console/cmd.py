@@ -196,7 +196,8 @@ class NetemConsole(Cmd):
     @netmem_cmd()
     def do_projectPath(self):
         "Display the path of the openning project"
-        self.poutput(self.__send_cmd("projectPath"))
+        prj_path = self.__send_cmd("projectPath")
+        self.poutput(os.path.abspath(prj_path))
 
     @netmem_cmd(catch_error=False)
     def do_run(self):
@@ -216,7 +217,7 @@ class NetemConsole(Cmd):
             self.perror("%s is not a valid path")
             return
         self.__spinner_cmd(
-            "Save the config, please wait ... ",
+            "Save the config in %s, please wait ... " % conf_path,
             "config", args=[conf_path])
 
     @netmem_cmd()
@@ -233,7 +234,8 @@ class NetemConsole(Cmd):
     @netmem_cmd(catch_error=False)
     def do_reload(self):
         """Reload the project"""
-        self.__spinner_cmd("Reload the project, please wait ... ", "reload")
+        self.pinfo("Reload the project, please wait ... ")
+        self.__send_cmd("reload")
 
     @netmem_cmd()
     def do_edit(self):
@@ -287,7 +289,7 @@ class NetemConsole(Cmd):
                             and GREEN+"up"+DEFAULT or ORANGE+"down"+DEFAULT
                         self.poutput("\t\t{}: {}\n".format(
                             if_obj["name"], i_state))
-            
+
             for n in status["nodes"]:
                 format_node(n)
 
