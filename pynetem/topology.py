@@ -195,7 +195,10 @@ class TopologieManager(object):
 
     def stopall(self):
         for n in self.nodes:
-            self.__stop_node(n)
+            try:
+                self.__stop_node(n)
+            except NetemError as ex:
+                logging.error(str(ex))
         for s in self.switches:
             s.stop()
         for b in self.bridges:

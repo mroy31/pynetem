@@ -18,6 +18,7 @@
 import subprocess
 import os
 import shlex
+import logging
 from pynetem import NetemError
 from pynetem.ui.config import NetemConfig
 from pynetem.wrapper import _BaseInstance
@@ -215,8 +216,14 @@ class QEMUInstance(_BaseInstance):
             self.shell_process.terminate()
             self.shell_process = None
         for k in self.capture_processes:
-            self.capture_processes[k].terminate()
-            self.capture_processes = {}
+            if self.capture_processes[k].poll() is None:
+                try:
+                    self.capture_processes[k].terminate()
+                except Exception as ex:
+                    logging.error(
+                        "Unable to stop capture process"
+                        "for node %s on if %s:  %s" % (self.name, k, ex))
+        self.capture_processes = {}
         super(QEMUInstance, self).stop()
         for if_c in self.interfaces:
             if if_c["tap"] is not None:
