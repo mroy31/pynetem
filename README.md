@@ -77,10 +77,11 @@ PyNetem has a special mode to emulate junos router. In the topology file, you
 need to use junos.<version> as node type. In this case, the configuration is
 saved as plain text (instead of complete img of the disk), thanks to a
 telnet connection.
-However, to use this kind of node, you need to put in the folder defined by 
-the config parameter *image_dir*, a junos image working with qemu with 
-a specific configuration: 
-  * A super user named *juniper* with the password *Juniper*
+However, to use this kind of node, you need to put in the folder defined by
+the config parameter *image_dir*, a junos image working with qemu with
+a specific configuration:
+  * Password set to *Juniper* for user root
+  * Hostname set to *generic*
 
 Documentation
 -------------

@@ -96,7 +96,9 @@ Junos node
 Junos node is a specific qemu node used to launch Juniper JunOS olive image.
 To use it, you have to get a JunOS olive image located in the *image_dir*
 folder and naming ``junos-<version>.img``, with a specific configuration:
-  * A super user named ``juniper`` with the password ``Juniper``
+
+  * Password set to ``Juniper`` for user root
+  * Hostname set to ``generic``
 
 Then you can declare a JunOS if you
 specify the type ``junos.<version>``. The other argument is identical to
