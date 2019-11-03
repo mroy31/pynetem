@@ -96,11 +96,11 @@ class _BaseInstance(_BaseWrapper):
             if r_code is not None:
                 out, err = self.process.communicate()
                 msg = "node %s dies unexpectedly" % self.name
-                logging.error("%s \n %s" (msg, err.decode("utf-8")))
+                logging.error("%s \n %s", msg, err.decode("utf-8"))
                 self.is_started = False
                 # send signal to connected clients
                 sig = ALL_SIGNALS["node"]
-                sig.send(self, name="watch", args={
+                sig.send(self, name="watch", attrs={
                     "state": "error",
                     "msg": msg
                 })
