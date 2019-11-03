@@ -38,8 +38,8 @@ class JunosTelnetClient(object):
         # wait some seconds before initiate the connection
         time.sleep(3.0)
         try:
-            tn = telnetlib.Telnet("localhost", port=self.port)
-        except ConnectionRefusedError:
+            tn = telnetlib.Telnet("localhost", port=self.port, timeout=5)
+        except (ConnectionRefusedError, TimeoutError):
             logging.error("Unable to connect to %s router" % self.name)
             return
 
@@ -73,7 +73,7 @@ class JunosTelnetClient(object):
 
     def save(self, conf_file):
         try:
-            tn = telnetlib.Telnet("localhost", port=self.port)
+            tn = telnetlib.Telnet("localhost", port=self.port, timeout=5)
         except (ConnectionRefusedError, TimeoutError):
             raise NetemError("Unable to connect to %s router" % self.name)
 
@@ -181,3 +181,7 @@ class JunosInstance(QEMUInstance):
             self.shell_process.terminate()
         j_client = JunosTelnetClient(self.name, self.telnet_port)
         j_client.save(self.__fmt_conf_path(conf_path))
+
+    def clean(self):
+        if os.path.isfile(self.img):
+            os.unlink(self.img)
