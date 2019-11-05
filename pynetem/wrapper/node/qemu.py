@@ -148,7 +148,7 @@ class QEMUInstance(_BaseInstance):
                 if process.poll() is None:
                     raise NetemError("Capture process is already running")
 
-            w_options = "-o 'gui.window_title:{1}.{2}'".format(
+            w_options = "-o 'gui.window_title:{}.{}'".format(
                 self.name, if_number)
             if_obj = self.interfaces[if_number]
             if if_obj["peer"] == "switch" \
