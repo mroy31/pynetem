@@ -148,6 +148,8 @@ class QEMUInstance(_BaseInstance):
                 if process.poll() is None:
                     raise NetemError("Capture process is already running")
 
+            w_options = "-o 'gui.window_title:{1}.{2}'".format(
+                self.name, if_number)
             if_obj = self.interfaces[if_number]
             if if_obj["peer"] == "switch" \
                     and if_obj["peer_instance"] is not None:
@@ -159,18 +161,16 @@ class QEMUInstance(_BaseInstance):
                     if if_name is None:
                         raise NetemError("Unable to launch capture, no tap"
                                          "if exists on this switch")
-                cmd_ln = shlex.split("wireshark -k -i %s" % if_name)
+                cmd_ln = shlex.split(
+                    "wireshark -k %s -i %s" % (w_options, if_name))
                 self.capture_processes[if_number] = subprocess.Popen(cmd_ln)
 
-            elif if_obj["peer"] == "bridge":
+            elif if_obj["peer"] in ("bridge", "node"):
                 if_name = if_obj["tap"]
-                cmd_ln = shlex.split("wireshark -k -i %s" % if_name)
+                cmd_ln = shlex.split(
+                    "wireshark -k %s -i %s" % (w_options, if_name))
                 self.capture_processes[if_number] = subprocess.Popen(cmd_ln)
 
-            elif if_obj["peer"] == "node":
-                if_name = if_obj["tap"]
-                cmd_ln = shlex.split("wireshark -k -i %s" % if_name)
-                self.capture_processes[if_number] = subprocess.Popen(cmd_ln)
             else:
                 raise NetemError("%s: interface %d is not "
                                  "plugged" % (self.name, if_number))
