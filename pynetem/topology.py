@@ -80,10 +80,7 @@ class TopologieManager(object):
     def __load_bridges(self, br_section):
         for br_name in br_section:
             br = BridgeInstance(self.prj_id, br_name, br_section[br_name])
-            self.__signaling_cmd(
-                br.start,
-                {"name": br.get_name(), "type": "bridge", "action": "start"},
-            )
+            br.start()
             self.bridges.append(br)
 
     def __load_nodes(self, network):
