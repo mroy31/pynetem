@@ -83,6 +83,11 @@ class NetemProject(object):
         return os.path.join(self.tmp_folder, TOPOLOGY_FILE)
 
     def is_topology_modified(self):
+        # sometime project is corrupted
+        # in this case, do not test topology
+        if not zipfile.is_zipfile(self.prj_path):
+            return False
+
         tmp_file = os.path.join(self.tmp_folder, TOPOLOGY_FILE)
         with open(tmp_file) as tmp_hd:
             tmp_content = tmp_hd.read().encode("utf-8")
