@@ -49,9 +49,11 @@ These 3 information are declared like that :
 
 Docker node
 ```````````
-A docker node is a docker container launch by pynetem based on 3 images :
+A docker node is a docker container launch by pynetem based on 4 images :
   - rca/host identified by the type *docker.host*,
     which emulates a terminal node
+  - rca/server identified by the type *docker.server*,
+    which emulates a server node (with http, tftp and dhcp server for now)
   - rca/frr identified by the type *docker.frr*, which emulates router
     based on the software `FRR <https://frrouting.org/>`_
   - rca/quagga identified by the type *docker.quagga*, which emulates router
