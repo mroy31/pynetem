@@ -25,26 +25,26 @@ import argparse
 import time
 from pynetem.utils import daemonize
 
-parser = argparse.ArgumentParser(description='Network emulator daemon')
-parser.add_argument(
-    "-c", "--conf-file", type=str, dest="conffile", metavar="FILE",
-    default=None, help="Specify a custom conf file"
-)
-parser.add_argument(
-    "-d", "--debug", action="store_true", dest="debug", default=False,
-    help="Log more debug informations"
-)
-parser.add_argument(
-    "-n", "--nodaemon", action="store_false", dest="daemon", default=True,
-    help="No daemonize pynetem daemon"
-)
-parser.add_argument(
-    "-l", "--log-file", type=str, dest="logfile",
-    default=None, help="Clean the netem env"
-)
-args = parser.parse_args()
-
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Network emulator daemon')
+    parser.add_argument(
+        "-c", "--conf-file", type=str, dest="conffile", metavar="FILE",
+        default=None, help="Specify a custom conf file"
+    )
+    parser.add_argument(
+        "-d", "--debug", action="store_true", dest="debug", default=False,
+        help="Log more debug informations"
+    )
+    parser.add_argument(
+        "-n", "--nodaemon", action="store_false", dest="daemon", default=True,
+        help="No daemonize pynetem daemon"
+    )
+    parser.add_argument(
+        "-l", "--log-file", type=str, dest="logfile",
+        default=None, help="Clean the netem env"
+    )
+    args = parser.parse_args()
+
     # init log
     if args.daemon and args.logfile is None:
         args.logfile = "pynetem.log"
