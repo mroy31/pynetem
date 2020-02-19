@@ -236,6 +236,57 @@ class HostNode(DockerNode):
         self._docker_cp(source, self.__fmt_conf_path(conf_path))
 
 
+class ServerNode(HostNode):
+    IMG = "rca/server"
+    SERVERS = {
+        "dhcp": {
+            "configs": [{
+                "target": "/etc/dhcp/dhcpd.conf",
+                "name": "dhcpd.conf"
+            }, {
+                "target": "/etc/default/isc-dhcp-server",
+                "name": "isc-dhcp-server.default"
+            }],
+            "service": "isc-dhcp-server"
+        },
+        "tftp": {
+            "configs": [{
+                "target": "/etc/default/tftpd-hpa",
+                "name": "tftpd-hpa.default",
+            }],
+            "service": "tftpd-hpa"
+        },
+    }
+
+    def __fmt_conf_path(self, config_name, conf_path=None):
+        return os.path.join(
+            conf_path or self.conf_dir,
+            "%s.%s" % (self.name, config_name)
+        )
+
+    def start(self):
+        super(ServerNode, self).start()
+        # set server configs if available
+        for server in self.SERVERS:
+            s_attrs = self.SERVERS[server]
+            for config in s_attrs["configs"]:
+                conf_path = self.__fmt_conf_path(config["name"])
+                if os.path.isfile(conf_path):
+                    dest = "%s:%s" % (self.container_name, config["target"])
+                    self._docker_cp(conf_path, dest)
+
+    @require_running
+    def save(self, conf_path=None):
+        super(ServerNode, self).save(conf_path)
+        # save server configs
+        for server in self.SERVERS:
+            s_attrs = self.SERVERS[server]
+            for config in s_attrs["configs"]:
+                fconf_path = self.__fmt_conf_path(config["name"], conf_path)
+                source = "%s:%s" % (self.container_name, config["target"])
+                self._docker_cp(source, fconf_path)
+
+
 class QuaggaRouter(DockerNode):
     IMG = "rca/quagga"
     SHELL = "/usr/bin/vtysh"
@@ -294,6 +345,7 @@ class FrrRouter(DockerNode):
 
 DOCKER_NODES = {
     "host": HostNode,
+    "server": ServerNode,
     "quagga": QuaggaRouter,
     "frr": FrrRouter
 }
