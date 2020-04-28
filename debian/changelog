@@ -1,3 +1,15 @@
+pynetem (0.12.0-1~bpo9+1) stretch-backports; urgency=medium
+
+  * Rebuild for stretch-backports.
+
+ -- Mickaël Royer <mickael.royer@gmail.com>  Fri, 21 Feb 2020 08:25:58 +0100
+
+pynetem (0.12.0-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Mickaël Royer <mickael.royer@gmail.com>  Fri, 21 Feb 2020 08:20:35 +0100
+
 pynetem (0.11.3-1) unstable; urgency=medium
 
   * New upstream release
