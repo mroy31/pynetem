@@ -19,8 +19,23 @@
 import sys
 import json
 import os.path
+import subprocess
+import ipaddress
 from optparse import OptionParser
 from pyroute2 import IPDB
+
+
+def is_ipv6_autoconf(if_name):
+    proc_prefix = "/proc/sys/net/ipv6/conf/"
+    ret = subprocess.run(["cat", proc_prefix+"all/autoconf"], capture_output=True)
+    if ret.output == "1":
+        return True
+
+    ret = subprocess.run(["cat", proc_prefix+if_name+"/autoconf"], capture_output=True)
+    if ret.output == "1":
+        return True
+
+    return False
 
 
 def load_net_config(f_path):
@@ -42,7 +57,15 @@ def load_net_config(f_path):
 
 
 def save_net_config(f_path, all_if):
-    def format_addr(addr_conf):
+    def is_recordable(addr, if_name):
+        ip_address = ipaddress.ip_address(addr)
+        if ip_address.version == 6:
+            if addr.startswith("fe80"):
+                return False
+
+        return True
+
+    def fmt_addr(addr_conf):
         return "%s/%s" % addr_conf
 
     net_config = {
@@ -57,16 +80,24 @@ def save_net_config(f_path, all_if):
             if not all_if and not if_name.startswith("eth"):
                 continue
             addresses = ipdb.interfaces[if_name]["ipaddr"]
-            net_config["interfaces"][if_name] = [format_addr(a) for a in addresses]
+
+            net_config["interfaces"][if_name] = [
+                fmt_addr(a) for a in addresses if is_recordable(a[0], if_name)
+            ]
         # record route
         net_config["routes"] = [{
             "dst": route["dst"],
             "gateway": route["gateway"],
             "family": route["family"]
-        } for route in ipdb.routes]
-    
+        } for route in ipdb.routes if route["gateway"] is not None and \
+            not route["gateway"].startswith("fe80")
+        ]
+
+    # remove old file if exist
+    os.path.isfile(f_path) and os.remove(f_path)
+
     with open(f_path, "w") as f_hd:
-        f_hd.write(json.dumps(net_config))
+        f_hd.write(json.dumps(net_config, sort_keys=True, indent=4))
 
 
 if __name__ == "__main__":
