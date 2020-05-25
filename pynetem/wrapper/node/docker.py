@@ -287,34 +287,6 @@ class ServerNode(HostNode):
                 self._docker_cp(source, fconf_path)
 
 
-class QuaggaRouter(DockerNode):
-    IMG = "rca/quagga"
-    SHELL = "/usr/bin/vtysh"
-    TMP_CONF = "/tmp/quagga.conf"
-
-    def __fmt_conf_path(self, conf_path):
-        return os.path.join(
-            conf_path or self.conf_dir,
-            "%s.quagga.conf" % self.name
-        )
-
-    def start(self):
-        super(QuaggaRouter, self).start()
-        # load quagga config if available and start quagga
-        conf_path = self.__fmt_conf_path(None)
-        if os.path.isfile(conf_path):
-            self._docker_exec("supervisorctl start all:")
-            dest = "%s:%s" % (self.container_name, self.TMP_CONF)
-            self._docker_cp(conf_path, dest)
-            self._docker_exec("load-quagga.sh %s" % self.TMP_CONF)
-
-    @require_running
-    def save(self, conf_path=None):
-        self._docker_exec("save-quagga.sh %s" % self.TMP_CONF)
-        source = "%s:%s" % (self.container_name, self.TMP_CONF)
-        self._docker_cp(source, self.__fmt_conf_path(conf_path))
-
-
 class FrrRouter(DockerNode):
     IMG = "rca/frr"
     SHELL = "/usr/bin/vtysh"
@@ -346,6 +318,6 @@ class FrrRouter(DockerNode):
 DOCKER_NODES = {
     "host": HostNode,
     "server": ServerNode,
-    "quagga": QuaggaRouter,
-    "frr": FrrRouter
+    "frr": FrrRouter,
+    "router": FrrRouter
 }
