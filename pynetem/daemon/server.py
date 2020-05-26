@@ -50,7 +50,7 @@ CMD_LIST = {
     "ovs_port_vlan": "^ovs_port_vlan (\S+) ([0-9]+)$",
     "ovs_add_mirror_port": "^ovs_add_mirror_port (\S+) (\S+)$",
     "ovs_del_port": "^ovs_del_port (\S+) (\S+)$",
-    "docker_create": "^docker_create (\S+) (\S+) (\S+)$",
+    "docker_create": "^docker_create (\S+) (\S+) (\S+) (yes|no)$",
     "docker_start": "^docker_start (\S+)$",
     "docker_stop": "^docker_stop (\S+)$",
     "docker_rm": "^docker_rm (\S+)$",
@@ -123,10 +123,13 @@ class NetemDaemonHandler(BaseRequestHandler):
         return __version__
 
     @staticmethod
-    def docker_create(name, container_name, image):
+    def docker_create(name, container_name, image, ipv6):
         logging.debug("Create docker container %s" % container_name)
-        run_command("docker create --privileged --cap-add=ALL --net=none "
-                    "-h %s --name %s %s" % (name, container_name, image))
+        cmd = "docker create --privileged --cap-add=ALL --net=none"
+        if ipv6 == "yes":
+            cmd += " --sysctl net.ipv6.conf.all.disable_ipv6=0"
+        cmd += " -h %s --name %s %s"
+        run_command(cmd % (name, container_name, image))
 
     @staticmethod
     def docker_attach_interface(container_name, if_name, target_name):

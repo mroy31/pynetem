@@ -41,7 +41,7 @@ class DockerNode(_BaseWrapper):
     BASH = "/bin/bash"
     IMG = None
 
-    def __init__(self, p2p_sw, prj_id, conf_dir, name, image_name):
+    def __init__(self, p2p_sw, prj_id, conf_dir, name, n_config):
         super(DockerNode, self).__init__(prj_id)
 
         self.name = name
@@ -52,6 +52,9 @@ class DockerNode(_BaseWrapper):
         self.__interfaces = []
         self.__lk_factory = NetemLinkFactory.instance()
         self.container_name = "%s.%s" % (prj_id, self.name)
+        self.ipv6_support = False
+        if "ipv6" in n_config:
+            self.ipv6_support = n_config.as_bool("ipv6")
         # create container
         self.__create()
 
@@ -69,7 +72,11 @@ class DockerNode(_BaseWrapper):
 
     def __create(self):
         logging.debug("Create docker container %s" % self.container_name)
-        self.daemon.docker_create(self.name, self.container_name, self.IMG)
+        self.daemon.docker_create(
+            self.name,
+            self.container_name,
+            self.IMG,
+            self.ipv6_support and "yes" or "no")
 
     def __add_if(self, peer_type, peer_instance, peer_if=None):
         if_id = len(self.__interfaces)
