@@ -97,8 +97,8 @@ class NetemProject(object):
         return tmp_content != rec_content
 
     def save(self):
+        self.topology.save()
         with zipfile.ZipFile(self.prj_path, mode="w") as prj_zip:
-            self.topology.save()
             for root, dirs, files in os.walk(self.tmp_folder):
                 for f in files:
                     f_path = os.path.join(root, f)
