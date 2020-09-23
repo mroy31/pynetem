@@ -4,8 +4,8 @@ LABEL maintainer="mickael.royer@enac.fr"
 RUN apt-get update -y && \
     apt-get install -y python3 python3-pyroute2 less nano vim tcpdump \
 	    iputils-ping iputils-arping iputils-tracepath net-tools file \
-		telnet man traceroute hping3 iptables links htop \
-		iperf3 build-essential curl tftp-hpa isc-dhcp-client \
+	    telnet man traceroute hping3 iptables links htop \
+	    snmp iperf3 build-essential curl tftp-hpa isc-dhcp-client ethtool \
         && rm -rf /var/lib/apt/lists/*
 
 ## build and install multicast programs
