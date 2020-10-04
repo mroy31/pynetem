@@ -14,3 +14,6 @@ override_dh_install:
 	cp -a $(CURDIR)/pynetem/ui/defaults.conf\
 		$(CURDIR)/debian/pynetem/etc/pynetem.conf
 	dh_install
+
+override_dh_auto_test:
+	:
