@@ -125,6 +125,7 @@ class NetemProtocol(asyncio.Protocol):
 
     @cmd(cmd_args=["^\S+$"])
     def do_config(self, conf_path):
+        conf_path = os.path.abspath(conf_path)
         if not os.path.isdir(conf_path):
             raise NetemError("%s is not a valid path" % conf_path)
         self.project.save_config(conf_path)

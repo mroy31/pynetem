@@ -213,6 +213,7 @@ class NetemConsole(Cmd):
     @netmem_cmd(reg_exp="^(\S+)$", catch_error=False)
     def do_config(self, conf_path):
         """Save configurations in a specific folder"""
+        conf_path = os.path.abspath(conf_path)
         if not os.path.isdir(conf_path):
             self.perror("%s is not a valid path")
             return
