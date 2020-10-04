@@ -297,7 +297,7 @@ class ServerNode(HostNode):
 class FrrRouter(DockerNode):
     IMG = "rca/frr"
     SHELL = "/usr/bin/vtysh"
-    TMP_CONF = "/tmp/frr.conf"
+    CONF = "/etc/frr/frr.conf"
 
     def __fmt_conf_path(self, conf_path):
         return os.path.join(
@@ -310,15 +310,16 @@ class FrrRouter(DockerNode):
         # load frr config if available and start frr
         conf_path = self.__fmt_conf_path(None)
         if os.path.isfile(conf_path):
-            self._docker_exec("supervisorctl start all:")
-            dest = "%s:%s" % (self.container_name, self.TMP_CONF)
+            dest = "{}:{}".format(self.container_name, self.CONF)
             self._docker_cp(conf_path, dest)
-            self._docker_exec("load-frr.sh %s" % self.TMP_CONF)
+            self._docker_exec("chown frr:frr {}".format(self.CONF))
+        self._docker_exec("/etc/init.d/frr start")
 
     @require_running
     def save(self, conf_path=None):
-        self._docker_exec("save-frr.sh %s" % self.TMP_CONF)
-        source = "%s:%s" % (self.container_name, self.TMP_CONF)
+        self._docker_exec("vtysh -w")
+        self._docker_exec("chmod +r {}".format(self.CONF))
+        source = "{}:{}".format(self.container_name, self.CONF)
         self._docker_cp(source, self.__fmt_conf_path(conf_path))
 
 
