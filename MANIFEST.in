@@ -9,4 +9,4 @@ recursive-include docs/source *
 include scripts/*.py
 include .vscode/*
 recursive-include docker *
-recursive-include tests *
+recursive-include tests *.py
