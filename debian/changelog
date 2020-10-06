@@ -1,8 +1,8 @@
-pynetem (0.12.0-1~bpo9+1) stretch-backports; urgency=medium
+pynetem (0.13.1-1) unstable; urgency=medium
 
-  * Rebuild for stretch-backports.
+  * New upstream release
 
- -- Mickaël Royer <mickael.royer@gmail.com>  Fri, 21 Feb 2020 08:25:58 +0100
+ -- Mickaël Royer <mickael.royer@gmail.com>  Sun, 04 Oct 2020 11:46:02 +0200
 
 pynetem (0.12.0-1) unstable; urgency=medium
 
@@ -36,13 +36,13 @@ pynetem (0.11.0-1) unstable; urgency=medium
 
 pynetem (0.10.0-1) unstable; urgency=medium
 
-  * New upstream release 
+  * New upstream release
 
  -- Mickaël Royer <mickael.royer@gmail.com>  Sun, 18 Aug 2019 12:11:13 +0200
 
 pynetem (0.9.2-1) unstable; urgency=medium
 
-  * New upstream release 
+  * New upstream release
 
  -- Mickaël Royer <mickael.royer@gmail.com>  Tue, 14 May 2019 17:44:06 +0200
 
@@ -54,7 +54,7 @@ pynetem (0.9.1-1) unstable; urgency=medium
 
 pynetem (0.9.0-1) unstable; urgency=medium
 
-  * New upstream release 
+  * New upstream release
 
  -- Mickael Royer <mickael.royer@gmail.com>  Sat, 16 Feb 2019 12:59:32 +0100
 
@@ -78,31 +78,31 @@ pynetem (0.8.2-1) unstable; urgency=medium
 
 pynetem (0.8.1-1) unstable; urgency=medium
 
-  * New upstream release 
+  * New upstream release
 
  -- Mickaël Royer <mickael.royer@gmail.com>  Fri, 02 Nov 2018 19:08:40 +0100
 
 pynetem (0.8.0-1) unstable; urgency=medium
 
-  * New upstream release 
+  * New upstream release
 
  -- Mickaël Royer <mickael.royer@gmail.com>  Sun, 28 Oct 2018 15:37:19 +0100
 
 pynetem (0.7.2-1) unstable; urgency=medium
 
-  * New upstream release 
+  * New upstream release
 
  -- Mickaël Royer <mickael.royer@gmail.com>  Tue, 16 Oct 2018 22:52:05 +0200
 
 pynetem (0.7.1-1) unstable; urgency=medium
 
-  * New upstream release 
+  * New upstream release
 
  -- Mickaël Royer <mickael.royer@gmail.com>  Sun, 23 Sep 2018 19:16:16 +0200
 
 pynetem (0.6.1-1) unstable; urgency=medium
 
-  * New upstream release 
+  * New upstream release
 
  -- Mickaël Royer <mickael.royer@gmail.com>  Sun, 29 Apr 2018 23:01:02 +0200
 
@@ -114,19 +114,19 @@ pynetem (0.4.2-1) unstable; urgency=medium
 
 pynetem (0.4.1-1) unstable; urgency=medium
 
-  * New upstream release 
+  * New upstream release
 
  -- Mickaël Royer <mickael.royer@gmail.com>  Thu, 19 Apr 2018 23:04:55 +0200
 
 pynetem (0.4.0-1) unstable; urgency=medium
 
-  * New upstream release 
+  * New upstream release
 
  -- Mickaël Royer <mickael.royer@gmail.com>  Mon, 04 Dec 2017 10:54:09 +0100
 
 pynetem (0.3.0-1) unstable; urgency=medium
 
-  * New upstream release 
+  * New upstream release
 
  -- Mickaël Royer <mickael.royer@gmail.com>  Tue, 07 Nov 2017 13:52:50 +0100
 
@@ -138,7 +138,7 @@ pynetem (0.2.1-1) unstable; urgency=medium
 
 pynetem (0.2.0-1) unstable; urgency=medium
 
-  * New upstream version 
+  * New upstream version
 
  -- Mickaël Royer <mickael.royerenac.fr>  Fri, 27 Oct 2017 09:20:54 +0200
 
