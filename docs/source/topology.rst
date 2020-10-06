@@ -43,23 +43,43 @@ These 3 information are declared like that :
 
 3 main types of node are available in pynetem :
 
-  1. docker node
-  2. qemu node
+  1. docker node declared with the value ``docker.<type>``
+  2. qemu node declared with the value ``qemu.<type>``
   3. junos node
+
+More details are given below for each type of node.
 
 Docker node
 ```````````
-A docker node is a docker container launch by pynetem based on 4 images :
-  - rca/host identified by the type *docker.host*,
+A docker node is a docker container launch by pynetem based on 3 images :
+  - mroy31/pynetem-host identified by the type *docker.host*,
     which emulates a terminal node
-  - rca/server identified by the type *docker.server*,
+  - mroy31/pynetem-server identified by the type *docker.server*,
     which emulates a server node (with http, tftp and dhcp server for now)
-  - rca/frr identified by the type *docker.frr*, which emulates router
+  - mroy31/pynetem-frr identified by the type *docker.frr*, which emulates router
     based on the software `FRR <https://frrouting.org/>`_
-  - rca/quagga identified by the type *docker.quagga*, which emulates router
-    based on the software `Quagga <https://www.quagga.net/>`_
+All these images are available on docker hub.
 
 When possible, this is the preferred way to emulate node/router.
+
+Options
+"""""""
+
+Several options are available when you declare a docker node:
+  - ``ipv6`` (boolean, optional): set to yes if you want to enable ipv6 support on this node (no by default)
+  - ``image`` (string, optional): use to override the docker image used to launch this node
+
+Exemple
+"""""""
+
+.. code-block:: ini
+
+    [nodes]
+    [[R1]]
+    type = docker.frr
+    ipv6 = yes
+    if_numbers = 1
+    if0 = remote_peer
 
 Qemu node
 ```````````

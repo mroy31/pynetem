@@ -27,10 +27,20 @@ Below, you will find available arguments to launch pynetem-daemon
     -n, --nodaemon        No daemonize pynetem daemon
     -l LOGFILE, --log-file LOGFILE
 
+Pull docker images
+------------------
+
+If you plan to use docker nodes, you need to pull images built for pynetem
+and available on docker hub. For that, you can use the following command:
+
+.. code-block:: bash
+
+    $ sudo pynetmem-emulator --pull
+
 Console
 -------
 
-Then you can use pynetem-emulator to create/launch project or to connect to 
+Then you can use pynetem-emulator to create/launch project or to connect to
 an existing running project (see client mode below).
 For example to create a project:
 
@@ -66,6 +76,7 @@ Below, you will find available arguments to launch pynetem-emulator
     --new                 Set to create a new project
     --no-start            Do not start the project at launch
     --clean               Clean the netem env
+    --pull                Pull docker images
     --client-only         Connect to an launched pynetem-server
     -p P_NUMBER, --port P_NUMBER
                         Port number
@@ -75,7 +86,7 @@ Client mode
 
 Since version 0.11, the core of pynetem has been splitted from the console.
 Exactly, when you launch a project with pynetem, a TCP server has been launch
-in background (on port 10100 by default, this value can be changed with 
+in background (on port 10100 by default, this value can be changed with
 the -p parameter). Then each command enter in the console has been sent to the
 server using a TCP connection.
 Like that, if you accidentally close the terminal with your console, you can
@@ -84,4 +95,3 @@ reconnect to the opening server with the following command:
 .. code-block:: bash
 
     $ pynetem-emulator --client-only
-    
