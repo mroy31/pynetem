@@ -17,6 +17,12 @@
 
 __version__ = "0.13.1"
 NETEM_ID = "ntm"
+DOCKER_IMAGES = {
+    "host": "mroy31/pynetem-host:{}".format(__version__),
+    "server": "mroy31/pynetem-server:{}".format(__version__),
+    "frr": "mroy31/pynetem-frr:{}".format(__version__),
+    "router": "mroy31/pynetem-frr:{}".format(__version__)
+}
 
 
 class NetemError(Exception):

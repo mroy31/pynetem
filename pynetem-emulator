@@ -62,6 +62,9 @@ parser.add_argument(
     "--clean", action="store_true", dest="clean",
     default=False, help="Clean the netem env")
 parser.add_argument(
+    "--pull", action="store_true", dest="pull",
+    default=False, help="Pull docker images")
+parser.add_argument(
     "--client-only", action="store_true", dest="client_mode",
     default=False, help="Connect to an launched pynetem-server")
 parser.add_argument(
@@ -80,7 +83,7 @@ if __name__ == "__main__":
     from pynetem.console.cmd import NetemConsole
     from pynetem.daemon.client import NetemDaemonClient
     from pynetem import NetemError
-    from pynetem import __version__, NETEM_ID
+    from pynetem import __version__, NETEM_ID, DOCKER_IMAGES
 
     # if asked, show version and quit
     if args.version:
@@ -111,6 +114,17 @@ if __name__ == "__main__":
     if args.clean:
         logging.info("Clean old pynetem project, please wait...")
         daemon.clean(NETEM_ID)
+        sys.exit()
+
+    # pull docker image commands
+    if args.pull:
+        logging.info("Pull docker images")
+        for n_type in DOCKER_IMAGES:
+            if n_type == "router":
+                continue
+            img = DOCKER_IMAGES[n_type]
+            logging.info("Pull image {}, please wait...".format(img))
+            daemon.docker_pull(img)
         sys.exit()
 
     if not args.client_mode:

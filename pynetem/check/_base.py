@@ -20,7 +20,8 @@ import re
 
 class _BaseCheck(object):
 
-    def __init__(self):
+    def __init__(self, daemon):
+        self.daemon = daemon
         self.__errors = []
 
     def get_name(self):
@@ -106,5 +107,11 @@ class _BaseCheck(object):
                     try:
                         val = int(val)
                     except (ValueError, TypeError):
-                        self.add_error("%s: arg %s is not an "
-                                       "integer" % (name, key))
+                        self.add_error(
+                            "%s: arg %s is not an integer" % (name, key)
+                        )
+                elif a_type == "bool":
+                    if val not in ("yes", "no"):
+                        self.add_error(
+                            "%s: arg %s is not yes|no" % (name, key)
+                        )

@@ -23,6 +23,7 @@ import subprocess
 import logging
 import shlex
 from pyroute2 import IPDB
+import docker
 from pynetem import __version__
 from pynetem import NetemError
 from pynetem.utils import get_exc_desc
@@ -60,6 +61,8 @@ CMD_LIST = {
     "docker_exec": r"^docker_exec (\S+) (.+)$",
     "docker_shell": r"^docker_shell (\S+) (\S+) (\S+) (\S+) (.+)$",
     "docker_capture": r"^docker_capture (\S+) (\S+) (\S+)$",
+    "docker_image_present": r"^docker_image_present (\S+)$",
+    "docker_pull": r"^docker_pull (\S+)$",
     "clean": r"^clean (\S+)$",
 }
 
@@ -121,6 +124,25 @@ class NetemDaemonHandler(BaseRequestHandler):
     @staticmethod
     def version():
         return __version__
+
+    @staticmethod
+    def docker_pull(image_name):
+        client = docker.from_env()
+        try:
+            client.images.pull(image_name)
+        except docker.errors.APIError as ex:
+            raise NetemError(
+                "Unable to pull {} image: {}".format(image_name, ex)
+            )
+
+    @staticmethod
+    def docker_image_present(image_name):
+        client = docker.from_env()
+        images = client.images.list()
+        for img in images:
+            if image_name in img.tags:
+                return "yes"
+        return "no"
 
     @staticmethod
     def docker_create(name, container_name, image, ipv6):

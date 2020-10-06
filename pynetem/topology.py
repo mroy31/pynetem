@@ -28,11 +28,12 @@ from pynetem.wrapper.p2p import NetemP2PSwitch
 from pynetem.wrapper.bridge import BridgeInstance
 
 
-class TopologieManager(object):
+class TopologyManager(object):
 
-    def __init__(self, prj_id, netfile):
+    def __init__(self, prj_id, netfile, daemon):
         self.prj_id = prj_id
         self.netfile = netfile
+        self.daemon = daemon
         self.p2p_switch = NetemP2PSwitch(prj_id)
         self.signal = ALL_SIGNALS["node"]
 
@@ -61,7 +62,7 @@ class TopologieManager(object):
                 os.mkdir(path)
 
         # check network files before start it
-        errors = check_network(network)
+        errors = check_network(network, self.daemon)
         if len(errors) > 0:
             msg = ""
             for e_mod in errors:

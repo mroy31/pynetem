@@ -18,7 +18,7 @@
 import os
 import logging
 import shutil
-from pynetem import NetemError
+from pynetem import NetemError, DOCKER_IMAGES
 from pynetem.ui.config import NetemConfig
 from pynetem.wrapper import _BaseWrapper
 from pynetem.wrapper.link import NetemLinkFactory
@@ -51,6 +51,7 @@ class DockerNode(_BaseWrapper):
         self.__pid = None
         self.__interfaces = []
         self.__lk_factory = NetemLinkFactory.instance()
+        self.docker_image = "image" in n_config and n_config["image"] or self.IMG
         self.container_name = "%s.%s" % (prj_id, self.name)
         self.ipv6_support = False
         if "ipv6" in n_config:
@@ -75,7 +76,7 @@ class DockerNode(_BaseWrapper):
         self.daemon.docker_create(
             self.name,
             self.container_name,
-            self.IMG,
+            self.docker_image,
             self.ipv6_support and "yes" or "no")
 
     def __add_if(self, peer_type, peer_instance, peer_if=None):
@@ -218,7 +219,7 @@ class DockerNode(_BaseWrapper):
 
 
 class HostNode(DockerNode):
-    IMG = "rca/host"
+    IMG = DOCKER_IMAGES["host"]
     CONFIG_FILE = "/tmp/custom.net.conf"
 
     def __fmt_conf_path(self, conf_path):
@@ -244,7 +245,7 @@ class HostNode(DockerNode):
 
 
 class ServerNode(HostNode):
-    IMG = "rca/server"
+    IMG = DOCKER_IMAGES["server"]
     SERVERS = {
         "dhcp": {
             "configs": [{
@@ -295,7 +296,7 @@ class ServerNode(HostNode):
 
 
 class FrrRouter(DockerNode):
-    IMG = "rca/frr"
+    IMG = DOCKER_IMAGES["frr"]
     SHELL = "/usr/bin/vtysh"
     CONF = "/etc/frr/frr.conf"
 

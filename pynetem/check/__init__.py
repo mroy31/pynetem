@@ -22,7 +22,7 @@ from pynetem.check.junos import JunosNodeCheck
 from pynetem.check.bridge import BridgeCheck
 
 
-def check_network(network):
+def check_network(network, daemon):
     errors = {}
 
     for check_module in (
@@ -31,7 +31,7 @@ def check_network(network):
             QemuNodeCheck,
             DockerNodeCheck,
             JunosNodeCheck):
-        mod = check_module()
+        mod = check_module(daemon)
         mod.check(network)
         if mod.has_errors():
             errors[mod.get_name()] = {

@@ -23,7 +23,7 @@ import zipfile
 import tempfile
 import shutil
 from pynetem import NetemError
-from pynetem.topology import TopologieManager
+from pynetem.topology import TopologyManager
 
 TOPOLOGY_FILE = "network.ini"
 
@@ -59,7 +59,7 @@ class NetemProject(object):
         if not os.path.isfile(topology_file):
             raise NetemError("Project %s does not contain "
                              "a topology file" % prj_path)
-        self.topology = TopologieManager(self.__id, topology_file)
+        self.topology = TopologyManager(self.__id, topology_file, daemon)
 
     def get_id(self):
         return self.__id
