@@ -10,6 +10,7 @@ To run pynetem, you have to install the following programs/modules
  * python3-cmd2 >= 0.7.0
  * python3-configobj
  * python3-pyroute2
+ * python3-docker
  * docker-ce
  * openvswitch-switch
  * uml-utilities

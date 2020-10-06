@@ -13,6 +13,7 @@ Requirements
  * python3-cmd2 >= 0.7.0
  * python3-configobj
  * python3-pyroute2
+ * python3-docker
  * docker-ce
  * openvswitch-switch
  * uml-utilities
@@ -44,7 +45,7 @@ right. You can use the following command for example:
 
     $sudo pynetmem-daemon -n
 
-Then you can use pynetem-emulator to create/launch project. For example to create a project:
+Finally, you can use pynetem-emulator to create/launch project. For example to create a project:
 
     $pynetmem-emulator --new ./myproject.pnet
     $[net-emulator] edit # if you want to edit the topology
@@ -58,18 +59,14 @@ An example of topology is available in the file example/topology.net
 
 Docker Node
 -----------
-To use docker node, you need to build the images used by pynetem.
- * rca/quagga -> for emulate router based on quagga software
- * rca/frr -> for emulate router based on frr software
- * rca/host -> for emulate host
+To use docker node, you need to pull from docker hub the images used by pynetem.
+ * mroy31/pynetem-frr -> for emulate router based on frr software
+ * mroy31/pynetem-host -> for emulate host
+ * mroy31/pynetem-server -> for emulate server
 
-To do that, you need to use the command docker build, for example
+To do that, you can use the following command:
 
-    $ cd docker/host
-    $ docker build -t rca/host .
-
-Or, if you want to build all the docker image, you can use the script
-build.sh available in the docker directory.
+    $pynetmem-emulator --pull
 
 Junos Router
 ------------
