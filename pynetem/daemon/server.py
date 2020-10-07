@@ -335,6 +335,7 @@ class NetemDaemonHandler(BaseRequestHandler):
     def br_addif(cls, br_name, if_name):
         logging.debug("Addif %s to bridge %s" % (if_name, br_name))
         if cls.__is_bridge_exist(br_name):
+            run_command("ip link set %s up" % if_name)
             run_command("brctl addif %s %s" % (br_name, if_name))
 
     @classmethod

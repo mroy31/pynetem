@@ -57,7 +57,6 @@ class BridgeInstance(_BaseWrapper):
         if ret == "EXIST":
             logging.warning("The bridge %s already exists." % self.__br_name)
 
-        self.daemon.ifup(self.__host_interface)
         self.daemon.br_addif(self.__br_name, self.__host_interface)
         self.__is_started = True
 
