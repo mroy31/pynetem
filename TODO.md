@@ -1,5 +1,5 @@
 
-  * Propose a graphical UI based on qt5
+Propose a graphical UI based on qt5
 
 Problem to investigate :
   - on host routes with reject|mod|dyn|reinstate are not saved

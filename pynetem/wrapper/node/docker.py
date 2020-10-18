@@ -48,8 +48,8 @@ class DockerNode(_BaseWrapper):
         self.conf_dir = conf_dir
         self.p2p_sw = p2p_sw
         self.running = False
+        self.interfaces = []
         self.__pid = None
-        self.__interfaces = []
         self.__lk_factory = NetemLinkFactory.instance()
         self.docker_image = "image" in n_config and n_config["image"] or self.IMG
         self.container_name = "%s.%s" % (prj_id, self.name)
@@ -80,11 +80,11 @@ class DockerNode(_BaseWrapper):
             self.ipv6_support and "yes" or "no")
 
     def __add_if(self, peer_type, peer_instance, peer_if=None):
-        if_id = len(self.__interfaces)
+        if_id = len(self.interfaces)
         ifname = None
         if peer_instance is not None:
             ifname = self.gen_ifname(if_id, peer_instance, peer_if)
-        self.__interfaces.append({
+        self.interfaces.append({
             "peer": peer_type,
             "peer_instance": peer_instance,
             "ifname": ifname,
@@ -110,7 +110,7 @@ class DockerNode(_BaseWrapper):
             self.__pid = self.daemon.docker_pid(self.container_name)
             self.running = True
             # attach interfaces
-            for if_conf in self.__interfaces:
+            for if_conf in self.interfaces:
                 if if_conf["peer"] == "null":
                     continue  # skip this interface
                 p_if = self.__lk_factory.create(if_conf["ifname"], self.__pid)
@@ -145,7 +145,7 @@ class DockerNode(_BaseWrapper):
                 "Unable to start capture -> Wireshark is not installed on"
                 " your computer")
 
-        if len(self.__interfaces) <= if_number:
+        if len(self.interfaces) <= if_number:
             raise NetemError("%s: interface %d does not "
                              "exist" % (self.name, if_number))
 
@@ -155,8 +155,8 @@ class DockerNode(_BaseWrapper):
 
     @require_running
     def set_if_state(self, if_number, state):
-        if len(self.__interfaces) > if_number:
-            if_entry = self.__interfaces[if_number]
+        if len(self.interfaces) > if_number:
+            if_entry = self.interfaces[if_number]
             if_name = if_entry["target_if"]
             self._docker_exec("ip link set {} {}".format(if_name, state))
             if_entry["state"] = state
@@ -172,7 +172,7 @@ class DockerNode(_BaseWrapper):
 
     @require_running
     def stop(self):
-        for if_c in self.__interfaces:
+        for if_c in self.interfaces:
             if if_c["peer_instance"] is None:
                 continue
             if if_c["peer"] == "switch":
@@ -190,7 +190,7 @@ class DockerNode(_BaseWrapper):
         if self.running:
             self.stop()
         self.daemon.docker_rm(self.container_name)
-        self.__interfaces = []
+        self.interfaces = []
 
     def get_status(self):
         return {
@@ -200,7 +200,7 @@ class DockerNode(_BaseWrapper):
                 {
                     "name": i["target_if"],
                     "isUp": i["state"] == "up"
-                } for i in self.__interfaces
+                } for i in self.interfaces
             ]
 
         }
@@ -300,6 +300,13 @@ class FrrRouter(DockerNode):
     SHELL = "/usr/bin/vtysh"
     CONF = "/etc/frr/frr.conf"
 
+    def __init__(self, p2p_sw, prj_id, conf_dir, name, n_config):
+        super(FrrRouter, self).__init__(p2p_sw, prj_id, conf_dir, name, n_config)
+        self.mpls_support = False
+        if "mpls" in n_config:
+            self.mpls_support = n_config.as_bool("mpls")
+        self.vrfs = "vrfs" in n_config and n_config["vrfs"].split(";") or []
+
     def __fmt_conf_path(self, conf_path):
         return os.path.join(
             conf_path or self.conf_dir,
@@ -308,13 +315,23 @@ class FrrRouter(DockerNode):
 
     def start(self):
         super(FrrRouter, self).start()
+        # enable mpls if necessary
+        if self.mpls_support:
+            self._docker_exec("sysctl -w net.mpls.platform_labels=100000")
+            self._docker_exec("sysctl -w net.mpls.conf.lo.input=1")
+            for if_conf in self.interfaces:
+                self._docker_exec("sysctl -w net.mpls.conf.{}.input=1".format(if_conf["target_if"]))
+        # create vrfs
+        for idx, vrf in enumerate(self.vrfs):
+            self._docker_exec("ip link add {} type vrf table {}".format(vrf, 10+idx))
+            self._docker_exec("ip link set {} up".format(vrf))
         # load frr config if available and start frr
         conf_path = self.__fmt_conf_path(None)
         if os.path.isfile(conf_path):
             dest = "{}:{}".format(self.container_name, self.CONF)
             self._docker_cp(conf_path, dest)
             self._docker_exec("chown frr:frr {}".format(self.CONF))
-        self._docker_exec("/etc/init.d/frr start")
+        self._docker_exec("/usr/lib/frr/frrinit.sh start")
 
     @require_running
     def save(self, conf_path=None):

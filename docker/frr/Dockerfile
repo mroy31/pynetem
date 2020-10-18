@@ -19,7 +19,7 @@ COPY conf/${SOURCE_LIST} /etc/apt/sources.list.d/frr.list
 RUN apt-get update -y && \
     apt-get install -y frr frr-pythontools frr-snmp ethtool \
 		curl less nano vim psmisc tcpdump iputils-ping \
-		iputils-arping iputils-tracepath net-tools file htop \
+		iputils-arping iputils-tracepath net-tools file htop procps \
         && rm -rf /var/lib/apt/lists/*
 
 # configure FRR

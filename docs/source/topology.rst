@@ -68,16 +68,26 @@ Options
 Several options are available when you declare a docker node:
   - ``ipv6`` (boolean, optional): set to yes if you want to enable ipv6 support on this node (no by default)
   - ``image`` (string, optional): use to override the docker image used to launch this node
+  - ``mpls`` (boolean, optional): set to yes to enable mpls support on this node (no by default). This option is only available for *frr* node.
 
-Exemple
-"""""""
+VRF support
+"""""""""""
+
+To facilitate the implementation of L3VPN with pynetem, it is possible to instantiate linux VRFs at the launch of FRR router.
+For that, you just need to use the option ``vrfs``. Use ";" as separator if you want to declare several VRFs.
+
+Complete Example for FRR router
+"""""""""""""""""""""""""""""""
 
 .. code-block:: ini
 
     [nodes]
     [[R1]]
     type = docker.frr
+    image = myimage:mytag
     ipv6 = yes
+    mpls = yes
+    vrfs = VPNA;VPNB
     if_numbers = 1
     if0 = remote_peer
 

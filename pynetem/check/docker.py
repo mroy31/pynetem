@@ -48,6 +48,7 @@ class DockerNodeCheck(_BaseCheck):
         self.check_args(name, node, {
             "if_numbers": {"type": "int", "mandatory": True},
             "ipv6": {"type": "bool", "mandatory": False},
+            "mpls": {"type": "bool", "mandatory": False},
         })
         return self.has_errors()
 
