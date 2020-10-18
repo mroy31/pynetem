@@ -91,7 +91,7 @@ if __name__ == "__main__":
         sys.exit()
 
     # add custom config parms
-    if args.conffile:
+    if args.conffile is not None:
         if not os.path.isfile(args.conffile):
             sys.exit("The config file does not exist.")
         NetemConfig.custom_conf = args.conffile
@@ -145,8 +145,10 @@ if __name__ == "__main__":
         rnd_str = "".join(random.sample(string.ascii_lowercase, 2))
         netid = "%s%s" % (NETEM_ID, rnd_str)
         bin_path = INSTALL_MODE == "source" and "./" or ""
-        cmd = "%spynetem-server --id %s --port %d %s" \
-            % (bin_path, netid, args.port, args.project)
+        extra_conf = args.conffile is not None \
+            and "-c {}".format(args.conffile) or ""
+        cmd = "%spynetem-server %s --id %s --port %d %s" \
+            % (bin_path, extra_conf, netid, args.port, args.project)
         result = subprocess.run(shlex.split(cmd), stderr=subprocess.PIPE)
         if result.returncode != 0:
             sys.exit("Unable to launch server: %s" % result.stderr)

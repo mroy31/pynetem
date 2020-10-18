@@ -23,6 +23,7 @@ import logging
 import argparse
 import asyncio
 from pynetem import NetemError
+from pynetem.ui.config import NetemConfig
 from pynetem.utils import daemonize, test_project
 
 
@@ -42,6 +43,10 @@ parser.add_argument(
     "-d", "--debug", action="store_true",
     dest="debug", default=False,
     help="Log more debug informations")
+parser.add_argument(
+    "-c", "--conf-file", type=str, dest="conffile",
+    metavar="FILE", default=None,
+    help="Specify a custom conf file")
 parser.add_argument(
     "-n", "--no-daemon", action="store_false", dest="daemon", default=True,
     help="No daemonize pynetem server"
@@ -69,6 +74,12 @@ if __name__ == "__main__":
             format='%(asctime)s - %(levelname)s: %(message)s',
             level=logging.INFO,
             filename=logfile)
+
+    # add custom config parms
+    if args.conffile is not None:
+        if not os.path.isfile(args.conffile):
+            sys.exit("The config file does not exist.")
+        NetemConfig.custom_conf = args.conffile
 
     # quit if project is not valid
     prj_path = args.project[0]
