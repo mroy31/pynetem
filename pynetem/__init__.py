@@ -17,12 +17,15 @@
 
 __version__ = "0.13.1"
 NETEM_ID = "ntm"
-DOCKER_IMAGES = {
-    "host": "mroy31/pynetem-host:{}".format(__version__),
-    "server": "mroy31/pynetem-server:{}".format(__version__),
-    "frr": "mroy31/pynetem-frr:{}".format(__version__),
-    "router": "mroy31/pynetem-frr:{}".format(__version__)
-}
+
+
+def get_docker_images(cfg):
+    return {
+        "host": "{}:{}".format(cfg.get("docker", "host_img"), __version__),
+        "server": "{}:{}".format(cfg.get("docker", "server_img"), __version__),
+        "frr": "{}:{}".format(cfg.get("docker", "frr_img"), __version__),
+        "router": "{}:{}".format(cfg.get("docker", "frr_img"), __version__),
+    }
 
 
 class NetemError(Exception):

@@ -199,7 +199,7 @@ class NetemConsole(Cmd):
         prj_path = self.__send_cmd("projectPath")
         self.poutput(os.path.abspath(prj_path))
 
-    @netmem_cmd(catch_error=False)
+    @netmem_cmd(catch_error=True)
     def do_run(self):
         """Check the project and start all nodes"""
         self.pinfo("Run the project, please wait ... ")

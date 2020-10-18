@@ -83,7 +83,7 @@ if __name__ == "__main__":
     from pynetem.console.cmd import NetemConsole
     from pynetem.daemon.client import NetemDaemonClient
     from pynetem import NetemError
-    from pynetem import __version__, NETEM_ID, DOCKER_IMAGES
+    from pynetem import __version__, NETEM_ID, get_docker_images
 
     # if asked, show version and quit
     if args.version:
@@ -119,6 +119,7 @@ if __name__ == "__main__":
     # pull docker image commands
     if args.pull:
         logging.info("Pull docker images")
+        DOCKER_IMAGES = get_docker_images(config)
         for n_type in DOCKER_IMAGES:
             if n_type == "router":
                 continue

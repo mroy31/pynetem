@@ -59,3 +59,10 @@ After the installation, the configuration of pynetem is done with the file
     memory = 256
     # set to false to disable kvm when a qemu instance is launch
     enable_kvm = yes
+
+    [docker]
+    # docker image names used by default for docker node
+    # tag must be equal to pynetem version
+    frr_img = mroy31/pynetem-frr
+    host_img = mroy31/pynetem-host
+    server_img = mroy31/pynetem-server

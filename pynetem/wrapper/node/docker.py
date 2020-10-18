@@ -18,10 +18,12 @@
 import os
 import logging
 import shutil
-from pynetem import NetemError, DOCKER_IMAGES
+from pynetem import NetemError, get_docker_images
 from pynetem.ui.config import NetemConfig
 from pynetem.wrapper import _BaseWrapper
 from pynetem.wrapper.link import NetemLinkFactory
+
+DOCKER_IMAGES = get_docker_images(NetemConfig.instance())
 
 
 def require_running(func):

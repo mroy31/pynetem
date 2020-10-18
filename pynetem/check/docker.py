@@ -15,8 +15,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from pynetem import DOCKER_IMAGES
+from pynetem import get_docker_images
+from pynetem.ui.config import NetemConfig
 from pynetem.check._base import _BaseCheck
+
+DOCKER_IMAGES = get_docker_images(NetemConfig.instance())
 
 
 class DockerNodeCheck(_BaseCheck):
