@@ -4,9 +4,8 @@ LABEL maintainer="mickael.royer@enac.fr"
 ENV DEBIAN_FRONTEND noninteractive
 ENV APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn
 
-# Change this value to use official release
-ARG REPO_KEY=mroy31.repo.gpg
-ARG SOURCE_LIST=mroy31.source.list
+ARG REPO_KEY=frr.repo.gpg
+ARG SOURCE_LIST=frr.source.list
 
 ## add FRR repository
 COPY conf/${REPO_KEY} /tmp/
