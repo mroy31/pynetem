@@ -95,3 +95,13 @@ reconnect to the opening server with the following command:
 .. code-block:: bash
 
     $ pynetem-emulator --client-only
+
+MPLS support
+------------
+
+Since version 0.14, pynetem supports MPLS with FRR docker image.
+To work, you must enable MPLS features in linux kernel by loading
+the following modules :
+
+- mpls_iptunnel
+- mpls_router

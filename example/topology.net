@@ -20,6 +20,8 @@ if0 = sw.Switch1
 
 [[R2]]
 type = docker.frr
+ipv6 = yes
+mpls = yes
 if_numbers = 2
 if0 = sw.Switch2
 if1 = br.Bridge1
