@@ -223,27 +223,37 @@ class DockerNode(_BaseWrapper):
 class HostNode(DockerNode):
     IMG = DOCKER_IMAGES["host"]
     CONFIG_FILE = "/tmp/custom.net.conf"
+    NTP_FILE = "/etc/ntp.conf"
 
-    def __fmt_conf_path(self, conf_path):
+    def fmt_conf_path(self, config_name, conf_path=None):
         return os.path.join(
             conf_path or self.conf_dir,
-            "%s.net.conf" % self.name
+            "%s.%s" % (self.name, config_name)
         )
 
     def start(self):
         super(HostNode, self).start()
         # set network config if available
-        conf_path = self.__fmt_conf_path(None)
-        if os.path.isfile(conf_path):
+        netconf_path = self.fmt_conf_path("net.conf")
+        if os.path.isfile(netconf_path):
             dest = "%s:%s" % (self.container_name, self.CONFIG_FILE)
-            self._docker_cp(conf_path, dest)
+            self._docker_cp(netconf_path, dest)
             self._docker_exec("network-config.py -l %s" % self.CONFIG_FILE)
+        # set ntp conf if available
+        ntpconf_path = self.fmt_conf_path("ntp.conf")
+        if os.path.isfile(ntpconf_path):
+            dest = "%s:%s" % (self.container_name, self.NTP_FILE)
+            self._docker_cp(ntpconf_path, dest)
 
     @require_running
     def save(self, conf_path=None):
+        # save network config file
         self._docker_exec("network-config.py -s %s" % self.CONFIG_FILE)
         source = "%s:%s" % (self.container_name, self.CONFIG_FILE)
-        self._docker_cp(source, self.__fmt_conf_path(conf_path))
+        self._docker_cp(source, self.fmt_conf_path("net.conf", conf_path))
+        # set ntp config file
+        source = "%s:%s" % (self.container_name, self.NTP_FILE)
+        self._docker_cp(source, self.fmt_conf_path("ntp.conf", conf_path))
 
 
 class ServerNode(HostNode):
@@ -268,19 +278,13 @@ class ServerNode(HostNode):
         },
     }
 
-    def __fmt_conf_path(self, config_name, conf_path=None):
-        return os.path.join(
-            conf_path or self.conf_dir,
-            "%s.%s" % (self.name, config_name)
-        )
-
     def start(self):
         super(ServerNode, self).start()
         # set server configs if available
         for server in self.SERVERS:
             s_attrs = self.SERVERS[server]
             for config in s_attrs["configs"]:
-                conf_path = self.__fmt_conf_path(config["name"])
+                conf_path = self.fmt_conf_path(config["name"])
                 if os.path.isfile(conf_path):
                     dest = "%s:%s" % (self.container_name, config["target"])
                     self._docker_cp(conf_path, dest)
@@ -292,7 +296,7 @@ class ServerNode(HostNode):
         for server in self.SERVERS:
             s_attrs = self.SERVERS[server]
             for config in s_attrs["configs"]:
-                fconf_path = self.__fmt_conf_path(config["name"], conf_path)
+                fconf_path = self.fmt_conf_path(config["name"], conf_path)
                 source = "%s:%s" % (self.container_name, config["target"])
                 self._docker_cp(source, fconf_path)
 
