@@ -73,8 +73,27 @@ Several options are available when you declare a docker node:
 VRF support
 """""""""""
 
-To facilitate the implementation of L3VPN with pynetem, it is possible to instantiate linux VRFs at the launch of FRR router.
+To facilitate the implementation of L3VPN with pynetem and FRR, it is possible to instantiate linux VRFs at the launch of FRR router.
 For that, you just need to use the option ``vrfs``. Use ";" as separator if you want to declare several VRFs.
+
+VRRP support
+""""""""""""
+
+To facilitate the implementation of VRRP with pynetem and FRR, it is possible to
+instantiate macvlan required for vrrp support at the launch of FRR router.
+For that, you just need to use the option ``vrrps``.
+
+  * each macvlan interface is defined with the following syntax `ifname|vrip|ipaddress/mask`
+
+.. code-block:: ini
+
+    [nodes]
+    [[R1]]
+    type = docker.frr
+    vrrps = eth0|1|192.168.0.252/24
+
+
+Use ";" separator if you want to declare several vrrp groups.
 
 Complete Example for FRR router
 """""""""""""""""""""""""""""""

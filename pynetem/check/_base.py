@@ -115,3 +115,9 @@ class _BaseCheck(object):
                         self.add_error(
                             "%s: arg %s is not yes|no" % (name, key)
                         )
+                elif a_type == "re":
+                    pattern = args_dict[key]["pattern"]
+                    if re.match(pattern, val) is None:
+                        self.add_error("{}: arg {} does not match {}".format(
+                            name, key, pattern
+                        ))

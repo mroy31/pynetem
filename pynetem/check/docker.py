@@ -43,7 +43,7 @@ class DockerNodeCheck(_BaseCheck):
         return self.has_errors()
 
     def __check_type(self, name, node_type):
-        null, n_type = node_type.split(".", 1)
+        _, n_type = node_type.split(".", 1)
         if n_type not in ("host", "frr", 'server', 'router'):
             self.add_error("%s: docker type %s is not valid" % (name, n_type))
 
@@ -51,8 +51,22 @@ class DockerNodeCheck(_BaseCheck):
         self.check_args(name, node, {
             "if_numbers": {"type": "int", "mandatory": True},
             "ipv6": {"type": "bool", "mandatory": False},
-            "mpls": {"type": "bool", "mandatory": False},
         })
+        _, n_type = node["type"].split(".", 1)
+        if n_type in ("frr", "router"):
+            self.check_args(name, node, {
+                "mpls": {"type": "bool", "mandatory": False},
+                "vrrps": {
+                    "type": "re",
+                    "pattern": "^(eth[0-9]\|\d+\|\d+\.\d+\.\d+\.\d+\/\d+)(;eth[0-9]\|\d+\|\d+\.\d+\.\d+\.\d+\/\d+)*$",
+                    "mandatory": False
+                },
+                "vrfs": {
+                    "type": "re",
+                    "pattern": "^(\w+)(;\w+)*$",
+                    "mandatory": False
+                },
+            })
         return self.has_errors()
 
     def __check_docker_img(self, name, node):

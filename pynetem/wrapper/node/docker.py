@@ -312,6 +312,7 @@ class FrrRouter(DockerNode):
         if "mpls" in n_config:
             self.mpls_support = n_config.as_bool("mpls")
         self.vrfs = "vrfs" in n_config and n_config["vrfs"].split(";") or []
+        self.vrrps = "vrrps" in n_config and n_config["vrrps"].split(";") or []
 
     def __fmt_conf_path(self, conf_path):
         return os.path.join(
@@ -331,6 +332,17 @@ class FrrRouter(DockerNode):
         for idx, vrf in enumerate(self.vrfs):
             self._docker_exec("ip link add {} type vrf table {}".format(vrf, 10+idx))
             self._docker_exec("ip link set {} up".format(vrf))
+        # provide macvlan interfaces for vrrp support
+        for vrrp_cnf in self.vrrps:
+            ifname, vid, address = vrrp_cnf.split("|")
+            vname = "vrrp-{}".format(ifname[-1])
+            self._docker_exec(
+                "ip link add %s link %s addrgenmode random type macvlan mode bridge" % (vname, ifname))
+            self._docker_exec(
+                "ip link set dev {} address 00:00:5E:00:01:{:02X}".format(
+                    vname, int(vid)))
+            self._docker_exec("ip addr add {} dev {}".format(address, vname))
+            self._docker_exec("ip link set dev {} up".format(vname))
         # load frr config if available and start frr
         conf_path = self.__fmt_conf_path(None)
         if os.path.isfile(conf_path):
