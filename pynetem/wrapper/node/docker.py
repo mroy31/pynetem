@@ -344,11 +344,9 @@ class FrrRouter(DockerNode):
                     vname, int(vid)))
             self._docker_exec("ip addr add {} dev {}".format(address, vname))
             self._docker_exec("ip link set dev {} up".format(vname))
-            # Awful Ack to remove connected route assiociated with macvlan int
-            # Without this ack, route stay active and interface in backup
-            # mode can not forward traffic on network or answer to ping
-            net = ipaddress.ip_network(address, strict=False)
-            self._docker_exec("ip route del {} dev {}".format(str(net), vname))
+            # modify kernel settings to disable routes when interface
+            # is in linkdown state
+            self._docker_exec("sysctl -w net.ipv4.conf.{}.ignore_routes_with_linkdown=1".format(vname))
         # load frr config if available and start frr
         conf_path = self.__fmt_conf_path(None)
         if os.path.isfile(conf_path):
