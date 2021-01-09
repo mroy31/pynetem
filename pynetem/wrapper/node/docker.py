@@ -131,10 +131,10 @@ class DockerNode(_BaseWrapper):
                                             target_name)
 
     @require_running
-    def open_shell(self, debug=False):
+    def open_shell(self, bash=False):
         display = self._get_x11_env()
         term_cmd = NetemConfig.instance().get("general", "terminal")
-        shell_cmd = debug and self.BASH or self.SHELL
+        shell_cmd = bash and self.BASH or self.SHELL
         self.daemon.docker_shell(
             self.container_name, self.name,
             shell_cmd, display, term_cmd

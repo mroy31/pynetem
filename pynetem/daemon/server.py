@@ -211,7 +211,7 @@ class NetemDaemonHandler(BaseRequestHandler):
             subprocess.Popen(
                 args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE, shell=False,
-                env={"DISPLAY": display}
+                env={"DISPLAY": display, "HOME": "/root"}
             )
         except FileNotFoundError as err:
             raise NetemError(str(err))
@@ -223,7 +223,9 @@ class NetemDaemonHandler(BaseRequestHandler):
         cmd = "/bin/bash -c 'docker exec {0} tcpdump -s 0 -U -w - -i {1} "\
               "2>/dev/null | wireshark -o 'gui.window_title:{1}@{2}' "\
               "-k -i - &'".format(c_name, if_name, pretty_name)
-        subprocess.call(shlex.split(cmd), env={"DISPLAY": display})
+        subprocess.call(
+            shlex.split(cmd),
+            env={"DISPLAY": display, "HOME": "/root"})
 
     @staticmethod
     def tap_create(name, user):

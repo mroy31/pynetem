@@ -181,7 +181,7 @@ class QEMUInstance(_BaseInstance):
     def set_if_state(self, if_number, state):
         raise NetemError("ifstate command is not supported for qemu nodes.")
 
-    def open_shell(self, debug=False):
+    def open_shell(self, bash=False):
         if self.shell_process is not None \
                 and self.shell_process.poll() is None:
             raise NetemError("The console is already opened")

@@ -174,19 +174,19 @@ class NetemProtocol(asyncio.Protocol):
     def do_status(self):
         return self.project.get_status()
 
-    def __open_shell(self, node_id, debug):
+    def __open_shell(self, node_id, bash):
         nodes = self.__get_nodes(node_id)
         if len(nodes) == 0:
             raise NetemError("Node '%s' does not exist" % node_id)
         for node in nodes:
-            node.open_shell(debug=debug)
+            node.open_shell(bash=bash)
 
     @cmd(cmd_args=["^\S+$"])
     def do_console(self, node_id):
         self.__open_shell(node_id, False)
 
     @cmd(cmd_args=["^\S+$"])
-    def do_debug(self, node_id):
+    def do_shell(self, node_id):
         self.__open_shell(node_id, True)
 
     @cmd(cmd_args=["^\S+$", "^\S+$"])

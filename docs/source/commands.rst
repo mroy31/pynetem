@@ -116,7 +116,7 @@ The kind of console opened by this command depends on the type of node:
   * For qemu node and docker host node: ``bash``
   * For docker.frr and docker.quagga, run directly ``vtysh``
 
-debug
+shell
 -----
 Same as *console* command, except run ``bash`` command whatever the node.
 

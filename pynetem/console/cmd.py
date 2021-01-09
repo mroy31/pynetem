@@ -300,9 +300,9 @@ class NetemConsole(Cmd):
         self.__send_cmd("console", args=[node_id])
 
     @netmem_cmd(reg_exp="^(\S+)$")
-    def do_debug(self, node_id):
+    def do_shell(self, node_id):
         """Open a debug console (meaning bash) for the given router/host"""
-        self.__send_cmd("debug", args=[node_id])
+        self.__send_cmd("shell", args=[node_id])
 
     @netmem_cmd(reg_exp="^(\S+\.[0-9]+) (up|down)$")
     def do_ifstate(self, if_name, state):
