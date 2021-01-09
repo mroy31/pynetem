@@ -18,7 +18,6 @@
 import os
 import logging
 import shutil
-import ipaddress
 from pynetem import NetemError, get_docker_images
 from pynetem.ui.config import NetemConfig
 from pynetem.wrapper import _BaseWrapper

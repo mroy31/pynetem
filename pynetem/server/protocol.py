@@ -189,7 +189,7 @@ class NetemProtocol(asyncio.Protocol):
     def do_debug(self, node_id):
         self.__open_shell(node_id, True)
 
-    @cmd(cmd_args=["^\S+ \S+$"])
+    @cmd(cmd_args=["^\S+$", "^\S+$"])
     def do_ifstate(self, if_name, state):
         self.project.topology.set_if_state(if_name, state)
 
