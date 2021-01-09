@@ -24,9 +24,9 @@ copyright = "2020, Mickael Royer"
 author = "Mickael Royer"
 
 # The short X.Y version
-version = '0.14.2'
+version = '0.14.3'
 # The full version, including alpha/beta/rc tags
-release = '0.14.2'
+release = '0.14.3'
 
 
 # -- General configuration ---------------------------------------------------
