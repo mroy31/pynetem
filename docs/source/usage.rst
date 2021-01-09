@@ -3,40 +3,6 @@
 Usage
 =====
 
-Daemon
-------
-To use PyNetmem, firstly you have lo launch pynetmem-daemon with the root
-right. It is required to execute commands that require privileges. You can use
-the following command for example:
-
-.. code-block:: bash
-
-    $ sudo pynetmem-daemon -n
-
-Below, you will find available arguments to launch pynetem-daemon
-
-.. code-block:: bash
-
-    usage: pynetem-daemon [-h] [-c FILE] [-d] [-n] [-l LOGFILE]
-
-    optional arguments:
-    -h, --help            show this help message and exit
-    -c FILE, --conf-file FILE
-                            Specify a custom conf file
-    -d, --debug           Log more debug informations
-    -n, --nodaemon        No daemonize pynetem daemon
-    -l LOGFILE, --log-file LOGFILE
-
-Pull docker images
-------------------
-
-If you plan to use docker nodes, you need to pull images built for pynetem
-and available on docker hub. For that, you can use the following command:
-
-.. code-block:: bash
-
-    $ sudo pynetmem-emulator --pull
-
 Console
 -------
 

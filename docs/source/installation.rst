@@ -1,7 +1,7 @@
 .. _installation:
 
-Installation/Configuration
-==========================
+Installation
+============
 
 Requirements
 ------------
@@ -21,8 +21,8 @@ To run pynetem, you have to install the following programs/modules
  * telnet (optional)
  * vde2 (optional)
 
-Installation
-------------
+Manual Installation
+-------------------
 You can install PyNetem with the following command (with superuser privileges):
 
 .. code-block:: bash
@@ -32,37 +32,29 @@ You can install PyNetem with the following command (with superuser privileges):
 Debian Package
 --------------
 
-A debian package can be built for pynetem, thanks to files included in the
-debian folder. To build the package, you can use for example pbuilder/pdebuild
+Debian packages are available on `github <https://github.com/mroy31/pynetem/releases>`_
+for the following distribution :
+  * Debian buster
+  * Debian stretch
+  * Ubuntu LTS focal
+  * Ubuntu LTS bionic
+
+If your distribution is not in the list, you can build a package for pynetem,
+thanks to files included in the debian folder.
+To build the package, you can use for example pbuilder/pdebuild
 utilities (https://pbuilder.alioth.debian.org/)
 
-Configuration
--------------
+Once you have downloaded the correct package, you can install it
+with the following commands :
 
-After the installation, the configuration of pynetem is done with the file
-``/etc/pynetem.conf``. Below, you will find the configuration by default :
+.. code-block:: bash
 
-.. code-block:: ini
+    $ sudo apt install gdebi-core
+    $ sudo gdebi pynetem_<version>_all.deb
 
-    [general]
-    daemon_socket = /tmp/pynetem-socket.ctl
-    # the path where all qemu/junos images are stored
-    image_dir = /home/pynetem
-    # the command used to launch a console to access to host/router
-    terminal = xterm -xrm 'XTerm.vt100.allowTitleOps: false' -title %(title)s -e %(cmd)s
-    # the editor used to update the topology file
-    editor = vim
+Then you need enable and start the daemon with the following commands
 
-    [qemu]
-    # the memory by default for a qemu instance
-    # it can be override in the topology file
-    memory = 256
-    # set to false to disable kvm when a qemu instance is launch
-    enable_kvm = yes
+.. code-block:: bash
 
-    [docker]
-    # docker image names used by default for docker node
-    # tag must be equal to pynetem version
-    frr_img = mroy31/pynetem-frr
-    host_img = mroy31/pynetem-host
-    server_img = mroy31/pynetem-server
+    $ sudo systemctl enable pynetem.service
+    $ sudo systemctl start pynetem.service
