@@ -21,18 +21,25 @@ import threading
 import itertools
 from pynetem.console.color import GREEN, RED, DEFAULT
 
+ACTIVE_SPINNER = None
+
 
 class Spinner(object):
-    busy = False
 
     def __init__(self, text, delay=0.1, color=DEFAULT):
+        global ACTIVE_SPINNER
+        if ACTIVE_SPINNER is not None:
+            ACTIVE_SPINNER.stop()
+        ACTIVE_SPINNER = self
+
         self.spinner_generator = itertools.cycle(['-', '/', '|', '\\'])
         self.delay = delay
         self.text = text
         self.color = color
         # start the thread
         self.busy = True
-        threading.Thread(target=self.spinner_task).start()
+        self.thread = threading.Thread(target=self.spinner_task)
+        self.thread.start()
 
     def is_running(self):
         return self.busy
@@ -47,16 +54,22 @@ class Spinner(object):
             sys.stdout.flush()
 
     def stop(self):
+        global ACTIVE_SPINNER
+
         if self.busy:
             self.busy = False
-            time.sleep(self.delay)
+            self.thread.join()
             sys.stdout.write(GREEN+'OK\n'+DEFAULT)
+        ACTIVE_SPINNER = None
 
     def error(self, err=None):
+        global ACTIVE_SPINNER
+
         if self.busy:
             self.busy = False
-            time.sleep(self.delay)
+            self.thread.join()
             msg = "NOK"
             if err is not None:
-                msg = msg + "\n\t{}".format(err) 
+                msg = msg + "\n\t{}".format(err)
             sys.stdout.write(RED+'{}\n'.format(msg)+DEFAULT)
+        ACTIVE_SPINNER = None
