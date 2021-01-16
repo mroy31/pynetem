@@ -26,9 +26,9 @@ Below, you will find available arguments to launch pynetem-emulator
 
 .. code-block:: bash
 
-    usage: pynetem-emulator [-h] [-c FILE] [-v] [-d] [--new] [--no-start]
-                            [--clean]
-                            [PRJ]
+    usage: pynetem-emulator [-h] [-c FILE] [-v] [-d] [--new] [--no-start] [--clean] [--pull] [--client] [-p P_NUMBER] [PRJ]
+
+    Network emulator console
 
     positional arguments:
     PRJ                   Path for the pnet project
@@ -38,14 +38,14 @@ Below, you will find available arguments to launch pynetem-emulator
     -c FILE, --conf-file FILE
                             Specify a custom conf file
     -v, --version         Display pynetem version and exit
-    -d, --debug           Log more debug information
+    -d, --debug           Log more debug informations
     --new                 Set to create a new project
     --no-start            Do not start the project at launch
     --clean               Clean the netem env
     --pull                Pull docker images
-    --client-only         Connect to an launched pynetem-server
+    --client              Connect to an launched project
     -p P_NUMBER, --port P_NUMBER
-                        Port number
+                            Port number
 
 Client mode
 -----------
@@ -60,7 +60,7 @@ reconnect to the opening server with the following command:
 
 .. code-block:: bash
 
-    $ pynetem-emulator --client-only
+    $ pynetem-emulator --client
 
 MPLS support
 ------------

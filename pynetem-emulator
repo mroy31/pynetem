@@ -65,8 +65,8 @@ parser.add_argument(
     "--pull", action="store_true", dest="pull",
     default=False, help="Pull docker images")
 parser.add_argument(
-    "--client-only", action="store_true", dest="client_mode",
-    default=False, help="Connect to an launched pynetem-server")
+    "--client", action="store_true", dest="client_mode",
+    default=False, help="Connect to an launched project")
 parser.add_argument(
     "-p", "--port", type=int, dest="port",
     metavar="P_NUMBER", default=10100, help="Port number")
@@ -151,7 +151,14 @@ if __name__ == "__main__":
             % (bin_path, extra_conf, netid, args.port, args.project)
         result = subprocess.run(shlex.split(cmd), stderr=subprocess.PIPE)
         if result.returncode != 0:
-            sys.exit("Unable to launch server: \n\t%s" % result.stderr.decode("utf-8"))
+            error_msg = """Unable to launch server:
+    %s
+pynetem-emulator probably quit unexpectedly.
+To connect to the openning project, enter the command:
+    pynetem-emulator --client
+And the you can stop properly the running project.
+""" % result.stderr.decode("utf-8")
+            sys.exit(error_msg)
 
     # install signal handlers
     def interrupt(s, f):
