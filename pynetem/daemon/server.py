@@ -209,8 +209,7 @@ class NetemDaemonHandler(BaseRequestHandler):
         args = shlex.split(term_cmd)
         try:
             subprocess.Popen(
-                args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE, shell=False,
+                args, shell=False,
                 env={"DISPLAY": display, "HOME": "/root"}
             )
         except FileNotFoundError as err:

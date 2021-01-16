@@ -22,8 +22,12 @@ from pynetem import NetemError, get_docker_images
 from pynetem.ui.config import NetemConfig
 from pynetem.wrapper import _BaseWrapper
 from pynetem.wrapper.link import NetemLinkFactory
+from pynetem.utils import cmd_run_app, get_x11_env
 
-DOCKER_IMAGES = get_docker_images(NetemConfig.instance())
+config = NetemConfig.instance()
+DOCKER_IMAGES = get_docker_images(config)
+CONSOLE_PROCESS = config.get("docker", "console")
+CAPTURE_PROCESS = config.get("docker", "capture")
 
 
 def require_running(func):
@@ -53,7 +57,7 @@ class DockerNode(_BaseWrapper):
         self.interfaces = []
         self.__pid = None
         self.__lk_factory = NetemLinkFactory.instance()
-        self.docker_image = "image" in n_config and n_config["image"] or self.IMG
+        self.docker_img = "image" in n_config and n_config["image"] or self.IMG
         self.container_name = "%s.%s" % (prj_id, self.name)
         self.ipv6_support = False
         if "ipv6" in n_config:
@@ -78,7 +82,7 @@ class DockerNode(_BaseWrapper):
         self.daemon.docker_create(
             self.name,
             self.container_name,
-            self.docker_image,
+            self.docker_img,
             self.ipv6_support and "yes" or "no")
 
     def __add_if(self, peer_type, peer_instance, peer_if=None):
@@ -132,13 +136,24 @@ class DockerNode(_BaseWrapper):
 
     @require_running
     def open_shell(self, bash=False):
-        display = self._get_x11_env()
         term_cmd = NetemConfig.instance().get("general", "terminal")
         shell_cmd = bash and self.BASH or self.SHELL
-        self.daemon.docker_shell(
-            self.container_name, self.name,
-            shell_cmd, display, term_cmd
-        )
+
+        if CONSOLE_PROCESS == "daemon":
+            # console is launch by the daemon
+            display = get_x11_env()
+            self.daemon.docker_shell(
+                self.container_name, self.name,
+                shell_cmd, display, term_cmd
+            )
+
+        else:  # user
+            cmd = term_cmd % {
+                "title": self.name,
+                "cmd": "docker exec -it %s %s" % (
+                    self.container_name, shell_cmd)
+            }
+            cmd_run_app(cmd)
 
     @require_running
     def capture(self, if_number):
@@ -152,8 +167,16 @@ class DockerNode(_BaseWrapper):
                              "exist" % (self.name, if_number))
 
         if_name = "eth%s" % if_number
-        display = self._get_x11_env()
-        self.daemon.docker_capture(display, self.container_name, if_name)
+        if CAPTURE_PROCESS == "daemon":
+            # capture is launch by the daemon
+            display = get_x11_env()
+            self.daemon.docker_capture(display, self.container_name, if_name)
+
+        else:  # user
+            cmd = "/bin/bash -c 'docker exec {0} tcpdump -s 0 -U -w - -i {1} "\
+                "2>/dev/null | wireshark -o 'gui.window_title:{1}@{2}' "\
+                "-k -i - &'".format(self.container_name, if_name, self.name)
+            cmd_run_app(cmd)
 
     @require_running
     def set_if_state(self, if_number, state):
@@ -212,12 +235,6 @@ class DockerNode(_BaseWrapper):
 
     def _docker_cp(self, source, dest):
         self.daemon.docker_cp(source, dest)
-
-    def _get_x11_env(self):
-        display = ":0.0"
-        if "DISPLAY" in os.environ:
-            display = os.environ["DISPLAY"]
-        return display
 
 
 class HostNode(DockerNode):
@@ -307,7 +324,8 @@ class FrrRouter(DockerNode):
     CONF = "/etc/frr/frr.conf"
 
     def __init__(self, p2p_sw, prj_id, conf_dir, name, n_config):
-        super(FrrRouter, self).__init__(p2p_sw, prj_id, conf_dir, name, n_config)
+        super(FrrRouter, self).__init__(
+            p2p_sw, prj_id, conf_dir, name, n_config)
         self.mpls_support = False
         if "mpls" in n_config:
             self.mpls_support = n_config.as_bool("mpls")

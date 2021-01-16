@@ -151,7 +151,7 @@ if __name__ == "__main__":
             % (bin_path, extra_conf, netid, args.port, args.project)
         result = subprocess.run(shlex.split(cmd), stderr=subprocess.PIPE)
         if result.returncode != 0:
-            sys.exit("Unable to launch server: %s" % result.stderr)
+            sys.exit("Unable to launch server: \n\t%s" % result.stderr.decode("utf-8"))
 
     # install signal handlers
     def interrupt(s, f):

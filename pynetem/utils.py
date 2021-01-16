@@ -51,9 +51,17 @@ def test_project(prj_path):
         raise NetemError("Project %s is not a zip file" % prj_path)
 
 
+def cmd_run_app(cmd_line):
+    args = shlex.split(cmd_line)
+    try:
+        return subprocess.Popen(args, shell=False, env={"DISPLAY": get_x11_env()})
+    except FileNotFoundError as err:
+        raise NetemError(str(err))
+
+
 def cmd_call(cmd_line):
     args = shlex.split(cmd_line)
-    return subprocess.call(args)
+    return subprocess.run(args).returncode
 
 
 def cmd_check_output(cmd_line):
@@ -72,3 +80,10 @@ def get_exc_desc():
 %s
 ---------------------------------------------
 """ % traceback.format_exc()
+
+
+def get_x11_env():
+    display = ":0.0"
+    if "DISPLAY" in os.environ:
+        display = os.environ["DISPLAY"]
+    return display

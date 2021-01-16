@@ -30,7 +30,7 @@
                 "PYTHONPATH": "${workspaceRoot}"
             },
             "args": [
-                "../networks/test/bridge_test.pnet"
+                "../networks/test/simple.pnet"
             ]
         },
         {
@@ -61,7 +61,7 @@
                 "-n",
                 "--debug",
                 "--id", "ntmtt",
-                "./simple.pnet"
+                "../networks/test/simple.pnet"
             ]
         },
     ]

@@ -33,6 +33,14 @@ After the installation, the configuration of pynetem is done with the file
     host_img = mroy31/pynetem-host
     server_img = mroy31/pynetem-server
 
+    # by default, console and capture are launched by the daemon
+    # if the user belong to docker group, you can set these options to `user`
+    # the console/capture are launch directly by the user.
+    # it can be useful if you launch pynetem through ssh connection
+    # with X11 forwarding
+    console = daemon
+    capture = daemon
+
 Daemon
 ------
 If you install pynetem manually, you have lo launch pynetmem-daemon with the root
