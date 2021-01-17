@@ -25,6 +25,7 @@ import string
 import random
 import subprocess
 import shlex
+import socket
 
 INSTALL_BIN_DIR = os.path.dirname(__file__)
 binsuffix = os.path.basename(INSTALL_BIN_DIR)
@@ -170,5 +171,12 @@ And the you can stop properly the running project.
     if args.start and not args.client_mode:
         # run the project
         console.do_run("")
+
+    # test the connection with server before enter in cmd loop
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    result = s.connect_ex(("127.0.0.1", args.port))
+    s.close()
+    if result:
+        sys.exit("Unable to connect to server on port {}".format(args.port))
 
     console.cmdloop()
