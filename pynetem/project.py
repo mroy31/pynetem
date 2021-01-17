@@ -117,12 +117,5 @@ class NetemProject(object):
         self.daemon.clean(self.get_id())
         shutil.rmtree(self.tmp_folder)
 
-    def __command(self, cmd_line):
-        args = shlex.split(cmd_line)
-        ret = subprocess.call(args)
-        if ret != 0:
-            msg = "Unable to execute command %s" % (cmd_line,)
-            raise NetemError(msg)
-
     def __strip_path(self, path):
         return path.replace(self.tmp_folder, "")

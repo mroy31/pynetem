@@ -168,9 +168,9 @@ And the you can stop properly the running project.
 
     # test the connection with server before enter in cmd loop
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    result = s.connect_ex(("127.0.0.1", args.port))
+    conn_result = s.connect_ex(("127.0.0.1", args.port))
     s.close()
-    if result:
+    if conn_result:
         sys.exit("Unable to connect to server on port {}".format(args.port))
 
     console.cmdloop()

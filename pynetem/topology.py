@@ -203,12 +203,15 @@ class TopologyManager(object):
             b.stop()
 
     def reload(self):
-        self.stopall()
-        for n in self.nodes:
-            n.clean()
+        if self.is_loaded:
+            self.stopall()
+            for n in self.nodes:
+                n.clean()
+
         self.nodes, self.switches, self.bridges = [], [], []
         self.saved_state = []
         self.__load()
+        self.is_loaded = True
 
     def save(self, conf_path=None):
         for n in self.saved_state:
