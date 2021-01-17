@@ -6,8 +6,8 @@ Installation
 Requirements
 ------------
 To run pynetem, you have to install the following programs/modules
- * python >= 3.5
- * python3-cmd2 >= 0.7.0
+ * python >= 3.7
+ * python3-cmd2 >= 0.8.0
  * python3-configobj
  * python3-pyroute2
  * python3-docker

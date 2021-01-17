@@ -24,9 +24,8 @@ from pynetem import NetemError
 
 class NetemClientProtocol(asyncio.Protocol):
 
-    def __init__(self, cmd, on_signal, on_answer, loop):
+    def __init__(self, cmd, on_signal, on_answer):
         self.transport = None
-        self.loop = loop
         self.cmd = cmd
         self.msg_chunks = ""
         self.next_msg = ""
@@ -41,7 +40,8 @@ class NetemClientProtocol(asyncio.Protocol):
 
     def connection_lost(self, exc):
         logging.debug("Close connection to server")
-        self.loop.stop()
+        if not self.on_answer.done():
+            self.on_answer.set_result(None)
 
     def data_received(self, msg_chunk):
         msg_chunk = msg_chunk.decode("utf-8")
@@ -59,8 +59,9 @@ class NetemClientProtocol(asyncio.Protocol):
         else:
             (rawmsg, self.next_msg) = split_msg(self.msg_chunks, index)
             self.msg_chunks = ""
-            if self.answer_received(rawmsg):
-                return self.transport.close()
+            done, ans = self.answer_received(rawmsg)
+            if done:
+                self.on_answer.set_result(ans)
 
             while self.next_msg != '':
                 try:
@@ -71,19 +72,19 @@ class NetemClientProtocol(asyncio.Protocol):
                     break
                 else:
                     (rawmsg, self.next_msg) = split_msg(self.next_msg, index)
-                    if self.answer_received(rawmsg):
-                        return self.transport.close()
+                    done, ans = self.answer_received(rawmsg)
+                    if done:
+                        self.on_answer.set_result(ans)
 
     def answer_received(self, rawmsg):
         try:
             ans = loads_response(rawmsg)
         except NetemError:
             logging.error("Unable to parse server answer : %s" % rawmsg)
-            self.on_answer(None)
+            return True, None
         else:
             if ans["type"] == "signal":
                 self.on_signal(ans)
-                return False
+                return False, None
 
-            self.on_answer(ans)
-        return True
+            return True, ans

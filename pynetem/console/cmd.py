@@ -21,11 +21,12 @@ import os
 import asyncio
 import subprocess
 import shlex
+import signal
 from pynetem import NetemError
 from pynetem.ui.config import NetemConfig
 from pynetem.console.client import NetemClientProtocol
 from pynetem.server.rpc import RPCRequest
-from pynetem.utils import cmd_check_output
+from pynetem.utils import cmd_check_output, get_exc_desc
 from pynetem.console.color import GREEN, ORANGE, DEFAULT
 from pynetem.console.spinner import Spinner
 
@@ -56,7 +57,8 @@ def netmem_cmd(reg_exp=None, catch_error=True):
             except Exception as err:
                 if not catch_error:
                     raise err
-                self.perror("unhandle error happens, %s" % err)
+                self.perror("unhandle error happens, see traceback below")
+                self.perror(get_exc_desc())
 
         cmd_func.__name__ = func.__name__
         cmd_func.__doc__ = func.__doc__
@@ -72,20 +74,31 @@ class NetemConsole(Cmd):
     def __init__(self, s_port):
         self.allow_cli_args = False
         self.s_port = s_port
-        self.current_response = None
         self.spinner = None
-        self.loop = asyncio.get_event_loop()
 
         super(NetemConsole, self).__init__()
         if "DISPLAY" not in os.environ:
             os.environ["DISPLAY"] = ":0.0"
         self.__open_display()
 
+        # install SIGHUP handler
+        signal.signal(signal.SIGHUP, self.sighup_handler)
+
     def pinfo(self, msg):
         self.poutput(GREEN + msg + DEFAULT)
 
     def pwarning(self, msg):
         self.poutput(ORANGE + msg + DEFAULT)
+
+    def sighup_handler(self, s, f):
+        self.__close_display()
+
+    # override default sigint handler
+    def sigint_handler(self, s, f):
+        if self.spinner is not None:
+            self.spinner.interrupt()
+        self.pwarning("\n To quit pynetem, simply enter quit in the console !")
+        super(NetemConsole, self).sigint_handler(s, f)
 
     def __open_display(self):
         try:
@@ -98,9 +111,6 @@ class NetemConsole(Cmd):
             cmd_check_output("xhost -si:localuser:root")
         except Exception:
             pass
-
-    def __on_answer(self, ans):
-        self.current_response = ans
 
     def __on_signal(self, sig):
         if sig["name"] == "node":
@@ -127,26 +137,35 @@ class NetemConsole(Cmd):
                     self.spinner.error()
                 self.perror(attrs["msg"])
 
-    def __send_cmd(self, cmd_name, args=[]):
+    async def __send_rpc_cmd(self, cmd_name, args=[]):
         request = RPCRequest(cmd_name, args)
-        self.current_response = None
+        loop = asyncio.get_running_loop()
+        on_answer = loop.create_future()
 
-        coro = self.loop.create_connection(
-            lambda: NetemClientProtocol(request, self.__on_signal,
-                                        self.__on_answer, self.loop),
+        transport, _ = await loop.create_connection(
+            lambda: NetemClientProtocol(request, self.__on_signal, on_answer),
             '127.0.0.1',
             self.s_port
         )
-        t = self.loop.create_task(coro)
-        if not t.done():
-            self.loop.run_forever()
 
-        if self.current_response is None:
+        result = await on_answer
+        transport.close()
+
+        if result is None:
             raise NetemError("No valid answer has been received from server")
-        if self.current_response["state"] == "error":
-            raise NetemError(self.current_response["content"])
+        elif result["state"] == "error":
+            raise NetemError(result["content"])
+        elif result["state"] == "interrupt":
+            # command has been interrupt by user
+            self.pwarning(
+                "Running command {} has been interrupt".format(cmd_name)
+            )
+            return None
 
-        return self.current_response["content"]
+        return result["content"]
+
+    def __send_cmd(self, cmd_name, args=[]):
+        return asyncio.run(self.__send_rpc_cmd(cmd_name, args=args))
 
     def __command(self, cmd_line):
         args = shlex.split(cmd_line)
@@ -176,7 +195,6 @@ class NetemConsole(Cmd):
             "Close the project, please wait ... ", "quit",
             color=ORANGE)
         self.__close_display()
-        self.loop.close()
         return True
 
     def emptyline(self):

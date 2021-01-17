@@ -9,8 +9,8 @@ PyNetem is a network emulator written in python based on
 
 Requirements
 ------------
- * Python >= 3.5
- * python3-cmd2 >= 0.7.0
+ * Python >= 3.7
+ * python3-cmd2 >= 0.8.0
  * python3-configobj
  * python3-pyroute2
  * python3-docker

@@ -19,7 +19,6 @@
 import sys
 import os
 import logging
-import signal
 import argparse
 import string
 import random
@@ -161,11 +160,6 @@ And the you can stop properly the running project.
 """ % result.stderr.decode("utf-8")
             sys.exit(error_msg)
 
-    # install signal handlers
-    def interrupt(s, f):
-        print("\n To quit pynetem, simply enter quit in the console !")
-
-    signal.signal(signal.SIGINT, interrupt)
     # start console
     console = NetemConsole(args.port)
     if args.start and not args.client_mode:

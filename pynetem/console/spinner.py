@@ -19,19 +19,12 @@ import sys
 import time
 import threading
 import itertools
-from pynetem.console.color import GREEN, RED, DEFAULT
-
-ACTIVE_SPINNER = None
+from pynetem.console.color import GREEN, RED, DEFAULT, ORANGE
 
 
 class Spinner(object):
 
     def __init__(self, text, delay=0.1, color=DEFAULT):
-        global ACTIVE_SPINNER
-        if ACTIVE_SPINNER is not None:
-            ACTIVE_SPINNER.stop()
-        ACTIVE_SPINNER = self
-
         self.spinner_generator = itertools.cycle(['-', '/', '|', '\\'])
         self.delay = delay
         self.text = text
@@ -53,23 +46,20 @@ class Spinner(object):
             sys.stdout.write('\b')
             sys.stdout.flush()
 
-    def stop(self):
-        global ACTIVE_SPINNER
-
+    def __stop(self, msg):
         if self.busy:
             self.busy = False
             self.thread.join()
-            sys.stdout.write(GREEN+'OK\n'+DEFAULT)
-        ACTIVE_SPINNER = None
+            sys.stdout.write(msg)
+
+    def stop(self):
+        self.__stop(GREEN+'OK\n'+DEFAULT)
+
+    def interrupt(self):
+        self.__stop(ORANGE+"INTERRUPT\n"+DEFAULT)
 
     def error(self, err=None):
-        global ACTIVE_SPINNER
-
-        if self.busy:
-            self.busy = False
-            self.thread.join()
-            msg = "NOK"
-            if err is not None:
-                msg = msg + "\n\t{}".format(err)
-            sys.stdout.write(RED+'{}\n'.format(msg)+DEFAULT)
-        ACTIVE_SPINNER = None
+        msg = "NOK"
+        if err is not None:
+            msg = msg + "\n\t{}".format(err)
+        self.__stop(RED+'{}\n'.format(msg)+DEFAULT)
