@@ -129,6 +129,8 @@ class DockerNode(_BaseWrapper):
                 elif if_conf["peer"] == "node":
                     self.p2p_sw.add_connection(if_conf["ifname"])
                 self.__attach_interface(p_if, if_conf["target_if"])
+                # disable tcp segmentation offloading (TSO)
+                self._docker_exec("ethtool -K {} tso off".format(if_conf["target_if"]))
 
     def __attach_interface(self, if_name, target_name):
         self.daemon.docker_attach_interface(self.container_name, if_name,

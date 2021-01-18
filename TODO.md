@@ -9,8 +9,5 @@ Be more robust during save/load process :
   - docker : add an option to share folder with host
 
 Other fixes :
-  - disable TCP offloading (segmentation / checksum)
-    - ethtool -k eth0 tx off
-
   - complete doc
      - integrate bridge connection to topology example
