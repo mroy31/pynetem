@@ -157,14 +157,14 @@ class NetemProtocol(asyncio.Protocol):
             node = get_node(d_name)
             node.dest_copy(s_path, d_path)
 
-    @cmd(cmd_args=["^\S+$"])
+    @cmd(cmd_args=[r"^\S+$"])
     def do_config(self, conf_path):
         conf_path = os.path.abspath(conf_path)
         if not os.path.isdir(conf_path):
             raise NetemError("%s is not a valid path" % conf_path)
         self.project.save_config(conf_path)
 
-    @cmd(cmd_args=["^\S+$"])
+    @cmd(cmd_args=[r"^\S+$"])
     def do_capture(self, if_name):
         self.project.topology.capture(if_name)
 
@@ -185,19 +185,19 @@ class NetemProtocol(asyncio.Protocol):
     def do_view(self):
         return self.project.view_topology()
 
-    @cmd(cmd_args=["^\S+$"])
+    @cmd(cmd_args=[r"^\S+$"])
     def do_start(self, node_id):
         topo = self.project.topology
         for node in self.__get_nodes(node_id):
             topo.start(node.get_name())
 
-    @cmd(cmd_args=["^\S+$"])
+    @cmd(cmd_args=[r"^\S+$"])
     def do_stop(self, node_id):
         topo = self.project.topology
         for node in self.__get_nodes(node_id):
             topo.stop(node.get_name())
 
-    @cmd(cmd_args=["^\S+$"])
+    @cmd(cmd_args=[r"^\S+$"])
     def do_restart(self, node_id):
         topo = self.project.topology
         for node in self.__get_nodes(node_id):
@@ -215,15 +215,15 @@ class NetemProtocol(asyncio.Protocol):
         for node in nodes:
             node.open_shell(bash=bash)
 
-    @cmd(cmd_args=["^\S+$"])
+    @cmd(cmd_args=[r"^\S+$"])
     def do_console(self, node_id):
         self.__open_shell(node_id, False)
 
-    @cmd(cmd_args=["^\S+$"])
+    @cmd(cmd_args=[r"^\S+$"])
     def do_shell(self, node_id):
         self.__open_shell(node_id, True)
 
-    @cmd(cmd_args=["^\S+$", "^\S+$"])
+    @cmd(cmd_args=[r"^\S+$", r"^\S+$"])
     def do_ifstate(self, if_name, state):
         self.project.topology.set_if_state(if_name, state)
 

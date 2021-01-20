@@ -27,29 +27,36 @@ from pynetem.ui.config import NetemConfig
 from pynetem.console.client import NetemClientProtocol
 from pynetem.server.rpc import RPCRequest
 from pynetem.utils import cmd_check_output, get_exc_desc
-from pynetem.console.color import GREEN, ORANGE, DEFAULT
+from pynetem.console.color import GREEN, ORANGE, DEFAULT, BLUE, RED
 from pynetem.console.spinner import Spinner
 
 
-def netmem_cmd(reg_exp=None, catch_error=True):
+def netmem_cmd(args=[], usage="{cmd_name}", catch_error=True):
     def cmd_decorator(func):
-        def cmd_func(self, arg):
-            # first, valid arguments
-            match_object = None
-            if reg_exp is None and arg.strip() != "":
-                self.perror("this command does not require any argument.")
+        def cmd_func(self, statement):
+            cmd_name = re.match(r"^do_(\w+)$", func.__name__).group(1)
+            usage_desc = usage.format(cmd_name=cmd_name)
+            st_args = shlex.split(statement)
+
+            if len(st_args) != len(args):
+                if len(args) in (0, 1):
+                    self.perror("{} argument is expected ".format(len(args)))
+                else:
+                    self.perror("{} arguments are expected ".format(len(args)))
+                self.pdesc("Usage: {}".format(usage_desc))
                 return
-            elif reg_exp is not None:
-                match_object = re.match(reg_exp, arg.strip())
-                if match_object is None:
-                    self.perror("argument for this cmd does not respect the "
-                                "following syntax: %s" % reg_exp)
+
+            for idx, st_arg in enumerate(st_args):
+                if re.match(args[idx], st_arg) is None:
+                    self.perror(
+                        "argument {:d} does not respect the "
+                        "syntax: {}".format(idx+1, args[idx])
+                    )
+                    self.pdesc("Usage: {}".format(usage_desc))
                     return
 
             try:
-                if match_object is None:
-                    return func(self)
-                return func(self, *match_object.groups())
+                return func(self, *st_args)
             except NetemError as err:
                 if not catch_error:
                     raise err
@@ -68,10 +75,11 @@ def netmem_cmd(reg_exp=None, catch_error=True):
 
 
 class NetemConsole(Cmd):
-    intro = '\nWelcome to network emulator. Type help or ? to list commands.\n'
-    prompt = '[net-emulator] '
+    intro = "\nWelcome to network emulator. Type help or ? to list commands.\n"
+    prompt = "[net-emulator] "
 
     def __init__(self, s_port):
+        self.config = NetemConfig.instance()
         self.allow_cli_args = False
         self.s_port = s_port
         self.spinner = None
@@ -87,8 +95,14 @@ class NetemConsole(Cmd):
     def pinfo(self, msg):
         self.poutput(GREEN + msg + DEFAULT)
 
+    def pdesc(self, msg):
+        self.poutput(BLUE + msg + DEFAULT)
+
     def pwarning(self, msg):
         self.poutput(ORANGE + msg + DEFAULT)
+
+    def perror(self, msg):
+        self.poutput(RED + msg + DEFAULT)
 
     def sighup_handler(self, s, f):
         self.__close_display()
@@ -144,8 +158,8 @@ class NetemConsole(Cmd):
 
         transport, _ = await loop.create_connection(
             lambda: NetemClientProtocol(request, self.__on_signal, on_answer),
-            '127.0.0.1',
-            self.s_port
+            "127.0.0.1",
+            self.s_port,
         )
 
         result = await on_answer
@@ -185,15 +199,17 @@ class NetemConsole(Cmd):
 
     def __quit(self):
         if self.__send_cmd("isTopologyModified"):
-            q = input("The topology has been modified, "
-                        "are you you want to quit netem (Y/N): ")
+            q = input(
+                "The topology has been modified, "
+                "are you you want to quit netem (Y/N): "
+            )
             while q not in ("Y", "N"):
                 q = input("Wrong answer, expect Y or N: ")
             if q == "N":
                 return None
         self.__spinner_cmd(
-            "Close the project, please wait ... ", "quit",
-            color=ORANGE)
+            "Close the project, please wait ... ",
+            "quit", color=BLUE)
         self.__close_display()
         return True
 
@@ -217,10 +233,10 @@ class NetemConsole(Cmd):
         prj_path = self.__send_cmd("projectPath")
         self.poutput(os.path.abspath(prj_path))
 
-    @netmem_cmd(catch_error=True)
+    @netmem_cmd(catch_error=False)
     def do_run(self):
         """Check the project and start all nodes"""
-        self.pinfo("Run the project, please wait ... ")
+        self.pdesc("Run the project, please wait ... ")
         self.__send_cmd("load")
 
     @netmem_cmd(catch_error=False)
@@ -228,16 +244,21 @@ class NetemConsole(Cmd):
         """Save the project"""
         self.__spinner_cmd("Save the project, please wait ... ", "save")
 
-    @netmem_cmd(reg_exp="^(\S+)$", catch_error=False)
+    @netmem_cmd(
+        args=[r"^[^\0]+$"],
+        usage="{cmd_name} <path>",
+        catch_error=False)
     def do_config(self, conf_path):
         """Save configurations in a specific folder"""
         conf_path = os.path.abspath(conf_path)
         if not os.path.isdir(conf_path):
-            self.perror("%s is not a valid path")
+            self.perror("{} is not a valid path".format(conf_path))
             return
         self.__spinner_cmd(
-            "Save the config in %s, please wait ... " % conf_path,
-            "config", args=[conf_path])
+            "Save the config in {}, please wait ... ".format(conf_path),
+            "config",
+            args=[conf_path],
+        )
 
     @netmem_cmd()
     def do_check(self):
@@ -245,15 +266,17 @@ class NetemConsole(Cmd):
         if self.__send_cmd("check"):
             self.pinfo("Network file is OK")
 
-    @netmem_cmd(reg_exp="^(\S+\.\w+)$")
+    @netmem_cmd(args=[r"^\S+\.\d+$"], usage="{cmd_name} <node>.<ifnumber>")
     def do_capture(self, if_name):
         """Capture trafic on an interface"""
         self.__send_cmd("capture", args=[if_name])
 
-    @netmem_cmd(reg_exp=r"^\"([^\0]+)\" \"([^\0]+)\"$")
+    @netmem_cmd(
+        args=[r"^[^\0]+$", r"^[^\0]+$"],
+        usage="{cmd_name} <src_path> <dst_path>")
     def do_copy(self, source, dest):
         """Copy files/folder between a docker node and the host fs
-        or vice versa. paths have to be surrounded by " caracter
+        or vice versa.
         ex: copy "node:/mypath/myfile.txt" "/hostpath/" """
         self.__send_cmd("copy", args=[source, dest])
 
@@ -267,8 +290,7 @@ class NetemConsole(Cmd):
     def do_edit(self):
         """Edit the topology"""
         f_path = self.__send_cmd("topologyFile")
-        cmd_line = "%s %s" % \
-            (NetemConfig.instance().get("general", "editor"), f_path)
+        cmd_line = "%s %s" % (self.config.get("general", "editor"), f_path)
         self.__command(cmd_line)
 
     @netmem_cmd()
@@ -278,17 +300,17 @@ class NetemConsole(Cmd):
         with open(f_path) as t_hd:
             self.poutput(t_hd.read())
 
-    @netmem_cmd(reg_exp="^(\S+)$")
+    @netmem_cmd(args=[r"^\S+$"], usage="{cmd_name} <node | all>")
     def do_start(self, node_id):
         """Start nodes, you can specify node name or 'all'"""
         self.__send_cmd("start", args=[node_id])
 
-    @netmem_cmd(reg_exp="^(\S+)$")
+    @netmem_cmd(args=[r"^\S+$"], usage="{cmd_name} <node | all>")
     def do_stop(self, node_id):
         """Stop nodes, you can specify node name or 'all'"""
         self.__send_cmd("stop", args=[node_id])
 
-    @netmem_cmd(reg_exp="^(\S+)$")
+    @netmem_cmd(args=[r"^\S+$"], usage="{cmd_name} <node | all>")
     def do_restart(self, node_id):
         """Restart nodes in the network"""
         self.__send_cmd("restart", args=[node_id])
@@ -297,39 +319,54 @@ class NetemConsole(Cmd):
     def do_status(self):
         """Display routeur/host status"""
         status = self.__send_cmd("status")
-        p_state = status["project"]["running"] \
-            and GREEN+"running"+DEFAULT or ORANGE+"stopped"+DEFAULT
-        self.poutput("Project:\n\tpath: {}\n\tstate: {}\n".format(
-            status["project"]["path"], p_state))
+        p_state = (
+            status["project"]["running"]
+            and GREEN + "running" + DEFAULT
+            or ORANGE + "stopped" + DEFAULT
+        )
+        self.poutput(
+            "Project:\n\tpath: {}\n\tstate: {}\n".format(
+                status["project"]["path"], p_state
+            )
+        )
 
         if status["project"]["running"]:
             self.poutput("Nodes:\n")
 
             def format_node(n):
-                n_state = n["isRunning"] \
-                    and GREEN+"running"+DEFAULT or ORANGE+"stopped"+DEFAULT
+                n_state = (
+                    n["isRunning"]
+                    and GREEN + "running" + DEFAULT
+                    or ORANGE + "stopped" + DEFAULT
+                )
                 self.poutput("\t{}: {}\n".format(n["name"], n_state))
                 if "interfaces" in n:
                     for if_obj in n["interfaces"]:
-                        i_state = if_obj["isUp"] \
-                            and GREEN+"up"+DEFAULT or ORANGE+"down"+DEFAULT
-                        self.poutput("\t\t{}: {}\n".format(
-                            if_obj["name"], i_state))
+                        i_state = (
+                            if_obj["isUp"]
+                            and GREEN + "up" + DEFAULT
+                            or ORANGE + "down" + DEFAULT
+                        )
+                        self.poutput(
+                            "\t\t{}: {}\n".format(if_obj["name"], i_state)
+                        )
 
             for n in status["nodes"]:
                 format_node(n)
 
-    @netmem_cmd(reg_exp="^(\S+)$")
+    @netmem_cmd(args=[r"^\S+$"], usage="{cmd_name} <node | all>")
     def do_console(self, node_id):
         """Open a console for the given router/host"""
         self.__send_cmd("console", args=[node_id])
 
-    @netmem_cmd(reg_exp="^(\S+)$")
+    @netmem_cmd(args=[r"^\S+$"], usage="{cmd_name} <node | all>")
     def do_shell(self, node_id):
         """Open a debug console (meaning bash) for the given router/host"""
         self.__send_cmd("shell", args=[node_id])
 
-    @netmem_cmd(reg_exp="^(\S+\.[0-9]+) (up|down)$")
+    @netmem_cmd(
+        args=[r"^\S+$\.[0-9]+", r"^up|down$"],
+        usage="{cmd_name} <node>.<ifnumber> up|down")
     def do_ifstate(self, if_name, state):
         """Enable/disable a node interface. The ifname have to
         follow this syntax : <node_id>.<if_number>"""

@@ -6,7 +6,6 @@ Problem to investigate :
 
 Be more robust during save/load process :
   - handle save/load error on host configuration
-  - docker : add an option to share folder with host
 
 Other fixes :
   - complete doc

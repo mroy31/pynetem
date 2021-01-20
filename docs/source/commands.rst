@@ -34,13 +34,12 @@ Usage:
 copy
 ----
 Copy files/folder between a docker node and the host fs or vice versa.
-paths have to be surrounded by "
 
 Usage:
 
 .. code-block:: bash
 
-  copy "node:/mypath/myfile.txt" "/hostpath/"
+  copy node:/mypath/myfile.txt /hostpath/
 
 check
 -----

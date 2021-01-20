@@ -57,8 +57,7 @@ CMD_LIST = {
     "docker_rm": r"^docker_rm (\S+)$",
     "docker_attach_interface": r"^docker_attach_interface (\S+) (\S+) (\S+)$",
     "docker_pid": r"^docker_pid (\S+)$",
-    "docker_cp": r"^docker_cp (\S+) (\S+)$",
-    "docker_path_cp": r"^docker_path_cp \"([^\0]+)\" \"([^\0]+)\"$",
+    "docker_cp": r"^docker_cp \"([^\0]+)\" \"([^\0]+)\"$",
     "docker_exec": r"^docker_exec (\S+) (.+)$",
     "docker_shell": r"^docker_shell (\S+) (\S+) (\S+) (\S+) (.+)$",
     "docker_capture": r"^docker_capture (\S+) (\S+) (\S+)$",
@@ -194,11 +193,6 @@ class NetemDaemonHandler(BaseRequestHandler):
     @staticmethod
     def docker_cp(source, dest):
         logging.debug("Docker cp from %s to %s" % (source, dest))
-        run_command("docker cp %s %s" % (source, dest))
-
-    @staticmethod
-    def docker_path_cp(source, dest):
-        logging.debug("Docker path cp from %s to %s" % (source, dest))
         run_command("docker cp \"%s\" \"%s\"" % (source, dest))
 
     @staticmethod

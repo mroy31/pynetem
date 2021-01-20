@@ -216,7 +216,7 @@ class DockerNode(_BaseWrapper):
     @require_running
     def source_copy(self, path, host_dest):
         source = "%s:%s" % (self.container_name, path)
-        self.daemon.docker_path_cp("\"%s\"" % source, "\"%s\"" % host_dest)
+        self._docker_cp(source, host_dest)
         host_path = host_dest
         if os.path.isdir(host_dest):
             host_path = os.path.join(host_dest, os.path.basename(path))
@@ -228,7 +228,7 @@ class DockerNode(_BaseWrapper):
     @require_running
     def dest_copy(self, host_source, path):
         dest = "%s:%s" % (self.container_name, path)
-        self.daemon.docker_path_cp("\"%s\"" % host_source, "\"%s\"" % dest)
+        self._docker_cp(host_source, dest)
 
     def clean(self):
         if self.running:
@@ -253,7 +253,7 @@ class DockerNode(_BaseWrapper):
         self.daemon.docker_exec(self.container_name, cmd)
 
     def _docker_cp(self, source, dest):
-        self.daemon.docker_cp(source, dest)
+        self.daemon.docker_cp("\"%s\"" % source, "\"%s\"" % dest)
 
 
 class HostNode(DockerNode):

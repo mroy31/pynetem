@@ -18,4 +18,5 @@
 RED = '\033[0;31m'
 ORANGE = '\x1b[93m'
 GREEN = '\033[0;32m'
+BLUE = '\033[0;34m'
 DEFAULT = '\033[0m'
