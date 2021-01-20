@@ -31,6 +31,17 @@ Usage:
 
   config <dest_path>
 
+copy
+----
+Copy files/folder between a docker node and the host fs or vice versa.
+paths have to be surrounded by "
+
+Usage:
+
+.. code-block:: bash
+
+  copy "node:/mypath/myfile.txt" "/hostpath/"
+
 check
 -----
 Check that the topology file is correct. If not, return found errors

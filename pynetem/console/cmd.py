@@ -250,6 +250,13 @@ class NetemConsole(Cmd):
         """Capture trafic on an interface"""
         self.__send_cmd("capture", args=[if_name])
 
+    @netmem_cmd(reg_exp=r"^\"([^\0]+)\" \"([^\0]+)\"$")
+    def do_copy(self, source, dest):
+        """Copy files/folder between a docker node and the host fs
+        or vice versa. paths have to be surrounded by " caracter
+        ex: copy "node:/mypath/myfile.txt" "/hostpath/" """
+        self.__send_cmd("copy", args=[source, dest])
+
     @netmem_cmd(catch_error=False)
     def do_reload(self):
         """Reload the project"""

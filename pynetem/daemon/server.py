@@ -58,12 +58,14 @@ CMD_LIST = {
     "docker_attach_interface": r"^docker_attach_interface (\S+) (\S+) (\S+)$",
     "docker_pid": r"^docker_pid (\S+)$",
     "docker_cp": r"^docker_cp (\S+) (\S+)$",
+    "docker_path_cp": r"^docker_path_cp \"([^\0]+)\" \"([^\0]+)\"$",
     "docker_exec": r"^docker_exec (\S+) (.+)$",
     "docker_shell": r"^docker_shell (\S+) (\S+) (\S+) (\S+) (.+)$",
     "docker_capture": r"^docker_capture (\S+) (\S+) (\S+)$",
     "docker_image_present": r"^docker_image_present (\S+)$",
     "docker_pull": r"^docker_pull (\S+)$",
     "clean": r"^clean (\S+)$",
+    "chown": r"^chown \"([^\0]+)\" (\d+) (\d+)$",
 }
 
 
@@ -193,6 +195,11 @@ class NetemDaemonHandler(BaseRequestHandler):
     def docker_cp(source, dest):
         logging.debug("Docker cp from %s to %s" % (source, dest))
         run_command("docker cp %s %s" % (source, dest))
+
+    @staticmethod
+    def docker_path_cp(source, dest):
+        logging.debug("Docker path cp from %s to %s" % (source, dest))
+        run_command("docker cp \"%s\" \"%s\"" % (source, dest))
 
     @staticmethod
     def docker_exec(container_name, cmd_line):
@@ -402,6 +409,14 @@ class NetemDaemonHandler(BaseRequestHandler):
                     print(str(if_name))
                     ipdb.interfaces[if_name].remove()
             ipdb.commit()
+
+    @staticmethod
+    def chown(host_path, uid, gid):
+        logging.debug("chown %s:%s %s" % (uid, gid, host_path))
+        if not os.path.exists(host_path):
+            raise NetemError("Path %s does not exist" % host_path)
+        cmd = "chown -R %s:%s \"%s\"" % (uid, gid, host_path)
+        run_command(cmd)
 
     @staticmethod
     def __get_container_list(prefix):

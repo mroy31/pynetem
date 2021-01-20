@@ -129,8 +129,8 @@ class DockerNode(_BaseWrapper):
                 elif if_conf["peer"] == "node":
                     self.p2p_sw.add_connection(if_conf["ifname"])
                 self.__attach_interface(p_if, if_conf["target_if"])
-                # disable tcp segmentation offloading (TSO)
-                self._docker_exec("ethtool -K {} tso off".format(if_conf["target_if"]))
+                # disable tcp offloading (segmentation / checksum)
+                self._docker_exec("ethtool -K {} tx off ".format(if_conf["target_if"]))
 
     def __attach_interface(self, if_name, target_name):
         self.daemon.docker_attach_interface(self.container_name, if_name,
@@ -212,6 +212,23 @@ class DockerNode(_BaseWrapper):
         self.daemon.docker_stop(self.container_name)
         self.__pid = None
         self.running = False
+
+    @require_running
+    def source_copy(self, path, host_dest):
+        source = "%s:%s" % (self.container_name, path)
+        self.daemon.docker_path_cp("\"%s\"" % source, "\"%s\"" % host_dest)
+        host_path = host_dest
+        if os.path.isdir(host_dest):
+            host_path = os.path.join(host_dest, os.path.basename(path))
+        # set correct rights for dest file/folder
+        self.daemon.chown(
+            "\"{}\"".format(host_path),
+            str(os.getuid()), str(os.getgid()))
+
+    @require_running
+    def dest_copy(self, host_source, path):
+        dest = "%s:%s" % (self.container_name, path)
+        self.daemon.docker_path_cp("\"%s\"" % host_source, "\"%s\"" % dest)
 
     def clean(self):
         if self.running:

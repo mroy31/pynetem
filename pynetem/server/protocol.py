@@ -19,6 +19,7 @@
 import os
 import logging
 import asyncio
+import re
 from pynetem import NetemError
 from pynetem.server.rpc import loads_request, RPCResponse, RPCSignal
 from pynetem.ui.config import NetemConfig
@@ -78,7 +79,7 @@ class NetemProtocol(asyncio.Protocol):
             ans = RPCResponse(r_id, "error", str(err))
         except AttributeError:
             ans = RPCResponse(
-                r_id, "error", "Method %s not found" % parsed["method"]
+                None, "error", "Method %s not found" % parsed["method"]
             )
         else:
             try:
@@ -122,6 +123,39 @@ class NetemProtocol(asyncio.Protocol):
     @cmd()
     def do_save(self):
         self.project.save()
+
+    @cmd(cmd_args=[r"^[^\0]+$", r"^[^\0]+$"])
+    def do_copy(self, source, dest):
+        def get_path_type(p):
+            docker_re = r"^(\w+):([^\0]+)$"
+            args = re.match(docker_re, p)
+            if args is None:
+                return "host", None, p
+            else:
+                return "docker", args.group(1), args.group(2)
+
+        def get_node(name):
+            node = self.project.topology.get_node(name)
+            if node is None:
+                raise NetemError("Node {} does not exist".format(name))
+            elif node.get_type() != "node.docker":
+                raise NetemError("Copy cmd works only with docker nodes")
+            return node
+
+        s_type, s_name, s_path = get_path_type(source)
+        d_type, d_name, d_path = get_path_type(dest)
+        if s_type == d_type:
+            raise NetemError("Can not do copy {0}/{0}".format(s_type))
+
+        if s_type == "docker":  # d_type = host
+            node = get_node(s_name)
+            node.source_copy(s_path, d_path)
+
+        else:  # s_type = host
+            if not os.path.exists(s_path):
+                raise NetemError("Host path {} does not exist".format(d_path))
+            node = get_node(d_name)
+            node.dest_copy(s_path, d_path)
 
     @cmd(cmd_args=["^\S+$"])
     def do_config(self, conf_path):
