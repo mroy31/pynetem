@@ -3,47 +3,7 @@
 Commands
 ========
 
-This page do the list of all commands available in the pynetem console.
-
-quit
-----
-Quit the pynetem console.
-
-run
-----
-If the project has not been launch during pynetem starting, run this command to
-load the topology and start all the nodes.
-
-
-save
-----
-Save the project. This command does two things:
-  - save the current topology
-  - for each running node, save the current of the node
-
-config
-------
-Save all the node config files in a specific folder.
-
-Usage:
-
-.. code-block:: bash
-
-  config <dest_path>
-
-copy
-----
-Copy files/folder between a docker node and the host fs or vice versa.
-
-Usage:
-
-.. code-block:: bash
-
-  copy node:/mypath/myfile.txt /hostpath/
-
-check
------
-Check that the topology file is correct. If not, return found errors
+This page lists all commands available in the pynetem console.
 
 capture
 -------
@@ -65,50 +25,29 @@ that launches pynetem-emulator must have the right to capture trafic
 with wireshark (on debian like system, this user has to be a member
 of *wireshark* group)
 
-
-reload
-------
-Reload the project. You have to run this command after modifing the
-topology. It does the following actions:
-
-  - Stop all running swithes/nodes/bridges
-  - Load the new topology
-  - Start all switches/nodes/bridges
-
-edit
-----
-Edit the topology. The editor used to open the topology file is configured
-by the parameter ``editor`` in the configuration file (by default,
-it is vim).
-
-view
-----
-View the content of the topology file.
-
-status
-------
-Display the status of the project/topology
-
-start
+check
 -----
-Start a node or all the nodes
+Check that the topology file is correct. If not, return found errors
+
+config
+------
+Save all the node config files in a specific folder.
 
 Usage:
 
 .. code-block:: bash
 
-  # start one node
-  start <node_name>
-  # start all the nodes
-  start all
+  config <dest_path>
 
-stop
+copy
 ----
-Stop a node or all the nodes. Same principle than *start* command.
+Copy files/folder between a docker node and the host fs or vice versa.
 
-restart
--------
-Restart a node or all the nodes. Same principle than *start* command.
+Usage:
+
+.. code-block:: bash
+
+  copy node:/mypath/myfile.txt /hostpath/
 
 console
 -------
@@ -124,11 +63,13 @@ the command used is:
 The kind of console opened by this command depends on the type of node:
 
   * For qemu node and docker host node: ``bash``
-  * For docker.frr and docker.quagga, run directly ``vtysh``
+  * For docker frr node, run directly ``vtysh``
 
-shell
------
-Same as *console* command, except run ``bash`` command whatever the node.
+edit
+----
+Edit the topology. The editor used to open the topology file is configured
+by the parameter ``editor`` in the configuration file (by default,
+it is vim).
 
 ifstate
 -------
@@ -141,3 +82,70 @@ Usage:
   ifstate <node_name>/<if_number> up|down
   # example
   ifstate R1.0 down
+
+quit
+----
+Quit the pynetem console.
+
+reload
+------
+Reload the project. You have to run this command after modifing the
+topology. It does the following actions:
+
+  - Stop all running swithes/nodes/bridges
+  - Load the new topology
+  - Start all switches/nodes/bridges
+
+restart
+-------
+Restart a node or all the nodes. Same principle than *start* command.
+
+run
+----
+If the project has not been launch during pynetem starting, run this command to
+load the topology and start all the nodes.
+
+
+save
+----
+Save the project. This command does two things:
+  - save the current topology
+  - for each running node, save the current of the node
+
+shell
+-----
+Same as *console* command, except run ``bash`` command whatever the node.
+
+start
+-----
+Start a node or all the nodes
+
+Usage:
+
+.. code-block:: bash
+
+  # start one node
+  start <node_name>
+  # start all the nodes
+  start all
+
+status
+------
+Display the status of the project/topology
+
+stop
+----
+Stop a node or all the nodes. Same principle than *start* command.
+
+Usage:
+
+.. code-block:: bash
+
+  # stop one node
+  stop <node_name>
+  # stop all the nodes
+  stop all
+
+view
+----
+View the content of the topology file.
