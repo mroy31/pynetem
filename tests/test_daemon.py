@@ -19,9 +19,11 @@
 import os
 import time
 import pytest
+import docker
 from pyroute2 import IPRoute
 from pyroute2 import netns
 from tests.data import gen_rnd_string
+from pynetem import __version__
 
 
 class IPRouteUtilities(object):
@@ -121,4 +123,33 @@ def test_bridge(pynetem_daemon, iproute):
 
 
 def test_docker(pynetem_daemon):
-    pass
+    client = docker.from_env()
+    cname = gen_rnd_string(min_size=8, max_size=8)
+    image = "mroy31/pynetem-host:{}".format(__version__)
+
+    # check the image exists
+    assert client.images.get(image) is not None
+
+    # create container and check its existence
+    pynetem_daemon.docker_create(cname, cname, image, "no")
+    containers = [c.name for c in client.containers.list(all=True)]
+    assert cname in containers
+
+    # start container
+    pynetem_daemon.docker_start(cname)
+    container = client.containers.get(cname)
+    assert container.status == "running"
+
+    # check pid
+    pid = pynetem_daemon.docker_pid(cname)
+    assert int(pid) == container.attrs["State"]["Pid"]
+
+    # stop container
+    pynetem_daemon.docker_stop(cname)
+    container.reload()
+    assert container.status == "exited"
+
+    # delete container
+    pynetem_daemon.docker_rm(cname)
+    containers = [c.name for c in client.containers.list(all=True)]
+    assert cname not in containers
