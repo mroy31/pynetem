@@ -17,7 +17,6 @@
 
 
 import os
-import time
 import pytest
 import docker
 from pyroute2 import IPRoute
@@ -59,30 +58,6 @@ def iproute():
     ipr = IPRouteUtilities()
     yield ipr
     ipr.close()
-
-
-@pytest.fixture(scope="module")
-def pynetem_daemon():
-    from pynetem.daemon.server import NetemDaemonThread
-    from pynetem.daemon.client import NetemDaemonClient
-
-    socket = os.path.join("/tmp", "ntmtest-daemon.ctl")
-    # start server thread
-    server_thread = NetemDaemonThread(socket)
-    server_thread.start()
-    # init client to send commands to daemon
-    client = NetemDaemonClient.instance()
-    client.set_socket_path(socket)
-    yield client
-
-    # stop daemon
-    time.sleep(0.1)
-    server_thread.stop()
-    server_thread.join()
-
-    # Make sure the socket does not already exist
-    if os.path.exists(socket):
-        os.unlink(socket)
 
 
 def test_version(pynetem_daemon):
