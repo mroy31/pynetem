@@ -140,6 +140,8 @@ if __name__ == "__main__":
             if os.path.isfile(args.project):
                 sys.exit("Project %s already exist" % args.project)
             create_project(args.project)
+        elif not os.path.isfile(args.project):
+            sys.exit("Project %s does not exist" % args.project)
 
         # launch the project in background with pynetem-server
         rnd_str = "".join(random.sample(string.ascii_lowercase, 2))
