@@ -23,9 +23,42 @@ def get_project(name):
     return os.path.join(dir_path, "projects", name)
 
 
-def test_project_open(pynetem_server, server_rpc_cmd):
+def test_open(pynetem_server, server_rpc_cmd):
     pynetem_server(get_project("simple.pnet"))
 
     answer = server_rpc_cmd("projectPath")
     assert answer["state"] == "OK"
     assert os.path.basename(answer["content"]) == "simple.pnet"
+
+
+def test_status(pynetem_server, server_rpc_cmd):
+    def check_status(running=False):
+        answer = server_rpc_cmd("status")
+        assert answer["state"] == "OK"
+
+        prj = answer["content"]["project"]
+        assert os.path.basename(prj["path"]) == "simple.pnet"
+        assert prj["running"] == running
+
+    pynetem_server(get_project("simple.pnet"))
+    check_status(running=False)
+
+    # start the topology
+    answer = server_rpc_cmd("load")
+    assert answer["state"] == "OK"
+    check_status(running=True)
+
+
+def test_valid_check(pynetem_server, server_rpc_cmd):
+    pynetem_server(get_project("simple.pnet"))
+
+    answer = server_rpc_cmd("check")
+    assert answer["state"] == "OK"
+    assert answer["content"]
+
+
+def test_invalid_check(pynetem_server, server_rpc_cmd):
+    pynetem_server(get_project("invalid.pnet"))
+
+    answer = server_rpc_cmd("check")
+    assert answer["state"] == "error"
