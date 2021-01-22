@@ -24,7 +24,7 @@ import shlex
 import signal
 from pynetem import NetemError
 from pynetem.ui.config import NetemConfig
-from pynetem.console.client import NetemClientProtocol
+from pynetem.server.client import NetemClientProtocol
 from pynetem.server.rpc import RPCRequest
 from pynetem.utils import cmd_check_output, get_exc_desc
 from pynetem.console.color import GREEN, ORANGE, DEFAULT, BLUE, RED
