@@ -41,7 +41,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-l", "--log-file", type=str, dest="logfile",
-        default=None, help="Clean the netem env"
+        default=None, help="Path for the daemon log file"
     )
     args = parser.parse_args()
 

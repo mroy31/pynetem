@@ -17,8 +17,6 @@
 
 import os
 import logging
-import shlex
-import subprocess
 import zipfile
 import tempfile
 import shutil
