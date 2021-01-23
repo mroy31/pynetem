@@ -27,6 +27,7 @@ from pynetem.daemon.server import NetemDaemonThread
 from pynetem.daemon.client import NetemDaemonClient
 
 SERVER_PORT = 10100
+NETID = "ntmtt"
 
 
 @pytest.fixture(scope="module")
@@ -82,7 +83,7 @@ def pynetem_server(server_rpc_cmd):
         cmd = "{} --conf {} --id {} --port {} {}".format(
             os.path.join(f_path, "..", "pynetem-server"),
             os.path.join(f_path, "conf/tests.conf"),
-            "ntmt", SERVER_PORT, prj_path
+            NETID, SERVER_PORT, prj_path
         )
         result = subprocess.run(shlex.split(cmd), stderr=subprocess.PIPE)
         if result.returncode != 0:

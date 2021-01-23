@@ -16,6 +16,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import os
+import docker
+from tests.conftest import NETID
 
 
 def get_project(name):
@@ -62,3 +64,42 @@ def test_invalid_check(pynetem_server, server_rpc_cmd):
 
     answer = server_rpc_cmd("check")
     assert answer["state"] == "error"
+
+
+def test_stop_start(pynetem_server, server_rpc_cmd):
+    pynetem_server(get_project("simple.pnet"))
+
+    server_rpc_cmd("load")
+    answer = server_rpc_cmd("status")
+    assert answer["state"] == "OK"
+
+    prj = answer["content"]["project"]
+    assert os.path.basename(prj["path"]) == "simple.pnet"
+    assert prj["running"]
+
+    c_name = "{}.R1".format(NETID)
+    client = docker.from_env()
+    # check the existence of docker container
+    containers = [c.name for c in client.containers.list(all=True)]
+    assert c_name in containers
+    container = client.containers.get(c_name)
+    assert container.status == "running"
+
+    # stop R1 node
+    answer = server_rpc_cmd("stop", args=["R1"])
+    assert answer["state"] == "OK"
+    container.reload()
+    assert container.status == "exited"
+
+    # start R1 node
+    answer = server_rpc_cmd("start", args=["R1"])
+    assert answer["state"] == "OK"
+    container.reload()
+    assert container.status == "running"
+
+
+def test_topo_file(pynetem_server, server_rpc_cmd):
+    pynetem_server(get_project("simple.pnet"))
+    answer = server_rpc_cmd("topologyFile")
+    assert answer["state"] == "OK"
+    assert os.path.isfile(answer["content"])
