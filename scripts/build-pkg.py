@@ -28,9 +28,7 @@ import shutil
 DISTRIBUTIONS = [
     ("sid", "-1"),
     ("buster", "-1~bpo10+1"),
-    ("stretch", "-1~bpo9+1"),
     ("focal", "-1~focal+1"),
-    ("bionic", "-1~bionic+1"),
 ]
 
 parser = argparse.ArgumentParser(description='Network emulator daemon')

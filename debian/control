@@ -22,12 +22,12 @@ Depends: ${misc:Depends}, ${python3:Depends},
          python3-docker,
          bridge-utils,
          xterm,
-         wireshark,
-         telnet
+         wireshark
 Recommends: qemu-system,
      	 docker-ce,
          qemu-utils,
-         vde2
+         vde2,
+         telnet
 Description: PyNetem is network emulator working with qemu/docker
  PyNetem is a network emulator based on
   * qemu or docker for node emulation

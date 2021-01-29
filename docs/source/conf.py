@@ -20,13 +20,13 @@
 # -- Project information -----------------------------------------------------
 
 project = 'pynetem'
-copyright = "2020, Mickael Royer"
+copyright = "2021, Mickael Royer"
 author = "Mickael Royer"
 
 # The short X.Y version
-version = '0.14.3'
+version = '0.15.0'
 # The full version, including alpha/beta/rc tags
-release = '0.14.3'
+release = '0.15.0'
 
 
 # -- General configuration ---------------------------------------------------
