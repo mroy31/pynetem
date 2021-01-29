@@ -365,7 +365,7 @@ class NetemConsole(Cmd):
         self.__send_cmd("shell", args=[node_id])
 
     @netmem_cmd(
-        args=[r"^\S+$\.[0-9]+", r"^up|down$"],
+        args=[r"^\S+\.[0-9]+$", r"^up|down$"],
         usage="{cmd_name} <node>.<ifnumber> up|down")
     def do_ifstate(self, if_name, state):
         """Enable/disable a node interface. The ifname have to
